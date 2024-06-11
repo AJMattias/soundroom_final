@@ -109,7 +109,7 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
             <Block row style = {{alignItems: 'center'}} onClick={() => openRoom()}>
                 <Image style={styles.image} source={room.image? room.image : require('../assets/theatre.png')} />
                 <Block style={styles.roomInfoRow} >
-                    <Text style={styles.title}> {room.name} </Text>
+                    <Text style={styles.title}> {room.nameSalaEnsayo} </Text>
                     <Block row style={styles.locationWrapper} >
                         <Icon size={24} color={theme.colors.grey600} name='calendar' family='AntDesign' />
                         <Block style = {styles.timesWrapper}>

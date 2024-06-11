@@ -99,14 +99,7 @@ class ReservationService {
     }
 
     //buscar reservas hechos por el usuario logueado a la sala q se renderiza
-    async getMyRoomReservationBd(userId, roomId){
-        const roomReservations = api.get("/reservation/findReservationbyUserAndRoom/?id="+userId, 
-        {
-            idRoom: roomId
-        })
-        return roomReservations
-    }
-
+    
     async reserve(order) {
         const user = LocalPhoneStorage.get(STORAGE_USER)
         const reservation = {
@@ -121,6 +114,29 @@ class ReservationService {
         console.log(reservation)
         MockStore.storeReservation(reservation)
         return reservation
+    }
+    
+    // async getMyRoomReservationBd(userId, roomId){
+    //     //Probar con peticion post. y enviar el room id dentro del body
+    //     const roomReservations = await api.get("/reservation/findReservationbyUserAndRoom/?id="+userId+"&roomId="+roomId)
+    //     return roomReservations
+    
+    // }
+
+    //version 2 querys
+    // async getMyRoomReservationBd(userId, roomId){
+    //     //Probar con peticion post. y enviar el room id dentro del body
+    //     const roomReservations = await api.get(`/reservation/findReservationbyUserAndRoom/?idUser=${userId}&roomId=${roomId}`)
+    //     return roomReservations
+    
+    // }
+
+    //version 3 params
+    async getMyRoomReservationBd(userId, roomId){
+        //Probar con peticion post. y enviar el room id dentro del body
+        const roomReservations = await api.get(`/reservation/findReservationbyUserAndRoom/${userId}/${roomId}`)
+        return roomReservations
+    
     }
 
     async createReservation (reserva){

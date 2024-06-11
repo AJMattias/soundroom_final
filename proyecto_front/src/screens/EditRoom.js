@@ -56,10 +56,12 @@ export  function EditRoom({ route, navigation }) {
     { id: '', name:'Tipos de sala' }]);
 
   const [rooms, setRooms] = useState([]);
-
+  const [typesFetched, setTypesFetched] = useState(false)
 
     useEffect(() => {
       // fetchProvinces(),
+      setTypes([
+        { id: '', name:'Tipos de sala' }])
       fetchTypes()
     }, [])
     //para mapear ordenadamente cada uno de los items de los combos
@@ -108,32 +110,35 @@ export  function EditRoom({ route, navigation }) {
     }
 
     const fetchTypes = async () => {
-      try{
-        const response  = await roomService.searchType()
-        console.log("Got types")
-        console.log(types)
-        response.map(type=>{
-            types.push({id: type.id, name: type.name})
-        })
-        console.log(types)
-    }
-    catch(apiError){
-        console.error("Error fetching types")
-        console.log(apiError)
-    }
+      if(!typesFetched){
+        try{
+          const response  = await roomService.searchType()
+          console.log("Got types")
+          console.log(types)
+          response.map(type=>{
+              types.push({id: type.id, name: type.name})
+          })
+          console.log(types)
+          setTypesFetched(true)
+        }
+        catch(apiError){
+          console.error("Error fetching types")
+          console.log(apiError)
+        }
+      }
     }
 
     const fetchRoom = async () => {
         try {
           const roomF =  await roomService.getRoomBd(roomId)
-            setRoom(roomF)
-            setRoomFetched(true)
-            setRoomChange(room)
-            setName({value: roomF.nameSalaEnsayo})
-            setCalleDireccion({value:roomF.calleDireccion})
-            setDescripcion({value:roomF.descripcion})
-            setComodidadesValue(roomF.comodidades)
-            setPrecio({value: roomF.precioHora})
+          setRoom(roomF)
+          setRoomFetched(true)
+          setRoomChange(room)
+          setName({value: roomF.nameSalaEnsayo})
+          setCalleDireccion({value:roomF.calleDireccion})
+          setDescripcion({value:roomF.descripcion})
+          setComodidadesValue(roomF.comodidades)
+          setPrecio({value: roomF.precioHora})
         } catch (apiError) {
             console.error(apiError)
             setRoomFetched(true)
@@ -191,9 +196,10 @@ export  function EditRoom({ route, navigation }) {
                 console.log("El room modificado es")
                 console.log(roomModificado)
                 const stored = await roomService.editRoom(roomModificado)
+                console.log('sala acutalizada: ', stored)
                 navigation.navigate("RoomScreen", {
-                    roomId: stored.id
-                })
+                  roomId: stored.id
+              })
 
             } catch (apiError) {
                 console.error("Error fetching roms")

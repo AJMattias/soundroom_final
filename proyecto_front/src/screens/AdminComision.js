@@ -52,6 +52,7 @@ export  function AdminComision({navigation}){
 
    
     const addComisionesToArray = async () =>{
+      setComisionesToPick([{label: 'Elige una comision'}])
       console.log(comisiones.length)
       let lengthComisiones = comisiones.length
       console.log(lengthComisiones)

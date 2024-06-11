@@ -22,6 +22,9 @@ const RatingStar = ({size = 10, value, currentScore , onClick}) => {
 
 export const AddComment = ({ user, otherId, title , placeholder , onRatingCreated , onRatingUpdated }) => {
 
+    //otherId is roomId
+    // reemplazar otherId por roomId
+    const roomId = otherId
     const [previousRating, setPreviousRating] = useState()
     
     const [previousRatingFetched, setPreviousRatingFetched] = useState(false)
@@ -46,13 +49,14 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
 
 
     const postComment = async () => {
+        console.log("posting opinion a sala: ", roomId)
         if(!validateComment()) {
             return
         }
         await ratingsService.createOpinion({
             comment: comment.value,
             score: score
-        }, otherId)
+        }, roomId)
         // await ratingsService.createRating({
         //     comment: comment.value,
         //     score: score
@@ -91,8 +95,8 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
         console.log(rating)
         if(rating) {
             setPreviousRating(rating)
-            setScore(rating.score)
-            setComment({...comment, value: rating.comment})
+            setScore(rating.estrellas)
+            setComment({...descripcion, value: rating.descripcion})
             setIsEditing(false)
         } else {
             setScore(undefined)

@@ -4,7 +4,7 @@ import { StyleSheet, ScrollView } from 'react-native'
 import { theme } from '../core/theme'
 import { avg } from '../utils/avg'
 
-export const Rating = ({ ratings, size, showNumber = true }) => {
+export const Rating = ({ ratings, estrellasProm, size, showNumber = true }) => {
     const scores = ratings.map((rating) => rating.score)
     const avgScore = avg(scores)
 
@@ -27,7 +27,8 @@ export const Rating = ({ ratings, size, showNumber = true }) => {
 
     return (
         <Block row style={styles.container} >
-            <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{avgScore.toFixed(1)}</Text>
+            {/* <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{avgScore.toFixed(1)}</Text> */}
+            <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{estrellasProm}</Text>
             { renderRating() }
         </Block>
     )

@@ -142,6 +142,7 @@ class UserService {
         return user
     }
 
+
     async forgotPassword(email) {
        const tokenResponse = await api.post("/auth/create_token" , {
            email: email

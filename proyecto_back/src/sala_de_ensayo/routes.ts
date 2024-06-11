@@ -3,7 +3,7 @@ import * as validator from "express-validator"
 import { run } from "../common/utils/run";
 import { Application, Request, Response } from "express";
 import * as dao from "./dao"
-import { SalaDeEnsayoDto} from "./dto";
+import { OpinionDto, SalaDeEnsayoDto} from "./dto";
 import {StringUtils} from "../common/utils/string_utils"
 import {ArgumentsException} from "../common/exception/exception"
 import {ErrorCode} from "../common/utils/constants"
@@ -302,14 +302,23 @@ export const route = (app: Application) => {
             if(!dto["duracionTurno"]){
                 dto["duracionTurno"] = salaOriginal["duracionTurno"];
             }
+            if(!dto["descripcion"]){
+                dto["descripcion"] = salaOriginal["descripcion"];
+            }
+            if(!dto["comodidades"]){
+                dto["comodidades"] = salaOriginal["comodidades"];
+            }
+            console.log('ruta update sala: ', dto)
             const sala = await service.instance.updateSalaDeEnsayo(id,{
                 nameSalaEnsayo: dto["nameSalaEnsayo"],
                 calleDireccion: dto["calleDireccion"],
                 numeroDireccion: dto["numeroDireccion"],
                 duracionTurno: dto["duracionTurno"],
                 precioHora: dto["precioHora"],
-                comodidades: dto["comodidades"]
+                comodidades: dto["comodidades"],
+                descripcion: dto["descripcion"]
             })
+            resp.json(sala)
         })
     )
         
@@ -338,9 +347,9 @@ export const route = (app: Application) => {
         })
     )
 
-    app.post("/salasdeensayo/",
+    app.post("/salasdeensayo/createOpinion/",
         auth,
-        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("descripcion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("estrellas").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run( async(req: any, resp: Response) => {
@@ -349,7 +358,10 @@ export const route = (app: Application) => {
                 throw ValidatorUtils.toArgumentsException(errors.array())
             }
             const dto = req.body
-            const id = req.query.id as string
+            const idRoom = req.query.idRoom as string
+            console.log('ruta create Pinion idRoom: ', idRoom)
+            console.log('ruta create opinion, idUser: ', req.user.id)
+
             //obtener usuario logueado con:
             const logged : UserDto = req.user 
             const user: UserDto = await userService.instance.findUserById(logged.id)
@@ -357,19 +369,19 @@ export const route = (app: Application) => {
             const opinion = await service.instance.createOpinion({
                 descripcion: dto["descripcion"],
                 estrellas: dto["estrellas"] ,
-                //idUser: dto["idUser"]
-                idUser: user.id
+                idUser: user.id,
+                idRoom: idRoom,
             })
             console.log('Ruta, opinion creada: ', opinion)
             if(!opinion){
                 resp.json("No se pude crear la opinon, intentalo de nuevo mas tarde")
             }
-            const salaOriginal : SalaDeEnsayoDto = await service.instance.findSalaById(id);
+            const salaOriginal : SalaDeEnsayoDto = await service.instance.findSalaById(idRoom);
             console.log('ruta sala encontrada original', salaOriginal)   
             
             //update sala con la opinion
             console.log('ruta opinion: ',opinion)
-            let sala = await service.instance.updateSalaDeEnsayoOpinion(id,{
+            let sala = await service.instance.updateSalaDeEnsayoOpinion(idRoom,{
                 nameSalaEnsayo: salaOriginal["nameSalaEnsayo"],
                 calleDireccion: salaOriginal["calleDireccion"],
                 numeroDireccion: salaOriginal["numeroDireccion"],
@@ -377,7 +389,7 @@ export const route = (app: Application) => {
                 opiniones: opinion.id
             })
             // realizar calculos de promedio luego de crear la opinion
-            const salaUpdated : SalaDeEnsayoDto = await service.instance.findSalaById(id);
+            const salaUpdated : SalaDeEnsayoDto = await service.instance.findSalaById(idRoom);
             const opinionesIds = salaUpdated.opiniones;
             const opiniones = await OpinionModel.find({ _id: { $in: opinionesIds } });
 
@@ -396,6 +408,37 @@ export const route = (app: Application) => {
         })
     )
 
+    //TODO update opinion
+    app.put("/saladeensayo/updateOpinion/",
+        auth,
+        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: any, resp: Response) =>{
+            const errors = validator.validationResult(req)
+                if(errors && !errors.isEmpty()){
+                    throw ValidatorUtils.toArgumentsException(errors.array())
+                }
+            const dto = req.body
+            const id = req.query.id as string
+            console.log("ruta update Opinion: ", dto)
+            const opinionOriginal: OpinionDto = await service.instance.getOpinionById(id)
+            if(!dto["descripcion"]){
+                dto["descripcion"] = opinionOriginal["descripcion"];
+            }
+            if(!dto["estrellas"]){
+                dto["estrellas"] = opinionOriginal["estrellas"];
+            }
+            if(!dto["idUser"]){
+                dto["idUser"] = req.user.id
+            }
+            const opinionUpdate = await service.instance.updateOpinion(id,{
+                descripcion:dto["descripcion"],
+                estrellas:dto["estrellas"],
+                idUser:dto["idUser"],
+                idRoom: id,
+            })
+            resp.json(opinionUpdate)
+        }))
+
     app.get("/salaPromedio/", run( async(req: Request, res: Response)=>{
 
         const id = req.query.id as string
@@ -412,6 +455,8 @@ export const route = (app: Application) => {
 
     }) )
 
+
+    //get opiniones de sala que se pasa por id en la query
     app.get("/salaOpiniones/", run(async (req: Request, res: Response)=>{
         const id = req.query.id as string
         //buscar sala de ensayo
@@ -420,11 +465,31 @@ export const route = (app: Application) => {
             return res.status(404).json({ message: 'Sala de ensayo no encontrada' });
         }
         const opinionesIds = salaDeEnsayo.opiniones;
-        const opiniones = await OpinionModel.find({ _id: { $in: opinionesIds } });
+        const opiniones = await OpinionModel.find({ _id: { $in: opinionesIds } }).populate("idUser");
 
         res.json({ opiniones });
 
     }))
+
+    //get opinion hecha por usuario logueado artista,  get mi opinion sobre una sala e particular
+    app.get("/salaOpinion/getMyOpinionToRoom", 
+    auth, 
+    validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    run(async (req: any, resp: Response)=>{
+        const errors = validator.validationResult(req)
+        if(errors && !errors.isEmpty()){
+            throw ValidatorUtils.toArgumentsException(errors.array())
+        }
+        //const idUser = req.query.id as string
+        const idUser = req.user.id
+        const dto = req.body
+        const idRoom = dto["idRoom"]
+        //const opinion = await service.instance
+        const opinion = await service.instance.getOpinionByUserAndRoom(idUser, idRoom)
+        resp.json(opinion)
+
+    })
+    )
 
     interface GrafTortaTipoSala {
         name: string;

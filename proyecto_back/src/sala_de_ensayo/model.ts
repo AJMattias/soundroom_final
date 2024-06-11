@@ -104,19 +104,26 @@ export const OpinionSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User",
     },
+    //nuevo diseño de documento ahora opinion tiene la sala a la que pertenece
+    idRoom : {
+        type: Schema.Types.ObjectId,
+        ref: "Sala_De_Ensayo",
+    },
 })
 
 export interface Opinion{
     id: string,
     descripcion: string,
     estrellas: number,
-    idUser:  string
+    idUser:  string,
+    idRoom: string,
 }
 
 export interface OpinionDoc extends Document{
     id: string,
     descripcion: string,
     estrellas: number,
-    idUser:  string
+    idUser:  string,
+    idRoom: string,
 }
 export const OpinionModel = mongoose.model<OpinionDoc>("Opinion", OpinionSchema)

@@ -195,11 +195,17 @@ export const route = (app: Application) =>{
         resp.json(reservation) 
     }))
 
-    app.get("/reservation/findReservationbyUserAndRoom/",
+    //idUser hace la reserva
+    app.get("/reservation/findReservationbyUserAndRoom/:userId/:roomId",
         run(async (req: Request,resp: Response) => {
-        const id = req.query.id as string
-        const dto = req.body
-        const reservation : ReservationDto[] = await  service.instance.getReservationByUserAndRoom(id, dto["idRoom"])
+        const id = req.params.userId as string
+        //Probar una vez mas con este roomId en la query
+        const roomId = req.params.roomId as string;
+        // const dto = req.body
+        // const idRoom = dto["idRoom"]
+        console.log('ruta get opinion by user', id + ' and sala, idRoom: ', roomId)
+        const reservation : ReservationDto[] = await  service.instance.getReservationByUserAndRoom(id, roomId)
+        console.log('ruta reservation: ', reservation)
         resp.json(reservation) 
     }))
 

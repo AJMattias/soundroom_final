@@ -252,6 +252,7 @@ export const ReservationsScreen = ({navigation}) => {
             <Screen rootScreen = {true} navigation = {navigation}>
                 <ScrollView>
                     {reservationsSearch()}
+                    {/* TODO en caso que sea tipo Sala de ensayo mostrar: Reservasa tus salas */}
                     <Block style = {styles.ownerReservationsRow}>
                         <Icon name = "briefcase" family = "Feather" color = {theme.colors.blueAccent700} size = {28}/>
                         <Text 

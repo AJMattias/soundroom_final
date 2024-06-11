@@ -96,12 +96,14 @@ async store(salaDeEnsayo: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayo>{
 }
 
 async updateSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayo>{
+    console.log('dao update sala: ', sala)
     const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId,{
         nameSalaEnsayo : sala.nameSalaEnsayo,
         calleDireccion: sala.calleDireccion,
         numeroDireccion: sala.numeroDireccion,
         precioHora: sala.precioHora,
-        createdAt: new Date()
+        createdAt: new Date(),
+        comodidades: sala.comodidades
     }).exec()
     if(!updated){
         throw new ModelNotFoundException() 
@@ -178,13 +180,14 @@ async createOpinion(opinion: CreateOpinionDto): Promise<Opinion>{
     const opinionDoc = await OpinionModel.create({
         descripcion: opinion.descripcion,
         idUser: opinion.idUser,
-        estrellas: opinion.estrellas
+        estrellas: opinion.estrellas,
+        idRoom: opinion.idRoom
     })
     return this.mapToOpinion(opinionDoc)
 }
 
-async updateOpinion(idOpinion: string, opinion: OpinionDto): Promise<Opinion>{
-    const opinionUpdatedDoc = await OpinionModel.findByIdAndUpdate(idOpinion, {
+async updateOpinion(opinion: OpinionDto): Promise<Opinion>{
+    const opinionUpdatedDoc = await OpinionModel.findByIdAndUpdate(opinion.id, {
         descripcion: opinion.descripcion,
         idUser: opinion.idUser,
         estrellas: opinion.estrellas
@@ -193,6 +196,22 @@ async updateOpinion(idOpinion: string, opinion: OpinionDto): Promise<Opinion>{
         throw new ModelNotFoundException() 
     }
     return this.mapToOpinion(opinionUpdatedDoc)
+}
+
+async getOpinionByUserAndRoom(idUser: string, idRoom: string): Promise<Opinion>{
+    const idroom = mongoose.Types.ObjectId(idRoom);
+    const iduser = mongoose.Types.ObjectId(idUser);
+
+    const opinionDoc = await OpinionModel.findOne({idUser: iduser, idRoom: idroom}).exec()
+    if(!opinionDoc) throw new ModelNotFoundException()
+    return this.mapToOpinion(opinionDoc)
+
+}
+
+async getOpinionById( opinionId: string): Promise<Opinion>{
+    const model = await OpinionModel.findById(opinionId).exec()
+    if (!model) throw new ModelNotFoundException()
+    return this.mapToOpinion(model)
 }
 
 //TODO hacer delete de opinion y getters quizas
@@ -204,6 +223,7 @@ mapToOpinion(document: OpinionDoc): Opinion{
         descripcion: document.descripcion,
         estrellas: document.estrellas,
         idUser:  document.idUser as unknown as string,
+        idRoom: document.idRoom as unknown as string
     }
 }
 

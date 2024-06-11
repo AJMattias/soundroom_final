@@ -66,6 +66,7 @@ export class ReservationDao{
 
     async getByUserAndRoom(userId: string, idRoom: string): Promise<Array<Reservation>>{
         const idroom = mongoose.Types.ObjectId(idRoom);
+        //idUser hace la reserva
         const iduser = mongoose.Types.ObjectId(userId);
         return (await ReservationModel.find({canceled: "false", idUser: iduser, idRoom: idroom}))
         .map((doc: ReservationDoc)=>{

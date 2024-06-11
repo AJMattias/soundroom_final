@@ -15,7 +15,7 @@ export const UserAvatar = ({ user, ...props }) => {
                 <Text style={styles.title}>{user.name + " " + user.last_name}</Text>
                 <Text style={styles.subtitle}>{user.email}</Text>
                  {  
-                 user.idPerfil && user2.idPerfil.name == "Artista" &&(
+                 user.idPerfilwwwwwwwwwwwww && user2.idPerfil.name == "Artista" &&(
                  <Block row style={styles.row}>
                  <Icon name='note' family='Entypo' size={24} color={theme.colors.grey600} />
                     <Text style={[styles.textBig, { marginStart: 8 }]}>Musico</Text>

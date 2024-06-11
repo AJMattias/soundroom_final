@@ -93,19 +93,21 @@ class RoomService {
 
     async editRoom(room){
         console.log('Room service to update', room)
+        let roomCreated
         try{
-        const roomCreated =  await api.put("/salasdeensayo/update/?id="+room.idRoom, {
+        roomCreated =  await api.put("/salasdeensayo/update/?id="+room.idRoom, {
 
-            nameSalaDeEnsayo: room.nameSalaDeEnsayo,
+            nameSalaEnsayo: room.nameSalaDeEnsayo,
             calleDireccion: room.calleDireccion,
             idType: room.tipoSala,
             descripcion: room.descripcion,
             precioHora: room.precioHora,
             comodidades: room.comodidades
         })
-        console.log('room updted: ', roomCreated)
+        console.log('room updated: ', roomCreated)
         if(roomCreated){
             await LocalPhoneStorage.set(STORAGE_ROOMOWNED, roomCreated)
+
         }
         }catch(error){
             console.log('error updateing room', error)
@@ -170,6 +172,11 @@ class RoomService {
         MockStore.removeReservation(ratingId)
     }
     
+    async getPromedioSala(roomId){
+        const promedio = await api.get("/salaPromedio/?id="+roomId)
+        return promedio
+    }
+
     async getMyRatingForRoom(roomId) {
         const user = LocalPhoneStorage.get(STORAGE_USER)
         const ratings = await this.getRatings(roomId)
@@ -178,6 +185,7 @@ class RoomService {
         const found =  ratings.filter((rating) => rating.user.id === user.id)
         return found.length? found[0] : undefined
     }
+    
 
     async updateRating(previousRatingId, newRating) {
         const rating = MockStore.getRating(previousRatingId)

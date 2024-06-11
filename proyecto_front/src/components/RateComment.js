@@ -17,11 +17,11 @@ export const RateComment = ({ user, rate, style, onClick }) => {
             <Block row style= {styles.userWrapper}>
                 <UserImage user={user} size = {40} />
                 <Block style={styles.ratingRow}>
-                    <Text style={styles.title}>{user.name + " " + user.last_name}</Text>
-                    <Rating ratings={[rate]} showNumber={false} />
+                    <Text style={styles.title}>{user.name + " " + user.lastName}</Text>
+                    <Rating ratings={[rate.estrellas]} showNumber={false} />
                 </Block>
             </Block>
-            <Text style = {styles.comment} >{rate.comment}</Text>
+            <Text style = {styles.comment} >{rate.descripcion}</Text>
         </Block>
     )
 }

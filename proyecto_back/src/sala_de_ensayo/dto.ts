@@ -40,6 +40,7 @@ export interface CreateSalaDeEnsayoDto2{
     nameSalaEnsayo: string,
     calleDireccion: string,
     numeroDireccion: number,
+    descripcion: string
     precioHora: number,
     duracionTurno: number,
     deletedAt?: Date,
@@ -87,7 +88,7 @@ export interface CreateSearchSdEDto{
 }
 
 export class OpinionDto{
-    id?: string;
+    id: string;
     descripcion: string;
     estrellas: number;
     idUser:  string
@@ -104,11 +105,20 @@ export class OpinionDto{
 export interface CreateOpinionDto{
     descripcion: string;
     estrellas: number;
-    idUser:  string
+    idUser:  string;
+    idRoom: string
 }
 
 export interface OpinionDto{
+    id: string,
     descripcion: string;
     estrellas: number;
     idUser:  string
 }
+
+export interface UpdateOpinionDto{
+    descripcion: string;
+    estrellas: number;
+    idUser:  string
+}
+

@@ -16,6 +16,7 @@ import { AddComment } from '../components/AddComment'
 import { reservationService } from '../network/ReservationService'
 import { emailService } from '../network/EmailService'
 import { userService } from '../network/UserService'
+import { ratingsService } from '../network/RatingsService'
 
 export const RoomScreen = ({ route, navigation }) => {
     const { roomId } = route.params
@@ -34,6 +35,7 @@ export const RoomScreen = ({ route, navigation }) => {
         opiniones:[]
 
     })
+    const [comodidades, setComodidades] = useState([])
     const [idDueño, setIdDueño] = useState("")
     const [owner, setOwner] = useState({
         name: " ",
@@ -47,13 +49,16 @@ export const RoomScreen = ({ route, navigation }) => {
         createdAt: "",
         userType: ""
     })
+    const [loggedUser, setLoggedUser] = useState()
     const [estrellasProm, setEstrellasProm] = useState(0)
     const [ratings, setRatings] = useState([])
     const [userReservations, setUserReservations] = useState([])
     let idOwner = '' 
     let idSala = ''
-    let ownerName =''
+    //let ownerName =''
     const [name, setName] = useState('')
+    const img =''
+    
 
      
     const fetchRoom = async () => {
@@ -66,30 +71,41 @@ export const RoomScreen = ({ route, navigation }) => {
             //setRoom(
             //     await roomService.getRoomBd(roomId)
             // )
+
+            setLoggedUser(getUser())
+            //TODO reemplazar todas las funciones getUser().id por logeedUSer.id
+
             let roomCreated = await roomService.getRoomBd(roomId)
             console.log('roomCreated: ', roomCreated)
             setRoom(roomCreated)
             console.log('room: ',room)
-
+            idSala = roomCreated.id
+            console.log('idRoom to get reservation:', idSala)
             idOwner = roomCreated.idOwner
             console.log("id dueño sala: ", idOwner)
+            setComodidades(roomCreated.comodidades)
+            console.log('room.comoidades: ', room.comodidades)
+            console.log('comodidades: ', comodidades)
 
             
 
-            idSala = roomCreated.id
+            
             
             //buscar owner
             console.log("buscando dueño de sala de id: ", idOwner)
             const roomOwner = room.idOwner
+            console.log(roomOwner)
             //await userService.getUserDb(idOwner)
             setOwner(roomOwner)
             //nombre completo
-            ownerName =  `${roomOwner.name} ${roomOwner.last_name}`
+            const ownerName =  `${roomOwner.name} ${roomOwner.lastName}`
+            console.log('ownerName: ', ownerName)
             setName(ownerName)
             console.log("owner: ", ownerName)
 
-            //buscar reservas a la sala para render opiniones
             const logeedUserId = getUser().id
+            //buscar reservas a la sala para render opiniones
+            const idSala2 = room.id
             const reservasdelusuarioasalal =  await reservationService.getMyRoomReservationBd(logeedUserId, roomId)
             setUserReservations(reservasdelusuarioasalal)
             console.log('reservas del usuario logueado a la sala: ', userReservations)
@@ -98,6 +114,7 @@ export const RoomScreen = ({ route, navigation }) => {
             // const promedioSala = await userService.getUserDb(idSala)
             // setEstrellasProm(promedioSala)
             // console.log("promedio sala: ", estrellasProm)
+            img = require("../assets/user.png")
 
         } catch (apiError) {
             console.error(apiError)
@@ -105,23 +122,23 @@ export const RoomScreen = ({ route, navigation }) => {
         }
     }
 
-    const fetchOwner  = async() => {
-        try {
-            //const idOwner = room["idOwner"]
-            console.log("buscando dueño de sala de id: ", idOwner)
-            const roomOwner = await userService.getUser(idOwner)
-            setOwner(roomOwner)
-            console.log("owner: ", roomOwner)
-        } catch (error) {
-            console.error(apiError)
-            setRoomFetched(true)
-        }
-    }
+    // const fetchOwner  = async() => {
+    //     try {
+    //         const idOwner = roomId
+    //         console.log("buscando dueño de sala de id: ", idOwner)
+    //         const roomOwner = await userService.getUser(idOwner)
+    //         setOwner(roomOwner)
+    //         console.log("owner: ", roomOwner)
+    //     } catch (error) {
+    //         console.error(apiError)
+    //         setRoomFetched(true)
+    //     }
+    // }
 
     const fetchPromedioEstrellas = async () =>{
         try {
-            //const idSala = room.id
-            const promedioSala = await userService.getUserDb(idSala)
+            const idSala = room.id
+            const promedioSala = await roomService.getPromedioSala(roomId)
             setEstrellasProm(promedioSala)
             console.log("promedio sala: ", estrellasProm)
         } catch (error) {
@@ -138,14 +155,30 @@ export const RoomScreen = ({ route, navigation }) => {
         // fetchUserReservations().then()
     //}
 
-    useEffect(() => {
-      fetchRoom().then()
-      fetchUserReservations().then()
-    //   fetchOwner()
-    //   fetchPromedioEstrellas
-    //TODO si room.opiniones.length >0 traer las opiniones y render ratings
-      setRoomFetched(true)
-    }, [])
+    // useEffect(() => {
+    //   setRoomFetched(false)
+    //   fetchRoom().then()
+    //   fetchUserReservations().then()
+    //   fetchRoomRatings().then()
+    //   // fetchOwner()
+    //   fetchPromedioEstrellas().then()
+    // //TODO si room.opiniones.length >0 traer las opiniones y render ratings
+    //   setRoomFetched(true)
+    // }, [])
+
+    //Cuando vuelvo para atras a esta pantalla, se debe acualizar
+    React.useEffect( () => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            setRoomFetched(false)
+            fetchRoom().then()
+            fetchUserReservations().then()
+            fetchRoomRatings().then()
+            // fetchOwner()
+            fetchPromedioEstrellas().then()
+            setRoomFetched(true)
+        });
+        return unsubscribe
+      }, [navigation])
     
     //useEffect
     // useEffect(()=>{
@@ -179,14 +212,28 @@ export const RoomScreen = ({ route, navigation }) => {
    
     
 
-    const fetchRatings = async () => {
+    // const fetchRatings = async () => {
+    //     const user = LocalPhoneStorage.get(STORAGE_USER)
+    //     try {
+    //         setRatings(
+    //             await (await roomService.getRatings(roomId)).filter(
+    //                 (rating) => rating.user.id !== user.id
+    //             )
+    //         )
+    //     } catch (apiError) {
+    //         console.error("Error fetching ratings")
+    //         console.error(apiError)
+    //     }
+    // }
+
+    const fetchRoomRatings = async () => {
         const user = LocalPhoneStorage.get(STORAGE_USER)
         try {
-            setRatings(
-                await (await roomService.getRatings(roomId)).filter(
-                    (rating) => rating.user.id !== user.id
-                )
-            )
+            const response = await ratingsService.getRoomOpinions(roomId)
+            const opiniones = response
+            setRatings(opiniones.opiniones)
+            console.log('response to room opinions: ', response)
+            console.log('opiniones useState: ', ratings)
         } catch (apiError) {
             console.error("Error fetching ratings")
             console.error(apiError)
@@ -196,7 +243,7 @@ export const RoomScreen = ({ route, navigation }) => {
     const fetchUserReservations = async () => {
         try {
             setUserReservations(
-                await reservationService.getMyRoomReservationBd(user.id, roomId)
+                await reservationService.getMyRoomReservationBd(getUser().id, roomId)
             )
             console.log('reservas del usuario logueado a la sala: ', userReservations)
         } catch (ignored){
@@ -215,12 +262,23 @@ export const RoomScreen = ({ route, navigation }) => {
         }
     }
 
+    const sendUpdateCommentNotification = async () => {
+        try {
+            const user = getUser()
+            emailService.sendEmailToUser(
+                room.idOwner.email, `¡${user.name} ${user.last_name} ha actualizado su calificacion a tu sala, ${room.name}! Logueate en la app para ver las calificaciones.`
+            )
+        } catch (ignored) {
+            console.log(ignored)
+        }
+    }
+
    
 
     const renderRatings = () => {
         if (ratings && ratings.length > 0) {
             return (
-                <Rating ratings={ratings} size={15} />
+                <Rating ratings={ratings} estrellasProm={estrellasProm} size={15} />
             )
         } else {
             return (
@@ -233,7 +291,7 @@ export const RoomScreen = ({ route, navigation }) => {
     const renderComments = () => {
         if (ratings) {
             return ratings.map((rating) => {
-               return ( <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.user} rate={rating} onClick = {()=>openArtistScreen(rating.user) } /> )
+               return ( <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.idUser} rate={rating} onClick = {()=>openArtistScreen(rating.idUuser._id) } /> )
               })
         }
     }
@@ -245,6 +303,7 @@ export const RoomScreen = ({ route, navigation }) => {
     }
 
     const getUser = () => {
+        //console.log(LocalPhoneStorage.get(STORAGE_USER))
         return LocalPhoneStorage.get(STORAGE_USER)
     }
 
@@ -337,8 +396,9 @@ export const RoomScreen = ({ route, navigation }) => {
                     }
                     <Card borderless shadow 
                          style={styles.owner} 
-                         avatar={room.ownerImage} 
-                         title={owner.name} 
+                         avatar ={img}
+                         //avatar={room.ownerImage} 
+                         title={`${room.idOwner.name} ${room.idOwner.lastName}`} 
                          caption = "Propietario"
                          captionColor = {theme.colors.primary}
                     />
@@ -355,6 +415,7 @@ export const RoomScreen = ({ route, navigation }) => {
                             placeholder = "Escribe una reseña para ayudar a otros artistas a evaluar esta sala."
                             user = {getUser()}
                             onRatingCreated = {() => sendCommentNotification().then()}
+                            onRatingUpdated = {() => sendUpdateCommentNotification().then()}
                         />    
                     }
 
@@ -364,9 +425,9 @@ export const RoomScreen = ({ route, navigation }) => {
                    {renderComments()}
                 </ScrollView>
             </Screen>
-           { owner && owner.id != getUser().id && 
+           { room.idOwner && room.idOwner._id != getUser().id && 
             <FooterButton buttonText = "Reservar" onClick = {()=> openReserveRoomScreen()}></FooterButton>
-           }
+          } 
         </StateScreen>
     )
 }

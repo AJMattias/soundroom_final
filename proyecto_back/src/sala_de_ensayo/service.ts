@@ -115,6 +115,7 @@ export class SalaService{
 
     // rehacer, modificar codigo update y delete
     async updateSalaDeEnsayo(id: string, dto: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayoDto>{
+        console.log('service update Sala:', dto)
         return this.mapToDto(
             await this.dao.updateSala(id,{
                 nameSalaEnsayo: dto.nameSalaEnsayo,
@@ -123,6 +124,7 @@ export class SalaService{
                 duracionTurno: dto.duracionTurno,
                 precioHora: dto.precioHora,
                 comodidades: dto.comodidades,
+                descripcion: dto.descripcion,
             })
         
         )
@@ -153,6 +155,7 @@ export class SalaService{
                 deletedAt: new Date(),
                 precioHora: dto.precioHora,
                 comodidades: dto.comodidades,
+                descripcion: dto.descripcion,
              })
          )
      }
@@ -274,14 +277,16 @@ async  obtenerCantidadValoraciones(idOwner: string) {
             await this.dao.createOpinion({
                 descripcion: dto.descripcion,
                 estrellas: dto.estrellas,
-                idUser: dto.idUser
+                idUser: dto.idUser,
+                idRoom: dto.idRoom
             })
         )
     }
 
     async updateOpinion(id: string, dto: CreateOpinionDto):Promise <OpinionDto>{
         return this.mapToDtoOpinion(
-            await this.dao.updateOpinion(id, {
+            await this.dao.updateOpinion({
+                id: id,
                 descripcion: dto.descripcion,
                 estrellas: dto.estrellas,
                 idUser: dto.idUser
@@ -291,7 +296,16 @@ async  obtenerCantidadValoraciones(idOwner: string) {
 
     //TODO hacer delete de opinion y getters quizas
 
-}
+    async getOpinionByUserAndRoom (idUser: string, idRoom: string):Promise<OpinionDto>{
+        const opinion = await this.dao.getOpinionByUserAndRoom(idUser, idRoom)
+        return this.mapToDtoOpinion(opinion)
+    }
 
+    async getOpinionById(idOpinion: string): Promise<OpinionDto>{
+        const opinion = await this.dao.getOpinionById(idOpinion)
+        return this.mapToDtoOpinion(opinion)
+    }
+
+}
 
 export const instance = new SalaService(dao.instance)
