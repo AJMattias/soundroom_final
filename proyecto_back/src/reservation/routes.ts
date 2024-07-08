@@ -219,7 +219,9 @@ export const route = (app: Application) =>{
     app.get("/reservation/findReservationbyRoom/",
         run(async (req: Request,resp: Response) => {
         const id = req.query.id as string
+        console.log('back get room reservations')
         const reservation : ReservationDto[] = await  service.instance.getReservationByRoom(id)
+        console.log('back room reservation response: ', reservation)
         resp.json(reservation) 
     }))
 
@@ -250,6 +252,7 @@ export const route = (app: Application) =>{
             let dtoNewUsersReport = [] 
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //falta pasar parametro idRoom
             const NewUsersReport = await  service.instance.getReservasPorMes(idUser, dto.fechaI, dto.fechaH)
             console.log(NewUsersReport)
             resp.json(NewUsersReport)    

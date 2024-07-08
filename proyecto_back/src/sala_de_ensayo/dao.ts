@@ -10,7 +10,7 @@ var mongoose = require('mongoose');
 export class SalaDeEnsayoDao{
 
 async getAll():Promise<Array<SalaDeEnsayo>>{
-    return(await SalaDeEnsayoModel.find({enabled:true}).exec())
+    return(await SalaDeEnsayoModel.find({enabled:'habilitado'}).exec())
     .map((doc:SalaDeEnsayoDoc)=>{
         return this.mapToSalaDeEnsayo(doc)
     })
@@ -29,7 +29,9 @@ async findById2(salaEnsayoId: string): Promise<SalaDeEnsayo>{
     if (!mongoose.Types.ObjectId.isValid(salaEnsayoId)) {
         throw new Error('ID de documento no válido');
     }
-    const model = await SalaDeEnsayoModel.findOne({_id: salaEnsayoId, enabled: true})
+    const model = await SalaDeEnsayoModel.findOne({_id: salaEnsayoId 
+        //, enabled: 'habilitado'
+    })
     .populate("idOwner")
     .exec()
     if(!model) throw new ModelNotFoundException()
@@ -45,8 +47,8 @@ async findByName(query: string): Promise<Array<SalaDeEnsayo>> {
 */
 
 async findByName(query: string): Promise<Array<SalaDeEnsayo>> {
-    return(await SalaDeEnsayoModel.find({nameSalaEnsayo: { $regex: query, $options: 'i' } , enabled: true}).populate("idOwner").exec())
-    //return(await SalaDeEnsayoModel.find({$text : { $search : query }}, {enabled: true}).exec())
+    return(await SalaDeEnsayoModel.find({nameSalaEnsayo: { $regex: query, $options: 'i' } , enabled: 'habilitado'}).populate("idOwner").exec())
+    // return(await SalaDeEnsayoModel.find({$text : { $search : query }}, {enabled: true}).exec())
     .map((doc:SalaDeEnsayoDoc)=>{
         return this.mapToSalaDeEnsayo(doc)
     })
@@ -56,7 +58,7 @@ async getSearch(sala: CreateSearchSdEDto):Promise<Array<SalaDeEnsayo>>{
     return(await SalaDeEnsayoModel.find({
         idType: mongoose.Types.ObjectId(sala.idType), 
         //idLocality: mongoose.Types.ObjectId(sala.idLocality)
-    }, {enabled: true}).exec())
+    }, {enabled: 'habilitado'}).exec())
     .map((doc:SalaDeEnsayoDoc)=>{
         return this.mapToSalaDeEnsayo(doc)
     })
@@ -66,7 +68,8 @@ async getSearch(sala: CreateSearchSdEDto):Promise<Array<SalaDeEnsayo>>{
 async getByOwner(idOwner: string):Promise<Array<SalaDeEnsayo>>{
     return(await SalaDeEnsayoModel.find({
         idOwner: mongoose.Types.ObjectId(idOwner), 
-        enabled: true}).exec())
+        //enabled: true
+    }).exec())
     .map((doc:SalaDeEnsayoDoc)=>{
         return this.mapToSalaDeEnsayo(doc)
     })
@@ -94,22 +97,51 @@ async store(salaDeEnsayo: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayo>{
      return this.mapToSalaDeEnsayo(SalaDeEnsayoDoc)
 
 }
+// no actualiza atributos booleanos
+// async updateSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayo>{
+//     console.log('dao update sala: ', sala)
+//     const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId,{
+//         $set: {
+//             enabled: sala.enabled,
+//             nameSalaEnsayo : sala.nameSalaEnsayo,
+//             calleDireccion: sala.calleDireccion,
+//             numeroDireccion: sala.numeroDireccion,
+//             precioHora: sala.precioHora,
+//             createdAt: sala.createdAt,
+//             comodidades: sala.comodidades    
+//         }    
+//     }, { new: true }).exec()
+//     if(!updated){
+//         throw new ModelNotFoundException() 
+//     }
+//     return this.mapToSalaDeEnsayo(updated)
+// }
+
 
 async updateSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayo>{
     console.log('dao update sala: ', sala)
-    const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId,{
-        nameSalaEnsayo : sala.nameSalaEnsayo,
-        calleDireccion: sala.calleDireccion,
-        numeroDireccion: sala.numeroDireccion,
-        precioHora: sala.precioHora,
-        createdAt: new Date(),
-        comodidades: sala.comodidades
-    }).exec()
+    const updated = await SalaDeEnsayoModel.findOneAndUpdate(
+        { _id: salaEnsayoId },
+        {
+            $set: {
+                enabled: sala.enabled,
+                nameSalaEnsayo: sala.nameSalaEnsayo,
+                calleDireccion: sala.calleDireccion,
+                numeroDireccion: sala.numeroDireccion,
+                precioHora: sala.precioHora,
+                createdAt: sala.createdAt,
+                comodidades: sala.comodidades
+            }
+        },
+        { new: true, runValidators: true }
+    ).exec();
     if(!updated){
         throw new ModelNotFoundException() 
     }
     return this.mapToSalaDeEnsayo(updated)
 }
+
+
 
 async updateSalaOpinion(salaEnsayoId: string, sala: CreateSalaDeEnsayoDtoOpinion, idOpinion: string): Promise<SalaDeEnsayo>{
     const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId,{
@@ -137,7 +169,7 @@ async deleteSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<Sa
         duracionTurno: sala.duracionTurno,
         deletedAt: sala.deletedAt,
         comodidades: sala.comodidades,
-        enabled: false,
+        enabled: 'deshabilitado',
     }).exec()
     if(!updated){
         throw new ModelNotFoundException()
@@ -202,7 +234,8 @@ async getOpinionByUserAndRoom(idUser: string, idRoom: string): Promise<Opinion>{
     const idroom = mongoose.Types.ObjectId(idRoom);
     const iduser = mongoose.Types.ObjectId(idUser);
 
-    const opinionDoc = await OpinionModel.findOne({idUser: iduser, idRoom: idroom}).exec()
+    const opinionDoc = await OpinionModel.findOne({ idUser: iduser, idRoom: idroom }).exec()
+    console.log('dao getted opinion to room: ', opinionDoc)
     if(!opinionDoc) throw new ModelNotFoundException()
     return this.mapToOpinion(opinionDoc)
 

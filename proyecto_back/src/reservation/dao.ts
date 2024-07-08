@@ -32,8 +32,8 @@ export class ReservationDao{
             {
                 createdAt: reservation.createdAt,
                 deletedAt: null,
-                hsStart: reservation.hsStart,
-                hsEnd: reservation.hsEnd,
+                hsStart: new Date(reservation.hsStart),
+                hsEnd: new Date(reservation.hsEnd),
                 idOwner: reservation.idOwner,
                 idUser: reservation.idUser,
                 idRoom: reservation.idRoom,

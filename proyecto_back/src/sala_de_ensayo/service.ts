@@ -14,7 +14,8 @@ export interface CreateSalaDeEnsayoDto{
     precioHora: number;
     idOwner: string;
     idType: string;
-    enabled?: boolean;
+    //enabled: boolean;
+    enabled?: string;
     descripcion: string;
     comodidades?:undefined; 
 }
@@ -47,6 +48,10 @@ export class SalaService{
     async createSalaDeEnsayo(dto: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayoDto>{
         console.log("servicio idImagen: ", dto.idImagen)
         console.log("service sde e imagen ", dto)
+        if(dto.enabled === undefined){
+            console.log('back service, create sala dto.enabled: ', dto.enabled)
+            dto.enabled= 'habilitado'
+        }
         return this.mapToDto(
             await this.dao.store({
                 nameSalaEnsayo: dto.nameSalaEnsayo,
@@ -60,7 +65,7 @@ export class SalaService{
                 precioHora: dto.precioHora,
                 duracionTurno: dto.duracionTurno,
                 createdAt: new Date(),
-                enabled: true,
+                enabled:  dto.enabled,
                 descripcion: dto.descripcion,
                 comodidades: dto.comodidades,
 
@@ -125,6 +130,7 @@ export class SalaService{
                 precioHora: dto.precioHora,
                 comodidades: dto.comodidades,
                 descripcion: dto.descripcion,
+                enabled: dto.enabled
             })
         
         )
@@ -156,6 +162,7 @@ export class SalaService{
                 precioHora: dto.precioHora,
                 comodidades: dto.comodidades,
                 descripcion: dto.descripcion,
+                enabled: dto.enabled
              })
          )
      }

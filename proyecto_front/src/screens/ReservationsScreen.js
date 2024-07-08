@@ -92,6 +92,7 @@ export const ReservationsScreen = ({navigation}) => {
                     reservation = {reservation} 
                     navigation  = {navigation}
                     onReservationCancelled = {reloadReservations}
+                    setReservationsFetched = {setReservationsFetched}
                 />
             ))
         )

@@ -14,7 +14,7 @@ export const TimeSlot = ({ date, hour, reservations, onSelected, isSelected }) =
     const checkIsUsed = () => {
         const time = getHours()
         const turns = reservations.filter(
-            (reservation) => (reservation.start < time && reservation.end > time)
+            (reservation) => (reservation.hsStart <= time && reservation.hsEnd >= time)
         )
         return turns.length > 0
     }
@@ -30,7 +30,7 @@ export const TimeSlot = ({ date, hour, reservations, onSelected, isSelected }) =
             console.log(time)
             console.log(
                 reservations.filter(
-                    (reservation) => (reservation.start < time && reservation.end > time)
+                    (reservation) => (reservation.hsStart < time && reservation.hsEnd > time)
                 )
             )
         }

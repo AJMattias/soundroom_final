@@ -43,9 +43,12 @@ export const ReserveRoomScreen = ({ route, navigation }) => {
 
     const fetchData = async () =>{
         try {
-            const reservationRoom = await reservationService.getReservationsByRoom(roomId)
-            setReservations(reservationRoom)
-            console.log('Room reservations: ', reservations)
+            console.log('fetching room reservation')
+            const reservationRoom = await reservationService.getReservationsByRoomBd(roomId)
+            
+            const response = reservationRoom
+            setReservations(response)
+            console.log('Room reservations: ', reservationRoom)
 
             const roomfetched = await roomService.getRoomBd(roomId)
             if(roomfetched.idImagen ==''){
@@ -85,8 +88,8 @@ export const ReserveRoomScreen = ({ route, navigation }) => {
     }
 
     if (!reservationsFetched) {
-        // fetchReservations().then()
-        // fetchRoom().then()
+        //fetchReservations().then()
+        //fetchRoom().then()
         fetchData().then()
         setReservationsFetched(true)
     }
@@ -151,7 +154,8 @@ export const ReserveRoomScreen = ({ route, navigation }) => {
         
         const hs =   Math.round(
             (end.getTime() - start.getTime()) / (3600*1000)
-         ) + 1
+         ) 
+         //+ 1
          console.log("order hours "+hs) 
 
         //const total = hs * room.hourlyRate

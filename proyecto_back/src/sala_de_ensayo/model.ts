@@ -18,7 +18,8 @@ export interface SalaDeEnsayo{
     idOwner: string;
     idLocality: string;
     idType: string;
-    enabled: boolean;
+    //enabled: boolean;
+    enabled: string;
     descripcion: string;
     comodidades:[{type: string}];
     opiniones: [{type: string, unique: true}];
@@ -37,7 +38,8 @@ export interface SalaDeEnsayoDoc extends Document{
     idOwner: ObjectId;
     idLocality: ObjectId;
     idType: ObjectId;
-    enabled: boolean;
+    //enabled: boolean;
+    enabled: string;
     descripcion: string;
     comodidades:[{type: string}];
     opiniones: [{type: string, unique: true}];
@@ -50,7 +52,8 @@ export const SalaDeEnsayoSchema = new Schema({
     precioHora: Number,
     duracionTurno: Number,
     createdAt: Date,
-    enabled: Boolean,
+    //enabled: boolean;
+    enabled: String,
     comodidades:  { type: [String] },
     descripcion: { 
         type: String,
@@ -78,6 +81,9 @@ export const SalaDeEnsayoSchema = new Schema({
         ref:"Opinion"
     }]
 })
+// index for another search room call to db
+//SalaDeEnsayoSchema.index({ nameSalaEnsayo: 'text' });
+
 
 export const SalaDeEnsayoModel = mongoose.model<SalaDeEnsayoDoc>("Sala_De_Ensayo", SalaDeEnsayoSchema)
 

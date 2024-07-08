@@ -32,7 +32,7 @@ export  function CreateRoom({ navigation }) {
     { id: '', name:'Tipos de sala' }])
   const [typeSelected, setTypeSelected] = useState({value:''})
   const [localidad, setLocalidad] = useState({ value: '', error: '' })
-  const [checkValue, setCheckValue] = useState(true);
+  const [checkValue, setCheckValue] = useState(false);
   const [comodidadesValue, setComodidadesValue] = useState([]);
   const [tipoSala, setTipoSala] = useState({value:'', error:''})
 
@@ -42,7 +42,7 @@ export  function CreateRoom({ navigation }) {
   const [provinceSelected, setProvinceSelected] = useState("");
   const provincia = {seleccion: ""};
 
-  const [harcodeoM2, setHarcodeoM2] = useState([[1,30, 350], [2,40, 500], [3,45, 600], [4,50, 700], [5,55, 800], [6,60, 900], [7,65, 1000], [8,70, 1100]]);
+  const [harcodeoM2, setHarcodeoM2] = useState([[1,30, 2000], [2,40, 2500], [3,45, 3000], [4,50, 3500], [5,55, 4000], [6,60, 4500], [7,65, 5000], [8,70, 6000]]);
    
   const [localitiesHiden, setLocalitiesHiden] = useState(true);
   const [localities, setlocalities] = useState([]);
@@ -101,6 +101,13 @@ export  function CreateRoom({ navigation }) {
         }
     }
     */
+
+    const changeCheckValue = () => {
+      console.log('old checkValue: ', checkValue)
+      setCheckValue(prevCheckValue => !prevCheckValue);
+      console.log('new checkValue: ', checkValue)
+    }
+
     const fetchLocalities = async () => {
         try {
             const locality  = await roomService.searchLocalities(provincia.seleccion)
@@ -204,7 +211,7 @@ export  function CreateRoom({ navigation }) {
                     summary: descripcion.value,
                     enabled: checkValue,
                     hourlyRate: parseFloat(precio.value),
-                    comodidades: comodidadesValue
+                    comodidades: comodidadesValue, 
                 }
                 const stored = await roomService.storeRoom(room)
                 navigation.navigate("RoomScreen", {
@@ -241,11 +248,17 @@ export  function CreateRoom({ navigation }) {
       }else{
         console.log('no errors')
           try {
+            let habilitado = ''
+            if(enabled = true){
+              habilitado = 'habilitado'
+            }else if(enabled = false){
+              habilitado = 'deshabilitado'
+            }
               const room = {
                   nameSalaDeEnsayo: name.value,
                   calleDireccion: calleDireccion.value,
                   descripcion: descripcion.value,
-                  enabled: checkValue,
+                  enabled: habilitado,
                   precioHora: parseFloat(precio.value),
                   comodidades: comodidadesValue,
                   tipoSala: typeSelected.value,
@@ -360,9 +373,11 @@ export  function CreateRoom({ navigation }) {
     <Text style={styles.link}>Habilitacion :  
           <CheckBox
               value={checkValue}
-              onValueChange={setCheckValue}
+              onValueChange={changeCheckValue}
               style={styles.checkbox}
            />
+          {console.log('new checkValue (in render): ', checkValue)}
+
     </Text>
 
     <Button

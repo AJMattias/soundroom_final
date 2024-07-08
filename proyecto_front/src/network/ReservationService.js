@@ -12,12 +12,19 @@ class ReservationService {
         return MockStore.findReservationsByUser(userId)
     }
 
-    async getReservationsByRoom(roomId) {
+    async getReservationsByRoomBd(roomId) {
+        console.log("fetchin reservations front service")
         let reservations
         try{
-            reservations = await api.get(`/reservation/findReservationbyRoom/?id=${roomId}`)
+            reservations = await api.get("/reservation/findReservationbyRoom/?id="+roomId)
+            console.log('reservation front service:', reservations)
         } catch (ignored) {}
-        return reservations
+        return reservations.map((reservation) =>{
+            reservation.hsStart = new Date(reservation.hsStart)
+            reservation.hsEnd = new Date(reservation.hsEnd)
+            reservation.user = reservation.idOwner
+            return reservation
+         })
     }
     // /reservation/findReservationbyRoom/
     async getReservationsByRoom(roomId) {

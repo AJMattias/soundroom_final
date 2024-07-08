@@ -45,7 +45,7 @@ class RoomService {
 
     //Llamada a la base de datos busqueda por nombre
     async findByNameBd(name){
-        const room = await api.get("/salasdeensayo/findByName/?q= "+name)
+        const room = await api.get("/salasdeensayo/findByName/?q="+name)
         return room
     }
 
@@ -76,14 +76,14 @@ class RoomService {
     //crear y guardar sala en el servidor
     async saveRoom(room){
         console.log('Room service', room)
-
         const roomCreated =  await api.post("salasdeensayo", {
             nameSalaDeEnsayo: room.nameSalaDeEnsayo,
             calleDireccion: room.calleDireccion,
             idType: room.tipoSala,
             descripcion: room.descripcion,
             precioHora: room.precioHora,
-            comodidades: room.comodidades
+            comodidades: room.comodidades,
+            enabled: room.enabled
         })
         if(roomCreated){
             await LocalPhoneStorage.set(STORAGE_ROOMOWNED, roomCreated)
@@ -131,6 +131,8 @@ class RoomService {
         }
         return roomCreated
     }
+
+    //delete room from db
 
     async deleteRoom(roomId) {
         return MockStore.removeRoom(roomId)

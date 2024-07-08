@@ -57,11 +57,11 @@ export const CalendarPicker = ({ reservations, onDaySelected }) => {
     const countHoursByDate = () => {
         const hoursDict = {}
         reservations.forEach((reservation, idx, arr) => {
-            const key = formatDate(reservation.start)
+            const key = formatDate(reservation.hsStart)
             if (!hoursDict[key]) {
                 hoursDict[key] = 0
             }
-            const diff = (reservation.end.getTime() - reservation.start.getTime()) / (3600 * 1000)
+            const diff = (reservation.hsEnd.getTime() - reservation.hsStart.getTime()) / (3600 * 1000)
             hoursDict[key] += diff
         })
         return hoursDict

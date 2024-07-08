@@ -45,6 +45,15 @@ class RatingsService {
         return opinions
     }
 
+    // buscar opiniones para la sala otherId con mi id de usuario q reservo
+    async getMyRatingsForOtherIdBd(otherId) {
+        //const user = LocalPhoneStorage.get(STORAGE_USER)
+        const opinion = await api.get("/salaOpinion/getMyOpinionToRoom/?idRoom="+otherId)
+        console.log('Opinion fetcheada: ', opinion)
+        return opinion
+    
+    }
+
     async updateRatingBd(ratingId, opinion) {
         const rating = await api.put("/salasdeensayo/updateOpinion/?id="+ratingId,{
             descripcion: opinion.comment,

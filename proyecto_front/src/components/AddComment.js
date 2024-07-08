@@ -57,10 +57,6 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
             comment: comment.value,
             score: score
         }, roomId)
-        // await ratingsService.createRating({
-        //     comment: comment.value,
-        //     score: score
-        // }, otherId)
         await fetchPreviousRating()
         if(onRatingCreated) {
             onRatingCreated()
@@ -74,7 +70,7 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
         if(!validateComment()) {
             return
         }
-        await ratingsService.updateRating(previousRating.id, {
+        await ratingsService.updateRatingBd(previousRating.id, {
             comment: comment.value,
             score: score
         })
@@ -90,13 +86,14 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
     }
 
     const fetchPreviousRating = async () => {
-        const rating = await  ratingsService.getMyRatingsForOtherId(otherId)
+        const rating = await  ratingsService.getMyRatingsForOtherIdBd(otherId)
         console.log("previous rating")
         console.log(rating)
         if(rating) {
             setPreviousRating(rating)
             setScore(rating.estrellas)
-            setComment({...descripcion, value: rating.descripcion})
+            //setComment({...descripcion, value: rating.descripcion})
+            setComment(rating.descripcion)
             setIsEditing(false)
         } else {
             setScore(undefined)
@@ -150,7 +147,7 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
                         onChangeText = { (text) => setComment({value: text, error: ''})}
                         multiline = {true}
                         width = '80%'
-                        placeholder = {placeholder}
+                        placeholder = {comment}
                     />
                     <TouchableOpacity onPress = {onSubmitClicked}  style = {{marginStart: 8}}>
                         <Icon size = {36} color = {theme.colors.primary} family = 'MaterialCommunityIcons' name = 'send'/>

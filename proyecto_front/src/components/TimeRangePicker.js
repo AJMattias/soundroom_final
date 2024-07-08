@@ -88,7 +88,8 @@ export const TimeRangePicker = ({ date, reservations, room, onSelected, onChange
         }
         const hs =   Math.round(
             (end.getTime() - start.getTime()) / (3600*1000)
-         ) + 1
+         ) 
+         //+ 1
          console.log("subtotal hs: "+hs)
          setSubTotal(hs * room.precioHora)
     }

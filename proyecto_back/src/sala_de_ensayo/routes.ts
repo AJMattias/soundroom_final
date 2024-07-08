@@ -200,7 +200,8 @@ export const route = (app: Application) => {
                 idOwner: user.id,
                 duracionTurno: dto["duracionTurno"],
                 descripcion: dto["descripcion"],
-                comodidades: dto["comodidades"]
+                comodidades: dto["comodidades"],
+                enabled: dto["enabled"]
                 //numeroDireccion: dto["numeroDireccion"],
                 //idLocality: dto["idLocality"],
                 
@@ -308,6 +309,12 @@ export const route = (app: Application) => {
             if(!dto["comodidades"]){
                 dto["comodidades"] = salaOriginal["comodidades"];
             }
+            if(!dto["enabled"]){
+                dto["enabled"] = salaOriginal["enabled"];
+            }
+            if(!dto["createdAt"]){
+                dto["createdAt"] = salaOriginal["createdAt"];
+            }
             console.log('ruta update sala: ', dto)
             const sala = await service.instance.updateSalaDeEnsayo(id,{
                 nameSalaEnsayo: dto["nameSalaEnsayo"],
@@ -316,7 +323,8 @@ export const route = (app: Application) => {
                 duracionTurno: dto["duracionTurno"],
                 precioHora: dto["precioHora"],
                 comodidades: dto["comodidades"],
-                descripcion: dto["descripcion"]
+                descripcion: dto["descripcion"],
+                enabled: dto["enabled"]
             })
             resp.json(sala)
         })
@@ -349,9 +357,10 @@ export const route = (app: Application) => {
 
     app.post("/salasdeensayo/createOpinion/",
         auth,
-        validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        //validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("descripcion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("estrellas").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run( async(req: any, resp: Response) => {
             const errors = validator.validationResult(req)
             if(errors && !errors.isEmpty()){
@@ -370,7 +379,8 @@ export const route = (app: Application) => {
                 descripcion: dto["descripcion"],
                 estrellas: dto["estrellas"] ,
                 idUser: user.id,
-                idRoom: idRoom,
+                idRoom: dto["idRoom"],
+                //idRoom: idRoom,
             })
             console.log('Ruta, opinion creada: ', opinion)
             if(!opinion){
@@ -472,10 +482,11 @@ export const route = (app: Application) => {
     }))
 
     //get opinion hecha por usuario logueado artista,  get mi opinion sobre una sala e particular
-    app.get("/salaOpinion/getMyOpinionToRoom", 
+    app.get("/salaOpinion/getMyOpinionToRoom/", 
     auth, 
     validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     run(async (req: any, resp: Response)=>{
+        console.log('route getting opinion to room')
         const errors = validator.validationResult(req)
         if(errors && !errors.isEmpty()){
             throw ValidatorUtils.toArgumentsException(errors.array())
@@ -483,9 +494,13 @@ export const route = (app: Application) => {
         //const idUser = req.query.id as string
         const idUser = req.user.id
         const dto = req.body
-        const idRoom = dto["idRoom"]
+        const idRoom = req.query.idRoom
+        console.log('ruta get my opinion to room:')
+        console.log('idUser: ', idUser)
+        console.log('idRoom: ', idRoom)
         //const opinion = await service.instance
         const opinion = await service.instance.getOpinionByUserAndRoom(idUser, idRoom)
+        console.log('route response opinion to room: ', opinion)
         resp.json(opinion)
 
     })

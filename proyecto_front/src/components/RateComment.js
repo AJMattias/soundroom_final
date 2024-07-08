@@ -12,12 +12,16 @@ export const RateComment = ({ user, rate, style, onClick }) => {
             onClick()
         }
     }
+    
+    const lastname = user.last_name ? user.last_name : user.lastName;
+    console.log(lastname)
+    console.log('user: ', user)
     return (
         <Block shadow style={[style, styles.container]} onClick = {() => _onClick()}>
             <Block row style= {styles.userWrapper}>
                 <UserImage user={user} size = {40} />
                 <Block style={styles.ratingRow}>
-                    <Text style={styles.title}>{user.name + " " + user.lastName}</Text>
+                    <Text style={styles.title}>{user.name + " " + lastname}</Text>
                     <Rating ratings={[rate.estrellas]} showNumber={false} />
                 </Block>
             </Block>

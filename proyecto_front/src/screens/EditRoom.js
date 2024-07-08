@@ -29,7 +29,7 @@ export  function EditRoom({ route, navigation }) {
   const [precio, setPrecio] = useState({ value: '', error: '' })
   const [type, setType] = useState({ value: '', error: '' })
   const [localidad, setLocalidad] = useState({ value: '', error: '' })
-  const [checkValue, setCheckValue] = useState(true);
+  const [checkValue, setCheckValue] = useState();
   const [comodidadesValue, setComodidadesValue] = useState();
   const [tipoSala, setTipoSala] = useState({value:'', error:''})
 
@@ -110,7 +110,8 @@ export  function EditRoom({ route, navigation }) {
     }
 
     const fetchTypes = async () => {
-      if(!typesFetched){
+      console.log('typesFetched.length: ', typesFetched.length)
+      if(!typesFetched && typesFetched.length >1){
         try{
           const response  = await roomService.searchType()
           console.log("Got types")
@@ -139,6 +140,13 @@ export  function EditRoom({ route, navigation }) {
           setDescripcion({value:roomF.descripcion})
           setComodidadesValue(roomF.comodidades)
           setPrecio({value: roomF.precioHora})
+          if(roomF.enabled == 'habilitado'){
+            setCheckValue(true)
+          }else if(roomF.enabled == 'deshabilitado'){
+            setCheckValue(false)
+          }
+          const valorCheck = checkValue
+          console.log('checkValue: ', valorCheck)
         } catch (apiError) {
             console.error(apiError)
             setRoomFetched(true)
@@ -162,7 +170,11 @@ export  function EditRoom({ route, navigation }) {
         console.log("el room encontrado es " + room)
     }
 
-    
+    const changeCheckValue = () => {
+      console.log('old checkValue: ', checkValue)
+      setCheckValue(prevCheckValue => !prevCheckValue);
+      console.log('new checkValue: ', checkValue)
+    }
 
    
     //guardar la sala
@@ -285,12 +297,13 @@ export  function EditRoom({ route, navigation }) {
       <Text style={styles.link}>Habilitacion :  
           <CheckBox
               value={checkValue}
-              onValueChange={setCheckValue}
+              onValueChange={changeCheckValue}
               style={styles.checkbox}
               color= "#ff8c00"
               uncheckedColor= "#414757"
-
            />
+           {console.log('new checkValue (in render): ', checkValue)}
+
       </Text>
 
       <Text

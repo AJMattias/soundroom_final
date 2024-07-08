@@ -12,7 +12,8 @@ export class SalaDeEnsayoDto{
     idOwner?: string;
     idType?: string;
     idLocality?: string;
-    enabled?: boolean;
+    //enabled: boolean;
+    enabled: string;
     descripcion: string;
     comodidades:[{type: string}];
     opiniones:[{type: string}];
@@ -32,6 +33,7 @@ export class SalaDeEnsayoDto{
         this.descripcion = sala.descripcion;
         this.comodidades = sala.comodidades;
         this.opiniones = sala.opiniones;
+        this.enabled = sala.enabled;
     }
 }
 
@@ -43,11 +45,14 @@ export interface CreateSalaDeEnsayoDto2{
     descripcion: string
     precioHora: number,
     duracionTurno: number,
+    createdAt?: Date,
     deletedAt?: Date,
     comodidades: undefined; 
     idOwner?: string;
     idType?: string; 
     opiniones?: string; 
+    //enabled: boolean;
+    enabled: string;
 }
 export interface CreateSalaDeEnsayoDto{
     nameSalaEnsayo: string;
@@ -60,7 +65,8 @@ export interface CreateSalaDeEnsayoDto{
     precioHora: number;
     idOwner?: string;
     idType: string;
-    enabled: boolean;
+    //enabled: boolean;
+    enabled: string;
     descripcion: string;
     comodidades:undefined;
 }

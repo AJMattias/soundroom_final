@@ -9,12 +9,15 @@ import { Alert } from 'react-native'
 import { LocalPhoneStorage, STORAGE_USER } from '../storage/LocalStorage'
 import { avatarForId } from '../mock/Factory'
 import { jsPDF } from "jspdf";
+import AwesomeAlert from 'react-native-awesome-alerts';
+
 
 
 
 export const ReservationCard = ({reservation, navigation, onReservationCancelled, setReservationsFetched, style}) => {
 
     const room =  reservation.idRoom
+    const [showAlert, setShowAlert] = useState(false);
 
     const openRoom = () => {
         console.log('room id: ', room._id)
@@ -22,6 +25,7 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
             roomId: room._id
         })
     }
+    
 
     const cancelReservation = async () => {
         const canceledReservation = await reservationService.cancelReservationBd(reservation.id)
@@ -35,6 +39,16 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
             onReservationCancelled()
             
         }
+    }
+
+    const handleCancelAlert = async () => {
+        // Función para cancelar la reserva
+        setShowAlert(false); // Ocultar el alerta después de responder
+    }
+
+    const onCancelClicked = () => {
+        // Mostrar el alerta cuando se hace clic en "Cancelar reserva"
+        setShowAlert(true);
     }
 
     const loggedUser = LocalPhoneStorage.get(STORAGE_USER)
@@ -83,24 +97,25 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
         )
     }
 
-    const onCancelClicked = () => {
-        console.log("Clicked cancel")
-        Alert.alert(
-            "Confirmar acción",
-            "¿Desea cancelar la reserva? Esta acción no se puede deshacer.",
-            [
-                {
-                    text: 'OK',
-                    onPress: () => cancelReservation().then()
-                },
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                    onPress: () => console.log("pressed cancel")
-                }    
-            ]
-        )
-    }
+    //alerta viejo no funciona
+    // const onCancelClicked = () => {
+    //     console.log("Clicked cancel")
+    //     Alert.alert(
+    //         "Confirmar acción",
+    //         "¿Desea cancelar la reserva? Esta acción no se puede deshacer.",
+    //         [
+    //             {
+    //                 text: 'OK',
+    //                 onPress: () => cancelReservation().then()
+    //             },
+    //             {
+    //                 text: 'Cancelar',
+    //                 style: 'cancel',
+    //                 onPress: () => console.log("pressed cancel")
+    //             }    
+    //         ]
+    //     )
+    // }
 
 
     return (
@@ -124,9 +139,26 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
                 </Block>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
             </Block>
-            <Text style = {styles.cancelText} onClick = {cancelReservation} >Cancelar reserva</Text>
+            <Text style = {styles.cancelText} onClick = {onCancelClicked} >Cancelar reserva</Text>
             <Icon size={24} color={theme.colors.grey600} onClick = {printReservation} name='printer' family='AntDesign' />
-            
+            <AwesomeAlert
+                show={showAlert}
+                showProgress={false}
+                title={"Confirmar acción"}
+                message={"¿Desea cancelar la reserva? Esta acción no se puede deshacer?"}
+                closeOnTouchOutside={false}
+                closeOnHardwareBackPress={false}
+                showCancelButton={true}
+                showConfirmButton={true}
+                cancelText="Cancelar"
+                confirmText="Confirmar"
+                confirmButtonColor="#DD6B55"
+                onCancelPressed={() => {
+                    setShowAlert(false)
+                } }
+                onConfirmPressed={() => {
+                    cancelReservation()
+                } } />
         </Block>
     )
 

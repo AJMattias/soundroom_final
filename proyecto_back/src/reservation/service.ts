@@ -150,6 +150,7 @@ export class ReservationService{
 
     async getReservationByRoom(roomId: string): Promise <Array<ReservationDto>>{
         const reservations =  await this.dao.getByRoom(roomId)
+        console.log('reservations: ', reservations)
         return reservations.map((reservation: Reservation) => {
             return this.mapToDto(reservation)
         })

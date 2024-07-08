@@ -58,6 +58,8 @@ export const RoomScreen = ({ route, navigation }) => {
     //let ownerName =''
     const [name, setName] = useState('')
     const img =''
+    let comodities =[]
+    const [comodities2, setComodities2] = useState([])
     
 
      
@@ -76,6 +78,7 @@ export const RoomScreen = ({ route, navigation }) => {
             //TODO reemplazar todas las funciones getUser().id por logeedUSer.id
 
             let roomCreated = await roomService.getRoomBd(roomId)
+            const response = roomCreated
             console.log('roomCreated: ', roomCreated)
             setRoom(roomCreated)
             console.log('room: ',room)
@@ -83,9 +86,16 @@ export const RoomScreen = ({ route, navigation }) => {
             console.log('idRoom to get reservation:', idSala)
             idOwner = roomCreated.idOwner
             console.log("id dueño sala: ", idOwner)
+            console.log(response.comodidades)
+            for (let i = 0; i < response.comodidades.length; i++) {
+                comodities2.push(response.comodidades[i]);
+                console.log('response.comodidades[i]: ', response.comodidades[i])
+            }
+            //setComodities2(response.comodidades)
+            console.log('comodities2: ', comodities2)
             setComodidades(roomCreated.comodidades)
             console.log('room.comoidades: ', room.comodidades)
-            console.log('comodidades: ', comodidades)
+            console.log('comodidades: ', comodities)
 
             
 
@@ -122,19 +132,6 @@ export const RoomScreen = ({ route, navigation }) => {
         }
     }
 
-    // const fetchOwner  = async() => {
-    //     try {
-    //         const idOwner = roomId
-    //         console.log("buscando dueño de sala de id: ", idOwner)
-    //         const roomOwner = await userService.getUser(idOwner)
-    //         setOwner(roomOwner)
-    //         console.log("owner: ", roomOwner)
-    //     } catch (error) {
-    //         console.error(apiError)
-    //         setRoomFetched(true)
-    //     }
-    // }
-
     const fetchPromedioEstrellas = async () =>{
         try {
             const idSala = room.id
@@ -147,24 +144,6 @@ export const RoomScreen = ({ route, navigation }) => {
         }
     }
 
-
-
-    //if (!roomFetched) {
-        //fetchRoom()
-        // fetchRatings().then()
-        // fetchUserReservations().then()
-    //}
-
-    // useEffect(() => {
-    //   setRoomFetched(false)
-    //   fetchRoom().then()
-    //   fetchUserReservations().then()
-    //   fetchRoomRatings().then()
-    //   // fetchOwner()
-    //   fetchPromedioEstrellas().then()
-    // //TODO si room.opiniones.length >0 traer las opiniones y render ratings
-    //   setRoomFetched(true)
-    // }, [])
 
     //Cuando vuelvo para atras a esta pantalla, se debe acualizar
     React.useEffect( () => {
@@ -208,23 +187,6 @@ export const RoomScreen = ({ route, navigation }) => {
     //     }
     //     fetchRoom()
     // },[])
-
-   
-    
-
-    // const fetchRatings = async () => {
-    //     const user = LocalPhoneStorage.get(STORAGE_USER)
-    //     try {
-    //         setRatings(
-    //             await (await roomService.getRatings(roomId)).filter(
-    //                 (rating) => rating.user.id !== user.id
-    //             )
-    //         )
-    //     } catch (apiError) {
-    //         console.error("Error fetching ratings")
-    //         console.error(apiError)
-    //     }
-    // }
 
     const fetchRoomRatings = async () => {
         const user = LocalPhoneStorage.get(STORAGE_USER)
@@ -322,7 +284,7 @@ export const RoomScreen = ({ route, navigation }) => {
     } 
     const habilitacion = () => {
         console.log(room)
-        if (room.enabled == true) {
+        if (room.enabled == 'habilitado') {
             return (< Text style={styles.habilitada} > Sala Habilitada </Text >)
             
         } else {
@@ -358,7 +320,8 @@ export const RoomScreen = ({ route, navigation }) => {
                     </Block>
                     
                     <Tags
-                        initialTags={room.comodidades}
+                        //room.comodidades
+                        initialTags={comodities2}
                         onChangeTags={(tags) => console.log(tags)}
                         onTagPress={(index, tagLabel, event) =>
                           console.log(index, tagLabel, event)
@@ -530,3 +493,67 @@ const styles = StyleSheet.create({
     }
 
 })
+
+// import React, { useEffect, useState } from 'react';
+// import { View, Text, StyleSheet, ScrollView } from 'react-native';
+// import Tags from 'react-native-tags';
+
+// export const RoomScreen = ({ route, navigation }) => {
+//     const { roomId } = route.params;
+//     const [roomFetched, setRoomFetched] = useState(false);
+//     const [comodidades, setComodidades] = useState([]);
+
+//     const fetchRoom = async () => {
+//         try {
+//             // Simulación de la obtención de datos
+//             const roomData = {
+//                 id: roomId,
+//                 comodidades: ['Wifi', 'Proyector', 'Pizarra'],
+//             };
+//             setComodidades(roomData.comodidades);
+//             setRoomFetched(true);
+//         } catch (error) {
+//             console.error(error);
+//         }
+//     };
+
+//     useEffect(() => {
+//         fetchRoom();
+//     }, []);
+
+//     return (
+//         <View style={styles.container}>
+//             <ScrollView>
+//                 <Text style={styles.title}>Detalles de la Sala</Text>
+//                 {roomFetched && (
+//                     <Tags
+//                         initialTags={comodidades}
+//                         onChangeTags={(tags) => console.log(tags)}
+//                         onTagPress={(index, tagLabel, event) => console.log(index, tagLabel, event)}
+//                         inputStyle={styles.tags}
+//                         deleteTagOnPress={false}
+//                         readonly={true}
+//                     />
+//                 )}
+//             </ScrollView>
+//         </View>
+//     );
+// };
+
+// const styles = StyleSheet.create({
+//     container: {
+//         flex: 1,
+//         padding: 16,
+//         backgroundColor: '#f5f5f5',
+//     },
+//     title: {
+//         fontSize: 24,
+//         fontWeight: 'bold',
+//         textAlign: 'center',
+//         marginVertical: 16,
+//     },
+//     tags: {
+//         backgroundColor: 'white',
+//     },
+// });
+

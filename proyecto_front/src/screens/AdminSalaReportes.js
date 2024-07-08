@@ -12,6 +12,8 @@ import { Calendar, CalendarProps } from 'react-native-calendars'
 import { formatDate } from '../utils/DateUtils'
 import ViewShot from 'react-native-view-shot'
 import { PDFDocument, PDFPage  } from 'react-native-pdf-lib';
+import { LocalPhoneStorage, STORAGE_USER } from '../storage/LocalStorage'
+import { roomService } from '../network/RoomService'
 
 //const screenWidth = Dimensions.get('window').width
 const screenWidth = 350
@@ -22,6 +24,8 @@ export function AdminSalaReportes({ navigation }) {
   const viewShotRef = useRef()
   const [pdfData, setPdfData] = useState(null);
 
+  //USER LOGGED
+  const user = LocalPhoneStorage.get(STORAGE_USER)
   const [roomsFetched, setRoomsFetched] = useState(false)
   const [textRoomsNotFetched, setTextRoomsNotFetched] = useState({
     value: 'No tiene salas aun',
@@ -37,6 +41,8 @@ export function AdminSalaReportes({ navigation }) {
     { id: 5, value: '', label: 'Elige una Sala' },
     { id: 6, value: 'salaJavier', label: 'Sala Javier' },
   ])
+  const [rooms, setRooms] = useState([
+    {id: 0, value: '', label: 'Elige una Sala' }])
 
   const currentDay = new Date()
   const [fechaI, setFechaI] = useState(Date)
@@ -84,10 +90,10 @@ export function AdminSalaReportes({ navigation }) {
     <Picker.Item key={reporte.id} label={reporte.label} value={reporte.value} />
   ))
   // va o no va ?
-  //const [selectedRoom, setSelectedRoom] = useState()
-  //   const listOwnerRooms = ownerRooms.map((room) =>
-  //   <Picker.Item key={room.id} label={room.name} value={room.id} />
-  // )
+  const [selectedRoom, setSelectedRoom] = useState()
+    const listOwnerRooms = ownerRooms.map((room) =>
+    <Picker.Item key={room.id} label={room.name} value={room.id} />
+  )
 
   const chartConfig = {
     backgroundGradientFrom: '#fff',
@@ -324,6 +330,12 @@ export function AdminSalaReportes({ navigation }) {
     return data;
   }
 
+  const fetRooms = async () =>{
+    const response = await roomService.getMyRoomsBd(user.id)
+    const salas = response
+    setR
+  }
+
   useEffect(() => {
     // setFechaI(undefined)
     // setFechaH(undefined)
@@ -332,7 +344,7 @@ export function AdminSalaReportes({ navigation }) {
   }, [])
 
   return (
-    <StateScreen>
+    <StateScreen loading={!roomsFetched}>
       <Screen navigation={navigation}>
         <SafeAreaView>
           <View style={styles.container}>
@@ -351,7 +363,7 @@ export function AdminSalaReportes({ navigation }) {
                 {listReportes}
               </Picker>
             </View>
-            {/* <Text style={styles.subtitle}>
+            <Text style={styles.subtitle}>
               Elige una sala para ver sus reportes
             </Text>
             <View>
@@ -366,7 +378,7 @@ export function AdminSalaReportes({ navigation }) {
               >
                 {salaPicker}
               </Picker>
-            </View> */}
+            </View>
             <View>
               <Text style={styles.text}>Selecciona rango de fechas</Text>
               <TouchableOpacity onPress={() => setOpenI(!openI)}>
