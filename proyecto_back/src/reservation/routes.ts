@@ -24,6 +24,15 @@ export const route = (app: Application) =>{
         resp.json(reservation) 
      }))
 
+     app.get("/reservations/findReservationByOwnerAndArtist",
+        auth,
+        run( async(req: any, res: Response)=>{
+            const idArtist = req.query.idArtist as string
+            const idOwner = req.user.id as string
+            const reservations: ReservationDto[] = await service.instance.getReservationByOwnerAndArtist(idOwner, idArtist)
+            res.json(reservations)
+    }))
+
     app.post("/reservation/create/",
         //con auth, obtengo en req.use el usuairo logueado con req.user
         auth,
@@ -155,6 +164,12 @@ export const route = (app: Application) =>{
             }
             if(!dto["deletedAt"]){
                 dto["deletedAt"] = reservationOriginal["deletedAt"];
+            }
+            if(!dto["date"]){
+                dto["date"] = reservationOriginal["date"];
+            }
+            if(!dto["totalPrice"]){
+                dto["totalPrice"] = reservationOriginal["totalPrice"];
             }
             const reservation = await service.instance.cancelReservation(id, {
                 createdAt: dto["createdAt"],

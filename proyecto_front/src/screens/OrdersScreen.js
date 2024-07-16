@@ -107,8 +107,10 @@ export const OrdersScreen = ({navigation}) => {
 
     const cancelOrder = async (order) => {
         try {
+            //send mail to user
             await ordersService.cancelOrder(order)
-            await reservationService.cancelReservation()
+            //cancel reservation in bd
+            await reservationService.cancelReservationBd(order.id)
             //await reservationService.sendEmail(email)
             // if(email.duenoSala){
             //     await reservationService.sendEmailOwner(email)
@@ -128,7 +130,7 @@ export const OrdersScreen = ({navigation}) => {
     // } 
     const areOrdersCancelled = () => {
         return orders && 
-            orders.filter((order ) => order.status == 'cancelled')
+            orders.filter((order ) => order.canceled == 'true')
                 .length
     }
 

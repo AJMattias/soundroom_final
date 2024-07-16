@@ -12,6 +12,12 @@ export const RateComment = ({ user, rate, style, onClick }) => {
             onClick()
         }
     }
+
+    const openArtistScreen = (artist) => {
+        navigation.navigate("ArtistProfileScreen", {
+            userId: artist.id
+        })
+    }
     
     const lastname = user.last_name ? user.last_name : user.lastName;
     console.log(lastname)

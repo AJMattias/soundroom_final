@@ -16,7 +16,8 @@ export class UserDto{
     enabled: string;
     estadoUsuario?:[{type: string}];
     userType: string;
-    idSalaDeEnsayo:[{type: string}]
+    idSalaDeEnsayo:[{type: string}];
+    tipoArtista: string
 
 
     /**
@@ -41,6 +42,7 @@ export class UserDto{
         this.estadoUsuario = user.estadoUsuario
         this.userType = user.userType
         this.idSalaDeEnsayo= user.idSalaDeEnsayo
+        this.tipoArtista= user.tipoArtista
     
     }
 }
@@ -59,7 +61,8 @@ export interface CreateUserDto {
     enabled: string;
     estadoUsuario?: EstadoUsuario;
     userType: string;
-    idSalaDeEnsayo:string
+    idSalaDeEnsayo:string;
+    tipoArtista: string;
 
 }
 

@@ -87,7 +87,8 @@ class UserService {
         name,
         lastName,
         enabled,
-        idPerfil
+        idPerfil,
+        tipoArtista
     ) {
         const user =  await api.put("/users/update/?id="+userId, {
                 email: email,
@@ -95,6 +96,7 @@ class UserService {
                 last_name: lastName,
                 enabled: enabled,
                 idPerfil: idPerfil,
+                tipoArtista: tipoArtista
             }
         )
         await LocalPhoneStorage.set("user", user)
@@ -131,6 +133,15 @@ class UserService {
             `/user/findUserbyId/?id=${userId}`,
             () =>  MockStore.findUser(userId) 
         )
+    }
+
+    async getUserBd(userId){
+        let user = undefined
+        try {
+            user = await api.get('/user/findUserbyId/?id='+userId)
+        } catch (ignored) {
+        }
+        return user
     }
 
     //getUser to db

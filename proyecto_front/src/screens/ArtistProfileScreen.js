@@ -37,11 +37,14 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
 
     const fetchUser = async () => {
         try {
-            setUser(
-                await userService.getUser(userId)
+            setArtist(
+                await userService.getUserBd(userId)
             )
-            await fetchProfile()
-            await fetchRooms()
+            //get opinions to user artist
+            //await fetchProfile()
+            //await fetchRooms()
+            //fetchRatings(userId).then()
+            console.log('artista: ', user)
             setUserFetched(true)
         } catch (apiError) {
             console.log("Error fetching user with Id")
@@ -54,8 +57,8 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         try {
             const artist = await artistService.getArtistByUserId(userId)
             setArtist(artist)
-            fetchArtistReservations(userId).then()
-            fetchRatings(userId).then()
+            //etchArtistReservations(userId).then()
+            //fetchRatings(userId).then()
         } catch (apiError) {
             console.error("Error fetching profile")
             console.error(apiError)
@@ -73,20 +76,23 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         }
     }
 
-    const fetchRatings = async (otherUserId) => {
-        try {
-            setRatings(
-               await ratingsService.getRatingsForOtherId(otherUserId)
-            )
-        } catch (apiError) {
-            console.error("Error fetching ratings")
-            console.error(apiError)
-        }
+    //opiniones al artista
+    const fetchRatings = async (userId) => {
+        // try {
+        //     setRatings(
+        //        await ratingsService.getArtistOpinions(otherUserId)
+        //     )
+        //     console.log('ratings: ', ratings)
+        // } catch (apiError) {
+        //     console.error("Error fetching ratings")
+        //     console.error(apiError)
+        // }
     }
 
+    // si tiene mas de una reserva se le puede opinar
     const fetchArtistReservations = async (otherUserId) => {
         try {
-            const myReservations = await reservationService.getMyReservations()
+            const myReservations = await reservationService.getArtistReservatiosToMyRooms(userId)
             setArtistReservations(
                 myReservations.filter(
                     (reservation) => {
@@ -94,6 +100,7 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
                     }
                 )
             )
+            console.log('artistReservations: ', artistReservations)
         } catch(ignored) {
             console.error(ignored)
         }
@@ -149,7 +156,8 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
                 <Text style={styles.subtitle}>Perfil Artista</Text>
                 <Block row style={styles.row}>
                     <Icon name='note' family='Entypo' size={24} color={theme.colors.grey600} />
-                    <Text style={[styles.textBig, { marginStart: 8 }]}>{artist.style}</Text>
+                   {/* tipo de artista */}
+                    <Text style={[styles.textBig, { marginStart: 8 }]}>{artist.tipoArtista}</Text>
                 </Block>
                 { renderRatings()}
             </Block>
@@ -166,13 +174,15 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
 
     if (!userFetched) {
         fetchUser().then()
+        // fetchArtistReservations(userId).then()
+        // fetchRatings(userId).then()
        
     }
 
     return (
         <StateScreen loading={!userFetched}>
             <Screen navigation={navigation}>
-                <UserAvatar user={user} />
+                <UserAvatar user={artist} />
                 <Block row center flex style = {{display: rooms.length > 0 ? 'flex': 'none'}}  >
                     <Text style = {styles.ownerLabel}>Propietario</Text>
                 </Block>

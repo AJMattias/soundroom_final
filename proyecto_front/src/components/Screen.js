@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent:'center',
         paddingTop: 16,
-        paddingBottom: 16,
+        paddingBottom: 16
     },
 
     userImage: {

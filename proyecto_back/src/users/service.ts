@@ -46,7 +46,8 @@ export class UsersService{
             idArtistStyle: dto.idArtistStyle as unknown as string,
             enabled: "habilitado",
             userType: dto.userType,
-            idSalaDeEnsayo: dto.idSalaDeEnsayo
+            idSalaDeEnsayo: dto.idSalaDeEnsayo,
+            tipoArtista: dto.tipoArtista
 
         })
         await this.sendMailPiola(user.email, "Usted ha creado la cuenta exitosamente. Gracias por elegir SoundRoom")
@@ -153,7 +154,8 @@ export class UsersService{
                     idArtistType: dto.idArtistType as unknown as string,
                     idArtistStyle: dto.idArtistStyle as unknown as string,
                     userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo
+                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                    tipoArtista: dto.tipoArtista
                 }))
         }
         if(dto.enabled === "deshabilitado"){
@@ -171,9 +173,11 @@ export class UsersService{
                     idArtistType: dto.idArtistType as unknown as string,
                     idArtistStyle: dto.idArtistStyle as unknown as string,
                     userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo
+                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                    tipoArtista: dto.tipoArtista
                 }))
         } else {
+            console.log('service update user, dtoUser: ', dto)
         return  this.mapToDto( 
             await this.dao.updateUser(userId,{
                 name:  dto.name,
@@ -188,7 +192,8 @@ export class UsersService{
                 idArtistType: dto.idArtistType as unknown as string,
                 idArtistStyle: dto.idArtistStyle as unknown as string,
                 userType: dto.userType,
-                idSalaDeEnsayo: dto.idSalaDeEnsayo
+                idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                tipoArtista: dto.tipoArtista
             })
         )}
     }
@@ -276,7 +281,8 @@ export class UsersService{
             enabled: user.enabled,
             createdAt: user.createdAt,
             deletedAt: user.deletedAt,
-            userType: user.userType
+            userType: user.userType,
+            tipoArtista: user.tipoArtista
         }
     }
     mapToReporte(reporte: Reporte): ReporteUsersDto{

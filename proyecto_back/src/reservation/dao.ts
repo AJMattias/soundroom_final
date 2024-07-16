@@ -81,8 +81,18 @@ export class ReservationDao{
         return this.mapToReservation(model)
     }
 
+    async getByOwnerAndArtist(idOwner: string, idArtist: string): Promise<Array<Reservation>>{
+        return (await ReservationModel.find({idUser: idArtist, idOwner: idOwner}))
+        .map((doc: ReservationDoc)=>{
+            return this.mapToReservation(doc)
+        }
+        )
+    }
+
     async getByOwnerA(ownerId: string): Promise<Array<Reservation>>{
-        return (await ReservationModel.find({canceled: "false", idOwner: ownerId}).populate("idRoom").exec())
+        return (await ReservationModel.find({
+            //canceled: "false",
+             idOwner: ownerId}).populate("idRoom").populate("idUser").exec())
         .map((doc: ReservationDoc)=>{
             return this.mapToReservation(doc)
         }

@@ -63,24 +63,28 @@ export const OrderRow = ({order, onOrderCancelled }) => {
     console.log("order")
     console.log(order)
     
-    const rowColor = order.status == "cancelled" ? styles.disabledOrder : styles.enabledOrder
+    //order.canceld == "false"
+    //const rowColor = order.status == "cancelled" ? styles.disabledOrder : styles.enabledOrder
+    const rowColor = order.canceled == "true" ? styles.disabledOrder : styles.enabledOrder
 
+    //calcula el total de la reserva mas comision del 5% 
     const fee = order.totalPrice*1.05 - order.totalPrice //order.totalNet
 
     return (
 
         <Block shadown style = {[ styles.orderRowContainer, rowColor]} >
             <Block row style = {styles.nameRow}>
-                <Text style = {styles.orderTitle}>{order.user.name} {order.user.last_name}</Text>
+                <Text style = {styles.orderTitle}>{order.idUser.name} {order.idUser.lastName}</Text>
+                {/* <Text style = {styles.orderTitle}>{order.user.name} {order.user.last_name}</Text> */}
                 <Block style = {styles.statusColumn}>
-                    { order.status == 'live' &&
+                    { order.canceled == 'false' &&
                     <DeleteButton 
                         innerText = "Cancelar" 
                         onDelete = {() => {onOrderCancelled(order)}} />
                     }
                     <Text style = {[
                         styles.statusText,
-                        {color: order.canceled == 'false'? theme.colors.success : theme.colors.green50}
+                        {color: order.canceled == 'true'? theme.colors.success : theme.colors.green50}
                     ]}>{order.canceled == 'false'? "" : "Cancelada"}</Text>    
                 </Block>
             </Block>

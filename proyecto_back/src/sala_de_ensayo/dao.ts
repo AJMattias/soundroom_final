@@ -2,7 +2,9 @@ import { ModelNotFoundException } from "../common/exception/exception";
 import { CreateOpinionDto, CreateSalaDeEnsayoDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, CreateSearchSdEDto, OpinionDto, SalaDeEnsayoDto} from "./dto";
 import { Opinion, OpinionDoc, OpinionModel, SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel } from "./model";
 import {StringUtils} from "../common/utils/string_utils";
-import { ObjectId } from "mongoose"
+import { Mongoose, ObjectId } from "mongoose"
+import { Types } from 'mongoose';
+
 
 
 var mongoose = require('mongoose');
@@ -130,7 +132,8 @@ async updateSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<Sa
                 numeroDireccion: sala.numeroDireccion,
                 precioHora: sala.precioHora,
                 createdAt: sala.createdAt,
-                comodidades: sala.comodidades
+                comodidades: sala.comodidades,
+                descripcion:sala.descripcion
             }
         },
         { new: true, runValidators: true }
@@ -177,6 +180,19 @@ async deleteSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<Sa
     return this.mapToSalaDeEnsayo(updated)
 }
 
+//Funciona delete con{_id: id}
+async borrarSala(salaEnsayoId: string): Promise<Boolean>{
+    const query = { id: new Types.ObjectId(salaEnsayoId) };
+    //const query = { id: StringUtils.toObjectId(salaEnsayoId) };
+    const result = await SalaDeEnsayoModel.deleteOne({_id: salaEnsayoId}) 
+    if (result.deletedCount === 0) {
+        throw new ModelNotFoundException();
+        console.log()
+    } else {
+        console.log('Documento eliminado exitosamente');
+        return true;
+    }
+}
 
 mapToSalaDeEnsayo(document: SalaDeEnsayoDoc): SalaDeEnsayo {
     return{
@@ -213,7 +229,8 @@ async createOpinion(opinion: CreateOpinionDto): Promise<Opinion>{
         descripcion: opinion.descripcion,
         idUser: opinion.idUser,
         estrellas: opinion.estrellas,
-        idRoom: opinion.idRoom
+        idRoom: opinion.idRoom,
+        idArtist:undefined,
     })
     return this.mapToOpinion(opinionDoc)
 }
@@ -247,6 +264,19 @@ async getOpinionById( opinionId: string): Promise<Opinion>{
     return this.mapToOpinion(model)
 }
 
+//get opiniones hechas a un artista
+// bug: mongoose: To create a new ObjectId please try `Mongoose.Types.ObjectId` ->
+// instead of using `Mongoose.Schema.ObjectId`
+async getOpinionToArtist( artistId: string): Promise<Array<Opinion>>{
+    const idArtist = mongoose.Types.ObjectId(artistId);
+    return (await OpinionModel.find({idArtist: idArtist}).exec())
+    .map((doc: OpinionDoc)=>{
+        return this.mapToOpinion(doc)
+    })
+}
+
+
+
 //TODO hacer delete de opinion y getters quizas
 
 
@@ -256,7 +286,8 @@ mapToOpinion(document: OpinionDoc): Opinion{
         descripcion: document.descripcion,
         estrellas: document.estrellas,
         idUser:  document.idUser as unknown as string,
-        idRoom: document.idRoom as unknown as string
+        idRoom: document.idRoom as unknown as string,
+        idArtist: document.idArtist as unknown as string
     }
 }
 

@@ -97,14 +97,17 @@ export class OpinionDto{
     id: string;
     descripcion: string;
     estrellas: number;
-    idUser:  string
+    idUser:  string;
+    idRoom: string;
+    idArtist?: string
 
     constructor(opinion: Opinion){
         this.id = opinion.id,
         this.descripcion= opinion.descripcion,
         this.estrellas = opinion.estrellas,
-        this.idUser = opinion.idUser
-
+        this.idUser = opinion.idUser,
+        this.idRoom = opinion.idRoom,
+        this.idArtist = opinion.idArtist
     }
 }
 
@@ -112,19 +115,24 @@ export interface CreateOpinionDto{
     descripcion: string;
     estrellas: number;
     idUser:  string;
-    idRoom: string
+    idRoom: string;
+    idArtist: string;
 }
 
 export interface OpinionDto{
     id: string,
     descripcion: string;
     estrellas: number;
-    idUser:  string
+    idUser:  string;
+    
 }
 
 export interface UpdateOpinionDto{
     descripcion: string;
     estrellas: number;
     idUser:  string
+    idRoom: string;
+    idArtist: string;
+
 }
 

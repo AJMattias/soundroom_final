@@ -580,7 +580,8 @@ const styles = StyleSheet.create({
   subtitle: {
     fontWeight: 600,
     fontSize: theme.SIZES.FONT * 1.25,
-    direction: 'ltr',
+    //direction: 'ltr',
+    writingDirection:'ltr'
     //paddingRight: 150
   },
   title: {

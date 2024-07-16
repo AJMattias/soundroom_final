@@ -151,21 +151,26 @@ export class SalaService{
         )
     }
 
-     async deleteSalaDeEnsayo(id: string, dto: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayoDto>{
-         return this.mapToDto(
-             await this.dao.deleteSala(id,{
-                nameSalaEnsayo: dto.nameSalaEnsayo,
-                calleDireccion: dto.calleDireccion,
-                numeroDireccion: dto.numeroDireccion,
-                duracionTurno: dto.duracionTurno,
-                deletedAt: new Date(),
-                precioHora: dto.precioHora,
-                comodidades: dto.comodidades,
-                descripcion: dto.descripcion,
-                enabled: dto.enabled
-             })
-         )
-     }
+    async deleteSalaDeEnsayo(id: string, dto: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayoDto>{
+        return this.mapToDto(
+            await this.dao.deleteSala(id,{
+            nameSalaEnsayo: dto.nameSalaEnsayo,
+            calleDireccion: dto.calleDireccion,
+            numeroDireccion: dto.numeroDireccion,
+            duracionTurno: dto.duracionTurno,
+            deletedAt: new Date(),
+            precioHora: dto.precioHora,
+            comodidades: dto.comodidades,
+            descripcion: dto.descripcion,
+            enabled: dto.enabled
+            })
+        )
+    }
+
+    async borrarSalaBd(id: string): Promise<Boolean>{
+    return await this.dao.borrarSala(id)
+    }
+     
 
      async obtenerCantidadNuevasSdEPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
         try {
@@ -239,6 +244,8 @@ export class SalaService{
             descripcion: document.descripcion,
             estrellas: document.estrellas,
             idUser:  document.idUser as unknown as string,
+            idRoom:  document.idRoom as unknown as string,
+            idArtist:  document.idArtist as unknown as string,
         }
     }
 
@@ -285,7 +292,8 @@ async  obtenerCantidadValoraciones(idOwner: string) {
                 descripcion: dto.descripcion,
                 estrellas: dto.estrellas,
                 idUser: dto.idUser,
-                idRoom: dto.idRoom
+                idRoom: dto.idRoom,
+                idArtist: dto.idArtist
             })
         )
     }
@@ -296,7 +304,9 @@ async  obtenerCantidadValoraciones(idOwner: string) {
                 id: id,
                 descripcion: dto.descripcion,
                 estrellas: dto.estrellas,
-                idUser: dto.idUser
+                idUser: dto.idUser,
+                idArtist: dto.idArtist,
+                idRoom: dto.idRoom
             })
         )
     }
@@ -313,6 +323,13 @@ async  obtenerCantidadValoraciones(idOwner: string) {
         return this.mapToDtoOpinion(opinion)
     }
 
+    //get opiniones sobre un artista
+    async getOpinionToArtist(idArtist: string): Promise<Array<OpinionDto>>{
+        const opiniones = await this.dao.getOpinionToArtist(idArtist)
+        return opiniones.map((opinion: Opinion) => {
+            return this.mapToDtoOpinion(opinion)
+        })
+    }
 }
 
 export const instance = new SalaService(dao.instance)

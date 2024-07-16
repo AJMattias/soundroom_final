@@ -41,7 +41,10 @@ class RatingsService {
     }
 
     async getRoomOpinions (roomId){
-        const opinions = await api.get("/salaOpiniones/?id="+roomId)
+        //const opinions = await api.get("/salaOpiniones/?id="+roomId)
+        //nueva formade buscar opiniones a saladeensayo
+        const opinions = await api.get("/salaOpinionesdos/?id="+roomId)
+        console.log('front service get room opinions: ', opinions)
         return opinions
     }
 
@@ -66,6 +69,12 @@ class RatingsService {
         const comment = await api.post("/salasdeensayo/createOpinion/")
         console.log("front comment service, opinion created: ", comment )
         return comment
+    }
+
+    // geto opiniones a artista
+    async getArtistOpinions (artistId){
+        const opiniones = await api.get("/opinionToArtista/?id="+artistId)
+        return opiniones
     }
 
     async updateRating(ratingId, newRating) {

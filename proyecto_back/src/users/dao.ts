@@ -6,6 +6,7 @@ import { CreateUserDto } from "./dto"
 import { CreateUserDtoTwo } from "./dto"
 import { EstadoUsuario, EstadoUsuarioDoc, EstadoUsuarioModel } from "./modelEU"
 import { createEstadoUsuarioDto } from "./dtoEstado.js"
+var mongoose = require('mongoose');
 
 /**
  * 
@@ -127,15 +128,35 @@ export class UsersDao {
     //  idPerfil: (user.idPerfil != null)? StringUtils.toObjectId(user.idPerfil) : undefined, 
 
     async updateUser(userId: string, user: CreateUserDto): Promise<User> {
-        console.log(user)
-        const query = { id: StringUtils.toObjectId(userId) };
-        const updated = await UserModel.findOneAndUpdate({query},{
-             name: user.name,
-            // lastName: user.last_name,
-            // email: user.email,
-            // enabled: user.enabled,
+        console.log('dao update user to update: ', user)
+        //const query = { id: StringUtils.toObjectId(userId) };
+        const query = { _id: mongoose.Types.ObjectId(userId) };
+        //atributos a actualizar : name:  dto.name,
+                // last_name : dto.last_name,
+                // email: dto.email,
+                // password : dto.password,
+                // createdAt: dto.createdAt,
+                // deletedAt: dto.deletedAt,
+                // image_id: undefined,
+                // enabled: dto.enabled,
+                // idPerfil: dto.idPerfil,
+                // idArtistType: dto.idArtistType as unknown as string,
+                // idArtistStyle: dto.idArtistStyle as unknown as string,
+                // userType: dto.userType,
+                // idSalaDeEnsayo: dto.idSalaDeEnsayo
+        const updated = await UserModel.findOneAndUpdate({_id: userId},{
+            name: user.name,
+            lastName: user.last_name,
+            email: user.email,
+            enabled: user.enabled,
+            tipoArtista: user.tipoArtista,
+            createdAt: user.createdAt,
+            deletedAt: user.deletedAt,
+            // idPerfil: user.idPerfil,
+            //password tb?
+
             //idPerfil: StringUtils.toObjectId(user.idPerfil)}, 
-            idArtistType: (user.idArtistType != null)? StringUtils.toObjectId(user.idArtistType) : undefined,
+            //idArtistType: (user.idArtistType != null)? StringUtils.toObjectId(user.idArtistType) : undefined,
         },
             {new: true}
             /*
@@ -150,6 +171,7 @@ export class UsersDao {
         if (!updated) {
             throw new ModelNotFoundException()
         }
+        console.log(updated)
         return this.mapToUser(updated)
     
     }
@@ -197,7 +219,8 @@ export class UsersDao {
              email: user.email,
              enabled: "deshabilitado",
              deletedAt: user.deletedAt
-         })
+         },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
+         )
          // const updated = await UserModel.findByIdAndUpdate(userId,{
          //     name: user.name,
          //     lastName: user.last_name,
@@ -221,7 +244,8 @@ export class UsersDao {
             email: user.email,
             enabled: "baja",
             deletedAt: user.deletedAt
-            })
+        },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
+        )
         if (!updated) {
             throw new ModelNotFoundException()
         }
@@ -259,7 +283,8 @@ export class UsersDao {
             isAdmin: document.isAdmin,
             estadoUsuario:document.estadoUsuario,
             enabled: document.enabled,
-            userType: document.userType
+            userType: document.userType,
+            tipoArtista: document.tipoArtista
         }
     }
 

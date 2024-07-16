@@ -102,7 +102,8 @@ class RoomService {
             idType: room.tipoSala,
             descripcion: room.descripcion,
             precioHora: room.precioHora,
-            comodidades: room.comodidades
+            comodidades: room.comodidades,
+            enabled: room.enabled
         })
         console.log('room updated: ', roomCreated)
         if(roomCreated){
@@ -133,6 +134,10 @@ class RoomService {
     }
 
     //delete room from db
+    async deleteRoomBd(roomId){
+        const deleted = await api.get("salasdeensayo/deletefrombd/?id="+roomId)
+        return deleted
+    }
 
     async deleteRoom(roomId) {
         return MockStore.removeRoom(roomId)

@@ -88,6 +88,16 @@ class ReservationService {
         //buscar reservas hechas por mi usuariologeado a la bd
     }
 
+    async getArtistReservatiosToMyRooms(userId){
+        const user = LocalPhoneStorage.get(STORAGE_USER)
+        const myReservations = await api.get("/reservations/findReservationByOwnerAndArtist/?idArtist="+userId)
+        return myReservations.map((reservation) =>{
+           reservation.hsStart = new Date(reservation.hsStart)
+           reservation.user = reservation.idOwner
+           return reservation
+        })
+    }
+
     async getMyReservationsBd() {
         const user = LocalPhoneStorage.get(STORAGE_USER)
         const myReservations = await api.get("/reservation/findReservationbyUser/?id="+user.id)
@@ -182,6 +192,7 @@ class ReservationService {
     }
 
     async cancelReservation(reservationId) {
+        console.log('reserva a cancelar: ', reservationId )
         const removed = MockStore.removeReservation(reservationId)
         if(removed && removed.length > 0) {
             return removed[0]

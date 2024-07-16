@@ -48,15 +48,18 @@ class OrdersService {
     }
 
     cancelOrder = async (order) => {
-        MockStore.updateOrder(order.id,{...order, status: 'cancelled', updated: new Date()})
-        MockStore.removeReservationByCondition((reservation) => {
-            reservation.order && 
-            reservation.order.id == order.id
-        })
+        // MockStore.updateOrder(order.id,{...order, status: 'cancelled', updated: new Date()})
+        // MockStore.removeReservationByCondition((reservation) => {
+        //     reservation.order && 
+        //     reservation.order.id == order.id
+        // })
+
+        //const orderCanceled = await reservationService.cancelReservationBd(order.id)
+       
         try {
             await emailService.sendEmailToUser(
-                order.user,
-                `Tu reserva para ${order.room.name} ha sido cancelada.`
+                order.idUser,
+                `Tu reserva para ${order.idRoom.nameSalaEnsayo} para el dia ${order.date.toLocaleDateString()}, ha sido cancelada por el dueño.`
             )
         } catch(emailException) {
             console.error("Error sending email")

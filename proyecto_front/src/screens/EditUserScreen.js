@@ -136,7 +136,8 @@ export function EditUserScreen ({navigation}){
         name.value,
         lastName.value,
         "habilitado",
-        perfilSelected.value
+        perfilSelected.value,
+        tipoArtista.value
       )
       console.log("User Edited")
       console.log(userNuevo)

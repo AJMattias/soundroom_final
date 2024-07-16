@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, Image, ScrollView } from 'react-native'
+import { StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native'
 import { StateScreen } from '../components/StateScreen'
 import { Rating } from '../components/Rating'
 import { Screen } from '../components/Screen'
@@ -17,6 +17,8 @@ import { reservationService } from '../network/ReservationService'
 import { emailService } from '../network/EmailService'
 import { userService } from '../network/UserService'
 import { ratingsService } from '../network/RatingsService'
+import AwesomeAlert from 'react-native-awesome-alerts';
+
 
 export const RoomScreen = ({ route, navigation }) => {
     const { roomId } = route.params
@@ -60,6 +62,9 @@ export const RoomScreen = ({ route, navigation }) => {
     const img =''
     let comodities =[]
     const [comodities2, setComodities2] = useState([])
+    const [showAlert, setShowAlert] = useState(false);
+    let showOwner
+
     
 
      
@@ -97,6 +102,15 @@ export const RoomScreen = ({ route, navigation }) => {
             console.log('room.comoidades: ', room.comodidades)
             console.log('comodidades: ', comodities)
 
+            //is owner watching his room:
+            if (room.idOwner && room.idOwner._id == getUser().id){
+                console.log('loggedUser.id: ', loggedUser.id)
+                showOwner = true
+                console.log('showOwner: ', showOwner)
+            }else{ 
+                showOwner = false
+                console.log('showOwner: ', showOwner)
+            }
             
 
             
@@ -152,41 +166,12 @@ export const RoomScreen = ({ route, navigation }) => {
             fetchRoom().then()
             fetchUserReservations().then()
             fetchRoomRatings().then()
-            // fetchOwner()
             fetchPromedioEstrellas().then()
             setRoomFetched(true)
         });
         return unsubscribe
       }, [navigation])
-    
-    //useEffect
-    // useEffect(()=>{
-    //     console.log('El useEffect se está ejecutando');
-    //     const fetchRoom = async () => {
-    //         try {
-    //             console.log("roomId : " + roomId)
-    //             //setRoom se usa con mockstore 
-    //             //setRoom(
-    //             //     await roomService.getRoomBd(roomId)
-    //             // )
-    //             const roomCreated = await roomService.getRoomBd(roomId)
-    //             console.log('roomCreated: ', roomCreated)
-    //             setRoom(roomCreated.sala)
-    //             setEstrellasProm(roomCreated.promedioEstrellas)
-    //             console.log("In room")
-    //             console.log(room)
-    //             console.log('user:', getUser())
-    //             setOwner(room.idOwner)
-    //             console.log(owner)
-    //             setRoomFetched(true)
-                
-    //         } catch (apiError) {
-    //             console.error(apiError)
-    //             setRoomFetched(true)
-    //         }
-    //     }
-    //     fetchRoom()
-    // },[])
+
 
     const fetchRoomRatings = async () => {
         const user = LocalPhoneStorage.get(STORAGE_USER)
@@ -204,10 +189,9 @@ export const RoomScreen = ({ route, navigation }) => {
 
     const fetchUserReservations = async () => {
         try {
-            setUserReservations(
-                await reservationService.getMyRoomReservationBd(getUser().id, roomId)
-            )
-            console.log('reservas del usuario logueado a la sala: ', userReservations)
+            const reservationss = await reservationService.getMyRoomReservationBd(getUser().id, roomId)
+            setUserReservations(reservationss)
+            //console.log('reservas del usuario logueado a la sala: ', userReservations)
         } catch (ignored){
             console.log(ignored)
         }
@@ -253,14 +237,16 @@ export const RoomScreen = ({ route, navigation }) => {
     const renderComments = () => {
         if (ratings) {
             return ratings.map((rating) => {
-               return ( <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.idUser} rate={rating} onClick = {()=>openArtistScreen(rating.idUuser._id) } /> )
+                const idUserRating = rating.idUser._id
+                console.log('idUserRating: ', idUserRating)
+               return ( <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.idUser} rate={rating} onClick = {()=>openArtistScreen(idUserRating) } /> )
               })
         }
     }
 
     const openArtistScreen = (artist) => {
         navigation.push("ArtistProfileScreen", {
-            userId: artist.id
+            userId: artist
         })
     }
 
@@ -276,14 +262,14 @@ export const RoomScreen = ({ route, navigation }) => {
     }
 
     const deleteRoom = async () => {
-        await roomService.deleteRoom(roomId)
+        await roomService.deleteRoomBd(roomId)
         navigation.reset({
             index: 0,
             routes: [{ name: "UserProfileScreen2" }],
           })
     } 
+
     const habilitacion = () => {
-        console.log(room)
         if (room.enabled == 'habilitado') {
             return (< Text style={styles.habilitada} > Sala Habilitada </Text >)
             
@@ -299,17 +285,28 @@ export const RoomScreen = ({ route, navigation }) => {
         })
     }
 
+    // Función para mostrar el Alert
+    const showAlertModal = () => {
+        setShowAlert(true);
+    };
+
+    // Función para ocultar el Alert
+    const hideAlertModal = () => {
+        setShowAlert(false);
+    };
 
     return (
         <StateScreen loading={!roomFetched} >
             <Screen navigation={navigation} >
                 <ScrollView>
+                    <Block>
                     <Image style={styles.image} source={
                         //room.image? room.image : 
                         require('../assets/theatre.png')} 
                         />
                     <Text style={styles.title}>{room.nameSalaEnsayo}</Text>
                     <Text style={styles.subtitle}>Tipo de Sala: Musical</Text>
+                    </Block>
                     <Block row  style = {styles.priceRow}>
                     {renderRatings()}
                     <Price price = {room.precioHora} style = {styles.priceText}  />
@@ -318,30 +315,50 @@ export const RoomScreen = ({ route, navigation }) => {
                         <Icon size={24} color={theme.colors.grey600} name='location-pin' family='MaterialIcons' />
                         <Text style={styles.text}>{room.calleDireccion}</Text>
                     </Block>
-                    
-                    <Tags
-                        //room.comodidades
-                        initialTags={comodities2}
-                        onChangeTags={(tags) => console.log(tags)}
-                        onTagPress={(index, tagLabel, event) =>
-                          console.log(index, tagLabel, event)
-                        }
-                        onPress={(index, tagLabel, event) =>
-                          console.log(index, tagLabel, event)}
-                        inputStyle={styles.tags}
-                        deleteTagOnPress={false}
-                        readonly={true}
-                   />
+                    <Block>
+                        <Tags
+                            //room.comodidades
+                            initialTags={comodities2}
+                            onChangeTags={(tags) => console.log(tags)}
+                            onTagPress={(index, tagLabel, event) =>
+                            console.log(index, tagLabel, event)
+                            }
+                            onPress={(index, tagLabel, event) =>
+                            console.log(index, tagLabel, event)}
+                            inputStyle={styles.tags}
+                            deleteTagOnPress={false}
+                            readonly={true}
+                        />
+                    </Block>
                     { room.idOwner && room.idOwner._id == getUser().id  && 
-                        <Block 
+                    <Block>
+                        <TouchableOpacity 
                             style = {styles.deleteRoomRow}
-                            onClick = {deleteRoom}
+                            onPress = {showAlertModal}
                         >
                             <Icon size = {24} name = 'trash-2' family = 'Feather'color = {theme.colors.error} />
                             <Text style = {styles.deleteText} >Eliminar sala</Text>
-                         </Block>
+                         </TouchableOpacity>
+                        
+                     </Block>
+                         
                     }
-                    { room.idOwner && room.idOwner._id == getUser().id  && 
+                     <AwesomeAlert
+                            show={showAlert}
+                            showProgress={false}
+                            title="Eliminar Sala"
+                            message="¿Estás seguro de que deseas eliminar esta sala?"
+                            closeOnTouchOutside={false}
+                            closeOnHardwareBackPress={false}
+                            showCancelButton={true}
+                            showConfirmButton={true}
+                            cancelText="Cancelar"
+                            confirmText="Eliminar"
+                            confirmButtonColor="#DD6B55"
+                            onCancelPressed={hideAlertModal} // Ocultar el Alert si se presiona Cancelar
+                            onConfirmPressed={deleteRoom} // Llamar a la función deleteRoom si se confirma la eliminación
+                        />
+                    { room.idOwner && room.idOwner._id == getUser().id  &&
                          <Block 
                             style = {styles.editRoomRow}
                             onClick = {openEditRoom}
@@ -365,14 +382,16 @@ export const RoomScreen = ({ route, navigation }) => {
                          caption = "Propietario"
                          captionColor = {theme.colors.primary}
                     />
-                    <Text style={styles.subtitle}>Descripcion</Text>
-                    <Text p style={styles.text}>
-                        {room.descripcion}
-                    </Text>
+                    <Block>
+                        <Text style={styles.subtitle}>Descripcion</Text>
+                        <Text p style={styles.text}>
+                            {room.descripcion}
+                        </Text>
+                    </Block>
                    
-                    {
-                        room && userReservations.length > 0 && 
-                        <AddComment
+                    {room && userReservations.length > 0 && room.idOwner._id != getUser().id &&
+                        <Block>
+                            <AddComment
                             otherId = {roomId}
                             title = "Tu opinión de la Sala"
                             placeholder = "Escribe una reseña para ayudar a otros artistas a evaluar esta sala."
@@ -380,15 +399,19 @@ export const RoomScreen = ({ route, navigation }) => {
                             onRatingCreated = {() => sendCommentNotification().then()}
                             onRatingUpdated = {() => sendUpdateCommentNotification().then()}
                         />    
+                        </Block>
                     }
-
-                   {ratings && ratings.length >0 && 
-                    <Text style={[styles.subtitle, theme.styles.m24]}>Opiniones</Text>
-                   }
+                    <Block>
+                    {ratings && ratings.length >0 && 
+                        <Text style={[styles.subtitle, theme.styles.m24]}>Opiniones</Text>
+                    }
                    {renderComments()}
+                   </Block>
                 </ScrollView>
             </Screen>
-           { room.idOwner && room.idOwner._id != getUser().id && 
+           { 
+           //room.idOwner && !showOwner &&
+           room.idOwner && room.idOwner._id != getUser().id && 
             <FooterButton buttonText = "Reservar" onClick = {()=> openReserveRoomScreen()}></FooterButton>
           } 
         </StateScreen>
@@ -556,4 +579,3 @@ const styles = StyleSheet.create({
 //         backgroundColor: 'white',
 //     },
 // });
-

@@ -34,6 +34,7 @@ export interface User {
     isAdmin: boolean;
     enabled: string;
     userType: string;// sala de ensayo o artist
+    tipoArtista: string;//musico, musico - rock / cumbia, actor, actor-drama etc banda, etc-
     estadoUsuario?:[{type: string}];
     idSalaDeEnsayo:[{type: string}]
 }
@@ -55,6 +56,7 @@ export interface UserDoc extends Document {
     userType: string;
     isAdmin: boolean;
     enabled: string;
+    tipoArtista: string;
     estadoUsuario?:[{type: string}];
     idSalaDeEnsayo:[{type: string}]
 }
@@ -79,6 +81,7 @@ export const UserSchema = new Schema({
     isAdmin: Boolean,
     enabled: String,
     userType: String,
+    tipoArtista: String,
     idPerfil : {
         type: Schema.Types.ObjectId,
         ref: "Perfil",

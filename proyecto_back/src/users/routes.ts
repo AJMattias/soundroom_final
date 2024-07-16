@@ -57,6 +57,7 @@ export const route = (app: Application) => {
      }))
 
      app.put("/users/update/",
+        auth,
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: Request,resp: Response) => {
             const errors = validator.validationResult(req)
@@ -81,20 +82,42 @@ export const route = (app: Application) => {
             if (!dto["password"]) {
                 dto["password"] = userOriginal["password"];
             }
-            console.log("baja:? ", dto["enabled"])
-            console.log(dto["idPerfil"])
+            if (!dto["createdAt"]) {
+                dto["createdAt"] = userOriginal["createdAt"];
+            }   
+            if (!dto["idPerfil"]) {
+                dto["idPerfil"] = userOriginal["idPerfil"];
+            } 
+            if (!dto["idSalaDeEnsayo"]) {
+                dto["idSalaDeEnsayo"] = userOriginal["idSalaDeEnsayo"];
+            } 
+            if (!dto["createdAt"]) {
+                dto["createdAt"] = userOriginal["createdAt"];
+            } 
+            if (!dto["estadoUsuario"]) {
+                dto["estadoUsuario"] = userOriginal["estadoUsuario"];
+            } 
+            if (!dto["userType"]) {
+                dto["userType"] = userOriginal["userType"];
+            } 
+            if (!dto["tipoArtista"]) {
+                dto["tipoArtista"] = userOriginal["tipoArtista"];
+            } 
+            console.log(" ruta update user, baja:? ", dto["enabled"])
+            console.log('idPerfil: ', dto["idPerfil"])
             const user = await service.instance.updateUser(id,{
                 name: dto["name"],
                 last_name: dto["last_name"],
                 email: dto["email"],
                 password: dto["password"],
+                enabled: dto["enabled"],
                 idPerfil: dto["idPerfil"],
                 idArtistType: dto["idArtistType"],
                 idArtistStyle: dto["idArtistStyle"],
                 image_id: undefined,
-                enabled: dto["enabled"],
                 userType: dto["userType"],
-                idSalaDeEnsayo: dto["idSalaDeEnsayo"]
+                idSalaDeEnsayo: dto["idSalaDeEnsayo"],
+                tipoArtista: dto['tipoArtista']
             })
             resp.json(user)
         })
@@ -120,7 +143,8 @@ export const route = (app: Application) => {
                 idPerfil: dto["idPerfil"],
                 enabled: dto["enabled"],
                 userType: dto["userType"],
-                idSalaDeEnsayo: dto["idSalaDeEnsayo"]
+                idSalaDeEnsayo: dto["idSalaDeEnsayo"],
+                tipoArtista: dto['tipoArtista']
             })
             resp.json(user)
      }))
@@ -152,7 +176,8 @@ export const route = (app: Application) => {
                     image_id: undefined,
                     enabled: dto["enabled"],
                     userType: dto["userType"],
-                    idSalaDeEnsayo: dto["idSalaDeEnsayo"]
+                    idSalaDeEnsayo: dto["idSalaDeEnsayo"],
+                    tipoArtista: dto['tipoArtista']
                 })
                 resp.json( )    
              }

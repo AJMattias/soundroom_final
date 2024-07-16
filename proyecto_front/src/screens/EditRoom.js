@@ -195,23 +195,27 @@ export  function EditRoom({ route, navigation }) {
             return
         }else {
             try {
-                const roomModificado = {
-                    idRoom: roomId,
-                    nameSalaDeEnsayo: name.value,
-                    calleDireccion: calleDireccion.value,
-                    descripcion: descripcion.value,
-                    precioHora: parseFloat(precio.value),
-                    enabled: checkValue,
-                    comodidades: comodidadesValue,
-                    tipoSala: typeSelected.value
-                }
-                console.log("El room modificado es")
-                console.log(roomModificado)
-                const stored = await roomService.editRoom(roomModificado)
-                console.log('sala acutalizada: ', stored)
-                navigation.navigate("RoomScreen", {
-                  roomId: stored.id
-              })
+              let habilitado = ''
+              if(checkValue === true){
+                habilitado='habilitado'
+              }else if(checkValue === false){
+                habilitado='deshabilitado'
+              }
+              const roomModificado = {
+                  idRoom: roomId,
+                  nameSalaDeEnsayo: name.value,
+                  calleDireccion: calleDireccion.value,
+                  descripcion: descripcion.value,
+                  precioHora: parseFloat(precio.value),
+                  enabled: habilitado,
+                  comodidades: comodidadesValue,
+                  tipoSala: typeSelected.value
+              }
+              console.log("El room modificado es")
+              console.log(roomModificado)
+              const stored = await roomService.editRoom(roomModificado)
+              console.log('sala acutalizada: ', stored)
+              navigation.navigate("RoomScreen", {roomId: stored.id})
 
             } catch (apiError) {
                 console.error("Error fetching roms")

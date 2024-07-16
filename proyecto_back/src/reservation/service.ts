@@ -93,7 +93,8 @@ export class ReservationService{
             totalPrice: dto.totalPrice,
             canceledDate: new Date() 
         })
-        await this.sendMailPiola(email, `Usted ha cancelado la reserva del dia ${dto.date}  a las ${dto.hsStart}exitosamente. Gracias por elegir SoundRoom`)
+        let msg = `Usted ha cancelado la reserva del dia ${dto.date}  a las ${dto.hsStart}exitosamente. Gracias por elegir SoundRoom`
+        await this.sendMailPiola(email, msg)
         return this.mapToDto(canceledReservation)
         
         
@@ -110,8 +111,14 @@ export class ReservationService{
 
     async getReservationById(id: string): Promise <ReservationDto>{
         const reservation =  await this.dao.getById(id)
-        return this.mapToDto(reservation)
-        
+        return this.mapToDto(reservation)   
+    }
+
+    async getReservationByOwnerAndArtist(idOwner: string, idArtist: string): Promise <Array<ReservationDto>>{
+        const reservations =  await this.dao.getByOwnerAndArtist(idOwner, idArtist)
+        return reservations.map((reservation: Reservation) => {
+            return this.mapToDto(reservation)
+        })   
     }
 
     async getReservationByOwner(ownerId: string): Promise <Array<ReservationDto>>{

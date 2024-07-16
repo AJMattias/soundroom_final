@@ -55,7 +55,7 @@ export  function CreateRoom({ navigation }) {
     numeroDireccion: 0,
     duracionTurno: 0,
     localidad: "",
-    enabled: true,
+    enabled: false,
     idtype: "",
     comodidades: []
   };
@@ -249,9 +249,9 @@ export  function CreateRoom({ navigation }) {
         console.log('no errors')
           try {
             let habilitado = ''
-            if(enabled = true){
+            if(checkValue === true){
               habilitado = 'habilitado'
-            }else if(enabled = false){
+            }else if(checkValue === false){
               habilitado = 'deshabilitado'
             }
               const room = {

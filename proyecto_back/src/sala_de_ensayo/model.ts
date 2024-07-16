@@ -115,6 +115,10 @@ export const OpinionSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Sala_De_Ensayo",
     },
+    idArtist:{
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    }
 })
 
 export interface Opinion{
@@ -123,6 +127,7 @@ export interface Opinion{
     estrellas: number,
     idUser:  string,
     idRoom: string,
+    idArtist?: string
 }
 
 export interface OpinionDoc extends Document{
@@ -131,5 +136,7 @@ export interface OpinionDoc extends Document{
     estrellas: number,
     idUser:  string,
     idRoom: string,
+    idArtist: string
 }
+
 export const OpinionModel = mongoose.model<OpinionDoc>("Opinion", OpinionSchema)

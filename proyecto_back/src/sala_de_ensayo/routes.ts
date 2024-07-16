@@ -219,7 +219,8 @@ export const route = (app: Application) => {
                 image_id: undefined,
                 enabled: user.enabled,
                 userType: user.userType,
-                idSalaDeEnsayo: idSala
+                idSalaDeEnsayo: idSala,
+                tipoArtista: user.tipoArtista
             })
 
            // copiar a perfil con usuario
@@ -329,6 +330,21 @@ export const route = (app: Application) => {
             resp.json(sala)
         })
     )
+
+    app.get("/salasdeensayo/deletefrombd/",auth,
+        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run( async(req: Request, resp: Response) => {
+            const errors = validator.validationResult(req)
+                if(errors && !errors.isEmpty()){
+                    throw ValidatorUtils.toArgumentsException(errors.array())
+                }
+                const id = req.query.id as string
+                const saladeleted = await service.instance.borrarSalaBd(id)
+                resp.json(saladeleted)
+            })
+
+    )
+
         
     app.post("/salasdeensayo/reportesNuevasSdE", 
         auth,
@@ -380,7 +396,7 @@ export const route = (app: Application) => {
                 estrellas: dto["estrellas"] ,
                 idUser: user.id,
                 idRoom: dto["idRoom"],
-                //idRoom: idRoom,
+                idArtist: '',
             })
             console.log('Ruta, opinion creada: ', opinion)
             if(!opinion){
@@ -418,6 +434,46 @@ export const route = (app: Application) => {
         })
     )
 
+    app.post("/salasdeensayo/createOpinionToArtist/",
+        auth,
+        //validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("descripcion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("estrellas").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("idArtist").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run( async(req: any, resp: Response) => {
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body
+            const idArtist = req.query.idArtist as string
+            console.log('ruta create Opinion idArtist: ', idArtist)
+            console.log('ruta create opinion, idUser: ', req.user.id)
+
+            //obtener usuario logueado con:
+            const logged : UserDto = req.user 
+            const user: UserDto = await userService.instance.findUserById(logged.id)
+            //create opinion
+            const opinion = await service.instance.createOpinion({
+                descripcion: dto["descripcion"],
+                estrellas: dto["estrellas"] ,
+                //usuario loguado hace opinion- propietario de SdE
+                idUser: user.id,
+                idRoom: '',
+                //Artista a quien le hace la opinion
+                idArtist: dto["idArtist"],
+            })
+            console.log('Ruta, opinion creada: ', opinion)
+            if(!opinion){
+                resp.json("No se pude crear la opinon, intentalo de nuevo mas tarde")
+            }
+            
+            resp.json(opinion)
+
+        
+        })
+    )
+
     //TODO update opinion
     app.put("/saladeensayo/updateOpinion/",
         auth,
@@ -440,11 +496,17 @@ export const route = (app: Application) => {
             if(!dto["idUser"]){
                 dto["idUser"] = req.user.id
             }
+            if(dto["idRoom"]){
+                dto["idArtist"] = ''
+            }else{
+                dto["idRoom"] = ''
+            }
             const opinionUpdate = await service.instance.updateOpinion(id,{
                 descripcion:dto["descripcion"],
                 estrellas:dto["estrellas"],
                 idUser:dto["idUser"],
-                idRoom: id,
+                idRoom: dto["idRoom"],
+                idArtist: dto["idArtist"],
             })
             resp.json(opinionUpdate)
         }))
@@ -481,6 +543,16 @@ export const route = (app: Application) => {
 
     }))
 
+    app.get("/salaOpinionesdos/", run(async (req: Request, res: Response)=>{
+        const id = req.query.id as string
+        //buscar sala de ensayo
+        // idType: mongoose.Types.ObjectId(sala.idType)
+        const opiniones: OpinionDto[] = await OpinionModel.find({ idRoom: id }).populate("idUser").exec();
+
+        res.json({ opiniones });
+
+    }))
+
     //get opinion hecha por usuario logueado artista,  get mi opinion sobre una sala e particular
     app.get("/salaOpinion/getMyOpinionToRoom/", 
     auth, 
@@ -505,6 +577,17 @@ export const route = (app: Application) => {
 
     })
     )
+
+    //TODO get opinones sobre un artista
+    app.get("/opinionToArtista/",
+        run(async (req: Request,resp: Response) => {
+            console.log('ruta opinionToArtista')
+            const id = req.query.id as string
+            const opiniones : OpinionDto [] = await  service.instance.getOpinionToArtist(id)
+            resp.json(opiniones) 
+         })
+    )
+
 
     interface GrafTortaTipoSala {
         name: string;
