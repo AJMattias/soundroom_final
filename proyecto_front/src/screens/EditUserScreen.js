@@ -48,9 +48,11 @@ export function EditUserScreen ({navigation}){
         setUser({...userResponse, image: 'https://i.pravatar.cc/100'})
         setUser(userResponse)
         console.log(user)
+        console.log('tipoArtista: ', userResponse.tipoArtista)
         setName({value:userResponse.name})
         setLastName({value:userResponse.last_name})
         setEmail({value: userResponse.email})
+        setTipoArtista({value: userResponse.tipoArtista})
         // setPassword({value: user.password})
     } catch (apiError) {
         console.error("Error fetching user")
@@ -121,13 +123,14 @@ export function EditUserScreen ({navigation}){
   );
 
   const editarPerfil = async () =>{
+    console.log('Editar pressed 1')
     checkPasswords(password2.value)
     const tipoArtistaError = tipoArtistaValidator(tipoArtista.value)
     setErrorMessage({...errorMessage, error:''})
-    if (tipoArtistaError) {
-      setTipoArtista({ ...tipoArtista, error: tipoArtistaError })
-      return
-    }
+    // if (tipoArtistaError) {
+    //   setTipoArtista({ ...tipoArtista, error: tipoArtistaError })
+    //   return
+    // }
     try {
       console.log('Editar pressed')
       const userNuevo = await userService.update(
@@ -137,7 +140,8 @@ export function EditUserScreen ({navigation}){
         lastName.value,
         "habilitado",
         perfilSelected.value,
-        tipoArtista.value
+        tipoArtista.value,
+        password.value
       )
       console.log("User Edited")
       console.log(userNuevo)
@@ -151,8 +155,10 @@ export function EditUserScreen ({navigation}){
   }
 
   const checkPasswords = (pass2) =>{
+    console.log('checking passwords')
     if (pass2 == password.value){
       setPassword2({value: pass2, error:''})
+      console.log('checked passwords')
     }else{
       setPassword2({value:'', error:'Las contraseñas deben ser iguales'})
     }

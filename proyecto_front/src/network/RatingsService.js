@@ -58,11 +58,19 @@ class RatingsService {
     }
 
     async updateRatingBd(ratingId, opinion) {
-        const rating = await api.put("/salasdeensayo/updateOpinion/?id="+ratingId,{
+        const rating = await api.put("/saladeensayo/updateOpinion/?id="+ratingId,{
             descripcion: opinion.comment,
             estrellas: opinion.score
-        })
-        
+        })   
+    }
+
+    async updateRatingToArtistBd(ratingId, opinion) {
+        const rating = await api.put("/saladeensayo/updateOpinion/?id="+ratingId,{
+            descripcion: opinion.comment,
+            estrellas: opinion.score,
+            idArtist: opinion.artistId,
+        })  
+        console.log('opinion a artista actualizada, rating service: ', rating) 
     }
 
      async createCommet(idRoom, descripcion, estrellas){
@@ -71,10 +79,18 @@ class RatingsService {
         return comment
     }
 
-    // geto opiniones a artista
+    // get opiniones a artista
     async getArtistOpinions (artistId){
         const opiniones = await api.get("/opinionToArtista/?id="+artistId)
         return opiniones
+    }
+
+    async getMyRatingsToArtist(otherId) {
+        //const user = LocalPhoneStorage.get(STORAGE_USER)
+        const opinion = await api.get("/salaOpinion/getMyOpinionToArtist/?idArtist="+otherId)
+        console.log('Opinion fetcheada: ', opinion)
+        return opinion
+    
     }
 
     async updateRating(ratingId, newRating) {

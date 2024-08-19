@@ -36,7 +36,10 @@ export interface User {
     userType: string;// sala de ensayo o artist
     tipoArtista: string;//musico, musico - rock / cumbia, actor, actor-drama etc banda, etc-
     estadoUsuario?:[{type: string}];
-    idSalaDeEnsayo:[{type: string}]
+    idSalaDeEnsayo:[{type: string}];
+    //si es artista tendra opiniones a el
+    opiniones: [{type: string, unique: true}];
+    enabledHistory: [{ status: string; dateFrom: Date, dateTo: Date }]; 
 }
 
 
@@ -58,7 +61,9 @@ export interface UserDoc extends Document {
     enabled: string;
     tipoArtista: string;
     estadoUsuario?:[{type: string}];
-    idSalaDeEnsayo:[{type: string}]
+    idSalaDeEnsayo:[{type: string}];
+    opiniones: [{type: string, unique: true}];
+    enabledHistory:[{ status: string; dateFrom: Date, dateTo: Date }];
 }
 
 
@@ -101,7 +106,17 @@ export const UserSchema = new Schema({
     idSalaDeEnsayo:[{
         type: Schema.Types.ObjectId, 
         ref:'Sala_De_Ensayo'
-    }]
+    }],
+    opiniones:[{
+        type: Schema.Types.ObjectId,
+        ref:"Opinion"
+    }],
+    //agregar dateFrom and dateTo or dateUntil asi tener un historial del estado
+    enabledHistory: [{
+        status: String,
+        dateFrom: Date, 
+        dateTo: Date
+    }] 
 
 })
 

@@ -85,6 +85,11 @@ export class UsersDao {
      *   
      */
     async store(user: CreateUserDto): Promise<User> {
+        const enabledHistoryEntry = {
+            status: "habilitado",
+            dateFrom: new Date(),
+            dateTo: null,
+        };
         const userDoc  = await UserModel.create(
             {
                 name: user.name,
@@ -98,7 +103,8 @@ export class UsersDao {
                 idArtistType: user.idArtistType,
                 idArtistStyle: user.idArtistStyle,
                 isAdmin: false,
-                enabled: "habilitado"
+                enabled: "habilitado",
+                enabledHistory: [enabledHistoryEntry],
             }
         )
         return this.mapToUser(userDoc)
@@ -129,9 +135,13 @@ export class UsersDao {
 
     async updateUser(userId: string, user: CreateUserDto): Promise<User> {
         console.log('dao update user to update: ', user)
+        const newId = String(userId)
         //const query = { id: StringUtils.toObjectId(userId) };
-        const query = { _id: mongoose.Types.ObjectId(userId) };
+        const query = { id: mongoose.Types.ObjectId(userId) };
+        const idUser = mongoose.Types.ObjectId(userId);
         //atributos a actualizar : name:  dto.name,
+        const perfilId = mongoose.Types.ObjectId(user.idPerfil)
+
                 // last_name : dto.last_name,
                 // email: dto.email,
                 // password : dto.password,
@@ -144,15 +154,21 @@ export class UsersDao {
                 // idArtistStyle: dto.idArtistStyle as unknown as string,
                 // userType: dto.userType,
                 // idSalaDeEnsayo: dto.idSalaDeEnsayo
-        const updated = await UserModel.findOneAndUpdate({_id: userId},{
-            name: user.name,
-            lastName: user.last_name,
-            email: user.email,
-            enabled: user.enabled,
-            tipoArtista: user.tipoArtista,
-            createdAt: user.createdAt,
-            deletedAt: user.deletedAt,
-            // idPerfil: user.idPerfil,
+        const updated = await UserModel.findOneAndUpdate(
+            {_id: userId},
+            {
+                $set:{
+                    name: user.name,
+                    lastName: user.last_name,
+                    email: user.email,
+                    enabled: user.enabled,
+                    tipoArtista: user.tipoArtista,
+                    createdAt: user.createdAt,
+                    deletedAt: user.deletedAt,
+                    idPerfil: perfilId,
+                    password: user.password,
+                    enabledHistory: user.enabledHistory,
+                }
             //password tb?
 
             //idPerfil: StringUtils.toObjectId(user.idPerfil)}, 
@@ -175,6 +191,28 @@ export class UsersDao {
         return this.mapToUser(updated)
     
     }
+    async updateUserTwo(userId: string, user: CreateUserDto): Promise<User> {
+        console.log('dao update user to update: ', user)
+
+        const updated = await UserModel.findByIdAndUpdate(userId,{
+            name: user.name,
+            lastName: user.last_name,
+            email: user.email,
+            enabled: user.enabled,
+            tipoArtista: user.tipoArtista,
+            createdAt: user.createdAt,
+            deletedAt: user.deletedAt
+        },
+            {new: true}
+        ).exec()
+        if (!updated) {
+            throw new ModelNotFoundException()
+        }
+        console.log(updated)
+        return this.mapToUser(updated)
+    
+    }
+
     async updateIdPerfil(userId: string, user: CreateUserDto): Promise<User> {
         const idPerfil2 = StringUtils.toObjectId(user.idPerfil)
         const updated = await UserModel.findByIdAndUpdate(userId,{
@@ -212,13 +250,39 @@ export class UsersDao {
 
     async disableUser(userId: string, user: CreateUserDto): Promise<User> {
         // const query = {user: user.email};
+        //const updated = await UserModel.findOneAndUpdate({user: user.email}, {enabled: false})
+        const updated = await UserModel.findByIdAndUpdate(userId, {
+            name: user.name,
+            lastName: user.last_name,
+            email: user.email,
+            enabled: "deshabilitado",
+            deletedAt: user.deletedAt,
+            $push: { enabledHistory: { status: 'deshabilitado', dateFrom: new Date() } },
+        },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
+        )
+        // const updated = await UserModel.findByIdAndUpdate(userId,{
+        //     name: user.name,
+        //     lastName: user.last_name,
+        //     email: user.email,
+        //     enabled: false
+        // }).exec()
+        
+        if (!updated) {
+            throw new ModelNotFoundException()}
+        return this.mapToUser(updated)
+        
+    }
+
+     async enabledUser(userId: string, user: CreateUserDto): Promise<User> {
+        // const query = {user: user.email};
          //const updated = await UserModel.findOneAndUpdate({user: user.email}, {enabled: false})
          const updated = await UserModel.findByIdAndUpdate(userId, {
              name: user.name,
              lastName: user.last_name,
              email: user.email,
-             enabled: "deshabilitado",
-             deletedAt: user.deletedAt
+             enabled: "habilitado",
+             deletedAt: user.deletedAt,
+             $push: { enabledHistory: { status: 'habilitado', dateFrom: new Date() } },
          },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
          )
          // const updated = await UserModel.findByIdAndUpdate(userId,{
@@ -236,20 +300,46 @@ export class UsersDao {
      async bajaUser(userId: string, user: CreateUserDto): Promise<User> {
         console.log("dao baja:", user.enabled)
         //buscar
-        const toUpdated =await this.findById(userId)
-        toUpdated.enabled = "baja"
+        //toUpdated.enabled = "baja"
         const updated = await UserModel.findByIdAndUpdate(userId,{
             name: user.name,
             lastName: user.last_name,
             email: user.email,
             enabled: "baja",
-            deletedAt: user.deletedAt
+            deletedAt: user.deletedAt,
+            $push: { enabledHistory: { status: 'baja', dateFrom: new Date() } },
         },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
         )
         if (!updated) {
             throw new ModelNotFoundException()
         }
         return this.mapToUser(updated)
+     }
+
+
+     async stopDisableUser(userId: string): Promise<User> {
+         const updated = await UserModel.findOneAndUpdate(
+            { _id: userId, "enabledHistory.dateTo": null },
+            { $set: { "enabledHistory.$.dateTo": new Date() } }
+        );
+         
+         if (!updated) {
+             throw new ModelNotFoundException()
+         }
+         return this.mapToUser(updated)
+     }
+     
+
+     async stopBajaUser(userId: string): Promise<User> {
+         const updated = await UserModel.findOneAndUpdate(
+            { _id: userId, "enabledHistory.dateTo": null },
+            { $set: { "enabledHistory.$.dateTo": new Date() } }
+        );
+         
+         if (!updated) {
+             throw new ModelNotFoundException()
+         }
+         return this.mapToUser(updated)
      }
  
 
@@ -284,7 +374,9 @@ export class UsersDao {
             estadoUsuario:document.estadoUsuario,
             enabled: document.enabled,
             userType: document.userType,
-            tipoArtista: document.tipoArtista
+            tipoArtista: document.tipoArtista,
+            opiniones: document.opiniones,
+            enabledHistory: document.enabledHistory
         }
     }
 

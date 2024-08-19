@@ -17,6 +17,8 @@ export class SalaDeEnsayoDto{
     descripcion: string;
     comodidades:[{type: string}];
     opiniones:[{type: string}];
+    enabledHistory?: { status: string;dateFrom: Date, dateTo: Date}[];
+
 
     constructor(sala: SalaDeEnsayo){
         this.id = sala.id
@@ -34,6 +36,8 @@ export class SalaDeEnsayoDto{
         this.comodidades = sala.comodidades;
         this.opiniones = sala.opiniones;
         this.enabled = sala.enabled;
+        this.enabledHistory = sala.enabledHistory;
+
     }
 }
 
@@ -53,6 +57,8 @@ export interface CreateSalaDeEnsayoDto2{
     opiniones?: string; 
     //enabled: boolean;
     enabled: string;
+    enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[]
+
 }
 export interface CreateSalaDeEnsayoDto{
     nameSalaEnsayo: string;
@@ -69,7 +75,9 @@ export interface CreateSalaDeEnsayoDto{
     enabled: string;
     descripcion: string;
     comodidades:undefined;
+    enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[]
 }
+
 export interface UpdateSalaDeEnsayoDto{
     name: string,
     calleDireccion: string,
@@ -77,6 +85,7 @@ export interface UpdateSalaDeEnsayoDto{
     precioHora: number,
     duracionturno: number,
     comodidades:undefined;
+    enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[]
 }
 
 export interface CreateSalaDeEnsayoDtoOpinion{

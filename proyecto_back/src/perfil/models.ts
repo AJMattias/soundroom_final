@@ -11,7 +11,7 @@ export interface Perfil{
     createdAt : Date;
     deletedAt?: Date;
     // permisos?: [] | undefined;
-    permisos?: [{type: string, unique: true}];
+    permisos?: [{type: string}];
 }
 
 export interface PerfilDoc extends Document{
@@ -19,7 +19,7 @@ export interface PerfilDoc extends Document{
     name: string;
     createdAt: Date;
     deletedAt?: Date;
-    permisos?: [{type: string, unique: true}];
+    permisos?: [{type: string}];
 }
 
 export const PerfilSchema = new Schema({
@@ -27,7 +27,6 @@ export const PerfilSchema = new Schema({
     createdAt: Date,
     permisos: [{
         type: Schema.Types.ObjectId,
-        unique: true, 
         ref:'Permiso'}]
 });
 

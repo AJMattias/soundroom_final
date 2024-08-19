@@ -44,6 +44,8 @@ export function AdminSoundRoomReportes({navigation}){
       }
     ]
   })
+  // const [reporte, setReporte] = useState()
+  const [mostrarReporte, setMostrarReporte] = useState(false)
 
   const onDayPressI = (calendarDay) => {
     const dayI = new Date()
@@ -72,7 +74,7 @@ export function AdminSoundRoomReportes({navigation}){
   const [mostrarReporteTortaTipoSala, setMostrarReporteTortaTipoSala] = useState(false)
   const listReportes = tipoReporte.map((reporte) =>
         <Picker.Item key={reporte.id} label={reporte.label} value={reporte.value} />
-    )
+  )
 
     const chartConfig = {
       backgroundGradientFrom: '#fff',
@@ -256,17 +258,20 @@ export function AdminSoundRoomReportes({navigation}){
     const response = await reportesService.reportesNuevosUsuarioss(fechaI, fechaH);
     
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+      // setReporte({
+      //   labels: labels,
+      //   datasets: [
+      //     {
+      //       data: data
+      //     }
+      //   ]
+      // });
+      setReporte(response)
+      if(reporte.labels){
+        setMostrarReporte(true)}
     console.log('reporte nuevos usuarios, response: ', reporte, response);
     return data;
   }
@@ -277,17 +282,20 @@ export function AdminSoundRoomReportes({navigation}){
     const response = await reportesService.reportesNuevosArtistas(fechaI, fechaH);
     
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+      // setReporte({
+      //   labels: labels,
+      //   datasets: [
+      //     {
+      //       data: data
+      //     }
+      //   ]
+      // });
+      setReporte(response)
+      if(reporte.labels){
+        setMostrarReporte(true)}
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
   }
@@ -297,18 +305,22 @@ export function AdminSoundRoomReportes({navigation}){
     console.log("onpressed ver reporte")
     const response = await reportesService.reportesSalasNuevas(fechaI, fechaH);
     
-    //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // //setear reporte con labesl y data
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+    //   setReporte({
+    //     labels: labels,
+    //     datasets: [
+    //       {
+    //         data: data
+    //       }
+    //     ]
+    //   });
+    setReporte(response)
+      if(reporte.labels){
+    setMostrarReporte(true)}
+    
     console.log('reporte salas nuevas, response: ', reporte, response);
     return data;
   }
@@ -316,20 +328,22 @@ export function AdminSoundRoomReportes({navigation}){
   const reportesUsuariosActivos = async () => {
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
-    const response = await reportesService.reportesSalasNuevas(fechaI, fechaH);
-    
+    const response = await reportesService.reportesUsuariosActivos(fechaI, fechaH);
+    setReporte(response)
+    if(reporte.labels){
+    setMostrarReporte(true)}
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+    //   setReporte({
+    //     labels: labels,
+    //     datasets: [
+    //       {
+    //         data: data
+    //       }
+    //     ]
+    //   });
     console.log('reporte usuarios activos, response: ', reporte, response);
     return data;
   }
@@ -338,19 +352,21 @@ export function AdminSoundRoomReportes({navigation}){
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
     const response = await reportesService.reportesUsuariosBaja(fechaI, fechaH);
-    
+    setReporte(response)
+    if(reporte.labels){
+      setMostrarReporte(true)}
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+    //   setReporte({
+    //     labels: labels,
+    //     datasets: [
+    //       {
+    //         data: data
+    //       }
+    //     ]
+    //   });
     console.log('reporte usuarios baja, response: ', reporte, response);
     return data;
   }
@@ -359,19 +375,21 @@ export function AdminSoundRoomReportes({navigation}){
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
     const response = await reportesService.reportesPropAlquianSala(fechaI, fechaH);
-    
+    setReporte(response)
+    if(reporte.labels){
+      setMostrarReporte(true)}
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+    //   setReporte({
+    //     labels: labels,
+    //     datasets: [
+    //       {
+    //         data: data
+    //       }
+    //     ]
+    //   });
     console.log('reporte propietarios que alquilan sala, response: ', reporte, response);
     return data;
   }
@@ -480,7 +498,7 @@ return(
                <Text style={styles.linkReporte}> VER REPORTE</Text>
              </TouchableOpacity> */}
             
-             {selectedReporte && mostrarFechaI && mostrarFechaH && !mostrarReporteTortaTipoSala &&
+             {selectedReporte && mostrarFechaI && mostrarFechaH && !mostrarReporteTortaTipoSala && mostrarReporte &&
                <> <View style={styles.titleContainer}>
                   <Text style={styles.subtitle}>{selectedReporte.value}</Text>
                   {/* <Block style={styles.descarga}>

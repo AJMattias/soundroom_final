@@ -44,7 +44,7 @@ import {
   PermisosListScreen,
   EditarPermisoScreen,
   ConsultComisionScreen,
-  EditUserScreen
+  EditUserScreen,
 } from './src/screens'
 // import CreatePerfilScreen from './src/screens/CreatePerfilScreen'
 // import AdminStartScreen from './src/screens/AdminStartScreen'
@@ -53,11 +53,9 @@ import {
 // import Reportes from './src/screens/AdminSoundRoomReportes'
 // import CreatePerfilPermisoScreen from './src/screens/CreatePerfilPermisoScreen'
 
-
-
 import {Navigation} from "./src/components/index"
-import SalaEnsayoReportes from './src/screens/SalaEnsayoReportes'
 import { CalendarScreen } from './src/screens/CalendarScreen'
+import { SalaReporteScreen } from './src/screens/SalaReportesScreen'
 
 
 const Stack = createStackNavigator()
@@ -96,7 +94,6 @@ export default function App() {
           <Stack.Screen name = "AbmPerfilesScreen" component = {AbmPerfilesScreen} />
           <Stack.Screen name = "CreatePerfilScreen2" component = {CreatePerfilScreen2} />
           <Stack.Screen name = "CreatePerfilScreen" component = {CreatePerfilScreen} />
-          <Stack.Screen name = "SalaEnsayoReportes" component = {SalaEnsayoReportes} />
           <Stack.Screen name="CreateRoom" component={CreateRoom} />
           <Stack.Screen name="BackupBD" component={BackupBD} />
           <Stack.Screen name = "CreatePerfilPermisoScreen" component = {CreatePerfilPermisoScreen} />
@@ -120,6 +117,7 @@ export default function App() {
           <Stack.Screen name = "ConsultComisionScreen" component = {ConsultComisionScreen} />
           <Stack.Screen name = "CalendarScreen" component = {CalendarScreen} />
           <Stack.Screen name = "EditUserScreen" component = {EditUserScreen} />
+          <Stack.Screen name = "SalaReporteScreen" component = {SalaReporteScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       {/* <Navigation/> */}

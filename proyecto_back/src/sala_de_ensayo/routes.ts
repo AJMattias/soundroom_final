@@ -14,6 +14,7 @@ import  * as imageService from "../imagen/service"
 import { admin, auth } from "../server/middleware";
 import { UserDto } from "src/users/dto";
 import * as userService from "../users/service"
+import { PerfilModel } from "../perfil/models";
 
 
 /**
@@ -96,6 +97,7 @@ export const route = (app: Application) => {
     }))
     
 
+    //email cancelacion reaserva por artista
    app.post('/email/',
    validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
    validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -113,6 +115,28 @@ export const route = (app: Application) => {
            Email.sendEmail(mailOptions);
            resp.json("envio exitoso");
        })
+    )
+
+    //cancelacion reserva, aviso a dueño sala de ensayo
+   app.post('/emailOwner/',
+    validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    validator.body("nombreUsuario").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: Request, resp: Response) => {
+            const dto = req.body
+            var Email = require('../server/MailCtrl');
+            const mailOptions = {
+                     from: 'soundroomapp@gmail.com',
+                     //from: process.env.EMAIL
+                     to: dto["receptor"],
+                     subject: "Cancelacion de la sala " + dto["sala"],
+                     html:'<div id=":pf" class="a3s aiL "><table><tbody> <tr> <td style="padding:16px 24px"> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"> <tbody> <tr> <td> <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="auto"> <tbody> <tr> <td> <img alt="Imagen de SoundRoom" border="0" height="70" width="70" src="https://fs-01.cyberdrop.to/SoundRoom_logo-X6fFVkX9.png" style="border-radius:50%;outline:none;color:#ffffff;max-width:unset!important;text-decoration:none" class="CToWUd"></a></td> </tr> </tbody> </table></td> </tr> <tr> <td> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width:396px;padding-bottom:4px;text-align:center"> <tbody> <tr> <td><h2 style="margin:0;color:#262626;font-weight:400;font-size:16px;line-height:1.5">'+"El usuario " + dto["nombreUsuario"] + " ha cancelado la reserva de la sala "+ dto["sala"] + " del dia " + dto["inicio"] + '</h2></td> </tr> </tbody> </table></td> </tr></tbody></table></div>',
+                     text: "El usuario " + dto["nombreUsuario"] + " ha cancelado la reserva de la sala "+ dto["sala"] + " del dia " + dto["inicio"]
+               };
+            Email.sendEmail(mailOptions);
+            resp.json("envio exitoso");
+        })
     )
 
     app.post('/emailReserva/',
@@ -144,28 +168,6 @@ export const route = (app: Application) => {
             resp.json("envio exitoso");
         })
     )
-   app.post('/emailOwner/',
-   validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-   validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-   validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-   validator.body("nombreUsuario").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-       run(async (req: Request, resp: Response) => {
-           const dto = req.body
-           var Email = require('../server/MailCtrl');
-           const mailOptions = {
-                    from: 'soundroomapp@gmail.com',
-                    //from: process.env.EMAIL
-                    to: dto["receptor"],
-                    subject: "Cancelacion de la sala " + dto["sala"],
-                    html:'<div id=":pf" class="a3s aiL "><table><tbody> <tr> <td style="padding:16px 24px"> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"> <tbody> <tr> <td> <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="auto"> <tbody> <tr> <td> <img alt="Imagen de SoundRoom" border="0" height="70" width="70" src="https://fs-01.cyberdrop.to/SoundRoom_logo-X6fFVkX9.png" style="border-radius:50%;outline:none;color:#ffffff;max-width:unset!important;text-decoration:none" class="CToWUd"></a></td> </tr> </tbody> </table></td> </tr> <tr> <td> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width:396px;padding-bottom:4px;text-align:center"> <tbody> <tr> <td><h2 style="margin:0;color:#262626;font-weight:400;font-size:16px;line-height:1.5">'+"El usuario " + dto["nombreUsuario"] + " ha cancelado la reserva de la sala "+ dto["sala"] + " del dia " + dto["inicio"] + '</h2></td> </tr> </tbody> </table></td> </tr></tbody></table></div>',
-                    text: "El usuario " + dto["nombreUsuario"] + " ha cancelado la reserva de la sala "+ dto["sala"] + " del dia " + dto["inicio"]
-              };
-           Email.sendEmail(mailOptions);
-           resp.json("envio exitoso");
-       })
-   )
-
-
 
     app.post("/salasdeensayo/", 
     auth,
@@ -222,6 +224,10 @@ export const route = (app: Application) => {
                 idSalaDeEnsayo: idSala,
                 tipoArtista: user.tipoArtista
             })
+            //si usuario es artista, cambiarlo a SdE
+            const perfilUserLogged = PerfilModel.findById(user.idPerfil)
+            if(user.idPerfil)
+            resp.json({user, perfilUserLogged})
 
            // copiar a perfil con usuario
             resp.json(sala)
@@ -280,8 +286,9 @@ export const route = (app: Application) => {
     )
 
     app.put("/salasdeensayo/update/", 
+    auth,
     validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-    run( async(req: Request, resp: Response) => {
+    run( async(req: any, resp: Response) => {
         const errors = validator.validationResult(req)
             if(errors && !errors.isEmpty()){
                 throw ValidatorUtils.toArgumentsException(errors.array())
@@ -327,6 +334,7 @@ export const route = (app: Application) => {
                 descripcion: dto["descripcion"],
                 enabled: dto["enabled"]
             })
+            
             resp.json(sala)
         })
     )
@@ -365,7 +373,7 @@ export const route = (app: Application) => {
             let dtoNewUsersReport = [] 
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
-            const NewUsersReport = await  service.instance.obtenerCantidadNuevasSdEPorMes(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.reporteNuevasSdE(dto.fechaI, dto.fechaH)
             
         resp.json(NewUsersReport)    
         })
@@ -496,20 +504,41 @@ export const route = (app: Application) => {
             if(!dto["idUser"]){
                 dto["idUser"] = req.user.id
             }
-            if(dto["idRoom"]){
-                dto["idArtist"] = ''
-            }else{
-                dto["idRoom"] = ''
+            if(!dto["idRoom"]){
+                dto["idRoom"] = opinionOriginal["idRoom"]
             }
+            
             const opinionUpdate = await service.instance.updateOpinion(id,{
                 descripcion:dto["descripcion"],
                 estrellas:dto["estrellas"],
                 idUser:dto["idUser"],
                 idRoom: dto["idRoom"],
-                idArtist: dto["idArtist"],
+                idArtist: '',
             })
             resp.json(opinionUpdate)
         }))
+
+        app.put("/saladeensayo/updateOpinionToArtist/",
+            auth,
+            validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+            run(async (req: any, resp: Response) =>{
+                const errors = validator.validationResult(req)
+                    if(errors && !errors.isEmpty()){
+                        throw ValidatorUtils.toArgumentsException(errors.array())
+                    }
+                const dto = req.body
+                const id = req.query.id as string
+                console.log("ruta update Opinion: ", dto)
+                
+                const opinionUpdate = await service.instance.updateOpinion(id,{
+                    descripcion:dto["descripcion"],
+                    estrellas:dto["estrellas"],
+                    idUser:req.user.id,
+                    idRoom: '',
+                    idArtist: dto["idArtist"],
+                })
+                resp.json(opinionUpdate)
+            }))
 
     app.get("/salaPromedio/", run( async(req: Request, res: Response)=>{
 
@@ -577,6 +606,31 @@ export const route = (app: Application) => {
 
     })
     )
+
+     //get opinion hecha por usuario logueado SdE,  get mi opinion sobre una artista en particular
+     app.get("/salaOpinion/getMyOpinionToArtist/", 
+        auth, 
+        validator.query("idArtist").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: any, resp: Response)=>{
+            console.log('route getting opinion to room')
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            //const idUser = req.query.id as string
+            const idUser = req.user.id
+            const dto = req.body
+            const idArtist = req.query.idArtist
+            console.log('ruta get my opinion to room:')
+            console.log('idUser: ', idUser)
+            console.log('idArtist: ', idArtist)
+            //const opinion = await service.instance
+            const opinion = await service.instance.getOpinionByUserAndArtist(idUser, idArtist)
+            console.log('route response opinion to room: ', opinion)
+            resp.json(opinion)
+    
+        })
+        )
 
     //TODO get opinones sobre un artista
     app.get("/opinionToArtista/",
@@ -666,7 +720,7 @@ export const route = (app: Application) => {
       );
 
    
-      app.get("/salasdeensayo/cantidadVaoraciones", 
+      app.get("/salasdeensayo/cantidadVaoraciones/", 
       auth,
       run(async (req: any, resp: Response) => {
           const errors = validator.validationResult(req)
@@ -674,16 +728,17 @@ export const route = (app: Application) => {
               throw ValidatorUtils.toArgumentsException(errors.array())
           }
           const dto = req.body 
-          const id = req.query.id as string
+          const id = req.query.idRoom as string
           
           console.log("ruta cantidad valoraciones")
         
           //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
           //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
-          const NewUsersReport = await  service.instance.obtenerCantidadValoraciones(id)
+          const NewUsersReport = await  service.instance.obtenerCantidadValoracionesDos(id)
           
       resp.json(NewUsersReport)    
       })
+      
 
       
 

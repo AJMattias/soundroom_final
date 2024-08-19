@@ -51,14 +51,14 @@ export const route = (app: Application) => {
 
     app.put("/comision/actualizarComision/", auth, admin,
     validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED), 
-    validator.body("porcentaje").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    //validator.body("porcentaje").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     run(async( req: Request, resp: Response)=>{
         const errors = validator.validationResult(req)
         if(errors && !errors.isEmpty()){
             throw ValidatorUtils.toArgumentsException(errors.array())
         }
         const id = req.query.id as string
-        const dto = req.body
+        //const dto = req.body
         // const original : ComisionDto = await service.instance.findEnabled()
         // if(!dto["porcentaje"]){
         //     dto["porcentaje"] = original["porcentaje"]
@@ -66,10 +66,12 @@ export const route = (app: Application) => {
         // if(!dto["createdAt"]){
         //     dto["createdAt"] = original["createdAt"]
         // }
-        const comision = await service.instance.actualizarComision(id, {
-            porcentaje: dto["porcentaje"],
-            //createdAt: dto["createdAt"]
-        })
+        const comision = await service.instance.updateComisionEnabled(id
+            //, {
+            //porcentaje: dto["porcentaje"],
+            //createdAt: dto["createdAt"]}
+        )
+        console.log('route response: ', comision)
         resp.json(comision)
     }))
 

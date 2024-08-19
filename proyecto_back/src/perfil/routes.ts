@@ -123,6 +123,27 @@ export const route = (app: Application) => {
     })
     )
 
+    app.put("/perfil/addPermisoToPerfil/",
+        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run( async( req: Request, resp: Response) => {
+            const errors = validator.validationResult(req)
+                if(errors && !errors.isEmpty()){
+                    throw ValidatorUtils.toArgumentsException(errors.array())
+                }
+            const dto = req.body
+            const id = req.query.id as string
+            const perfilOriginal : PerfilDto = await service.instance.findPerfilById(id)
+                if(!dto["name"]){
+                    dto["name"] = perfilOriginal["name"];
+                }
+            const perfil = await service.instance.addPermisoToPerfil(id, {
+                name: dto["name"],
+                permisos: dto["permisos"]
+            })
+            resp.json(perfil)
+        })
+        )
+
     app.put("/perfil/deletePermisoFromPerfil/",
     validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     run( async( req: Request, resp: Response) => {

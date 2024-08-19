@@ -30,7 +30,8 @@ export class ComisionDao{
     }
 
     async findEnabled(): Promise<Comision> {
-        const model = await ComisionModel.findOne({enabled: true})
+        const model = await ComisionModel.findOne({enabled: 'true'})
+        console.log('dao find enabled: ', model)
         if (!model) throw new ModelNotFoundException()
         return this.mapToComision(model)
     }

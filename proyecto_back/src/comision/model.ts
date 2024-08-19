@@ -10,7 +10,7 @@ export interface Comision{
     porcentaje: number,
     createdAt: Date,
     deletedAt?:Date,
-    enabled: boolean
+    enabled: string
 }
 
 export interface ComisionDoc extends Document{
@@ -18,14 +18,14 @@ export interface ComisionDoc extends Document{
     porcentaje: number;
     createdAt: Date;
     deletedAt?:Date;
-    enabled: boolean;
+    enabled: string;
 }
 
 export const ComisionSchema = new Schema({
     porcentaje: {type: Number, unique: true},
     createdAt: Date,
     deletedAt: Date,
-    enabled: Boolean
+    enabled: String
 })
 
 export const ComisionModel = mongoose.model<ComisionDoc>("Comision", ComisionSchema)

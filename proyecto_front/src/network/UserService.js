@@ -88,7 +88,8 @@ class UserService {
         lastName,
         enabled,
         idPerfil,
-        tipoArtista
+        tipoArtista,
+        password
     ) {
         const user =  await api.put("/users/update/?id="+userId, {
                 email: email,
@@ -96,7 +97,8 @@ class UserService {
                 last_name: lastName,
                 enabled: enabled,
                 idPerfil: idPerfil,
-                tipoArtista: tipoArtista
+                tipoArtista: tipoArtista,
+                password: password
             }
         )
         await LocalPhoneStorage.set("user", user)

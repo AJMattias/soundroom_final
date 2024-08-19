@@ -84,7 +84,7 @@ exports.sendEmailAsync = async (mailOptions) =>  {
             console.error(error)
            throw new ServerException("Error sending email")
         } else {
-            console.log("Email sent");
+            console.log("Email sent to and msj: ", mailOptions );
         }
     });
 };

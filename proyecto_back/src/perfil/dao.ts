@@ -1,9 +1,11 @@
-import { ObjectId } from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
 import { Perfil, PerfilDoc, PerfilModel } from "./models";
 import { ModelNotFoundException } from "../common/exception/exception";
 import { Permiso, PermisoDoc, PermisoModel} from "./modelPermiso";
-import { CreatePerfilDto, CreatePermisoDto } from "./dto";
+import { CreatePerfilDto, CreatePerfilDto2, CreatePermisoDto } from "./dto";
 import {StringUtils} from "../common/utils/string_utils"
+
+
 
 export class PerfilDao{
 
@@ -135,6 +137,41 @@ export class PerfilDao{
             id: document._id,
             permisos: document.permisos
         }
+    }
+
+    async addPermisosToPerfil(perfilId: string, permisos: string[]): Promise<Perfil> {
+        const permisosObjectIds = this.convertToObjectIdArray(permisos);
+        // Paso 1: Obtener el perfil actual para verificar si tiene el atributo permisos
+        const perfilActual = await PerfilModel.findById(perfilId).exec();
+
+        if (!perfilActual) {
+            throw new Error("Perfil not found");
+        }
+
+        // Paso 2: Si el perfil tiene el atributo permisos, eliminarlo
+        if (perfilActual.permisos) {
+            await PerfilModel.updateOne(
+                { _id: perfilId },
+                { $unset: { permisos: "" } }
+            ).exec();
+        }
+
+        // Paso 3: Actualizar el perfil con los nuevos permisos
+        const updated = await PerfilModel.findByIdAndUpdate(
+            perfilId,
+            { $set: { permisos: permisosObjectIds } },
+            { new: true } // Devuelve el documento actualizado
+        ).exec();
+    
+        if (!updated) {
+            throw new ModelNotFoundException();
+        }
+        return this.mapToPerfil(updated);
+    }
+
+     convertToObjectIdArray(ids: string[]): mongoose.Types.ObjectId[] {
+        const uniqueIds = Array.from(new Set(ids)); // Elimina duplicados
+        return uniqueIds.map(id => new mongoose.Types.ObjectId(id));
     }
 
 }

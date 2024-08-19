@@ -59,7 +59,7 @@ class OrdersService {
         try {
             await emailService.sendEmailToUser(
                 order.idUser,
-                `Tu reserva para ${order.idRoom.nameSalaEnsayo} para el dia ${order.date.toLocaleDateString()}, ha sido cancelada por el dueño.`
+                `Tu reserva para ${order.idRoom.nameSalaEnsayo} para el dia ${order.date.toLocaleDateString()}, ha sido cancelada por el dueño. Front message`
             )
         } catch(emailException) {
             console.error("Error sending email")

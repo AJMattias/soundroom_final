@@ -65,10 +65,11 @@ class perfilService{
 
     async addPermisosToProfile(
         idPerfil,
-        idPermiso,
+        permisos,
     ){
-        return await api.put("perfil/update/?id="+idPerfil,{
-            permisos : idPermiso,
+        //return await api.put("perfil/update/?id="+idPerfil,{
+            return await api.put("perfil/addPermisoToPerfil/?id="+idPerfil,{
+            permisos : permisos,
         })
     }
 

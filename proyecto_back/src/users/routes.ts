@@ -12,8 +12,15 @@ import { dangerouslyDisableDefaultSrc } from "helmet/dist/middlewares/content-se
 import { generateBarChartExample, generatePDF, generateBarChart   } from '../common/utils/generatePdf'
 import { convertirMeses } from "../common/utils/mesesDiccionario"
 import path from "path"
+import { OpinionModel } from "../sala_de_ensayo/model"
+import { OpinionDto } from "../sala_de_ensayo/dto"
+import * as  salaService from "../sala_de_ensayo/service"
 //import fs from 'fs';
 const fs = require('fs-extra');
+var mongoose = require('mongoose');
+
+//opinion service
+import * as opinionService from "../sala_de_ensayo/service"
 
 /**
  * 
@@ -42,7 +49,7 @@ export const route = (app: Application) => {
             if(errors && !errors.isEmpty()){
                 throw ValidatorUtils.toArgumentsException(errors.array())
             }
-            //TODO  : 
+            
             // retornar json de objeto User segun un id pasado 
             // ej : {"id" : "124", "name":  "Zahi" , "last_name": }
             const email = req.query.email as string
@@ -66,6 +73,7 @@ export const route = (app: Application) => {
             }
             const dto = req.body
             const id = req.query.id as string
+            console.log('update user dto: ', dto)
             const userOriginal : UserDto = await  service.instance.findUserById(id)
             if (!dto["name"]) {
                 dto["name"] = userOriginal["name"];
@@ -103,6 +111,9 @@ export const route = (app: Application) => {
             if (!dto["tipoArtista"]) {
                 dto["tipoArtista"] = userOriginal["tipoArtista"];
             } 
+            if (!dto["password"]) {
+                dto["password"] = userOriginal["password"];
+            } 
             console.log(" ruta update user, baja:? ", dto["enabled"])
             console.log('idPerfil: ', dto["idPerfil"])
             const user = await service.instance.updateUser(id,{
@@ -117,7 +128,8 @@ export const route = (app: Application) => {
                 image_id: undefined,
                 userType: dto["userType"],
                 idSalaDeEnsayo: dto["idSalaDeEnsayo"],
-                tipoArtista: dto['tipoArtista']
+                tipoArtista: dto['tipoArtista'],
+                createdAt: dto["createdAt"]
             })
             resp.json(user)
         })
@@ -179,7 +191,8 @@ export const route = (app: Application) => {
                     idSalaDeEnsayo: dto["idSalaDeEnsayo"],
                     tipoArtista: dto['tipoArtista']
                 })
-                resp.json( )    
+                const loginResponse = await service.instance.login(user.email, user.password)
+                resp.json( loginResponse)    
              }
          )
      )
@@ -267,8 +280,9 @@ export const route = (app: Application) => {
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             const NewUsersReport = await  service.instance.obtenerCantidadDocumentosPorMes(dto.fechaI, dto.fechaH)
+            const NewUsersReport2 = await  service.instance.reporteNuevosUsuarios(dto.fechaI, dto.fechaH)
             
-            resp.json(NewUsersReport)    
+            resp.json(NewUsersReport2)    
     }))
 
     app.post("/users/reportesNuevosArtistas/", 
@@ -291,7 +305,7 @@ export const route = (app: Application) => {
             let dtoNewUsersReport = [] 
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
-            const NewUsersReport = await  service.instance.obtenerArtistasNuevosPorMes(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.reporteNuevosArtistas(dto.fechaI, dto.fechaH)
             
             resp.json(NewUsersReport)    
     }))
@@ -354,11 +368,11 @@ export const route = (app: Application) => {
             }
             const dto = req.body 
             //fechaID = 'YYYY-MM-DD'
-            console.log("ruta reporte nuevos usuarios")
+            console.log("ruta reporte propietarios que alquilan")
             console.log(dto.fechaI)
             console.log(dto.fechaH)
             
-            const NewUsersReport = await  service.instance.propietariosAlquilanSala2(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.propietariosAlquilanSala3(dto.fechaI, dto.fechaH)
             
             resp.json(NewUsersReport)    
     }))
@@ -437,4 +451,58 @@ export const route = (app: Application) => {
             resp.json({NewUsersReport, directorioPDF}) 
     }))
 
+    //TODO Promedio estrellas de artista
+    app.get("/artistaPromedio/", run( async(req: Request, res: Response)=>{
+
+        //idArtista
+        const id = req.query.id as string
+        const idArtist = mongoose.Types.ObjectId(id)
+         // Encontrar opiniones por idArtist
+        //  const opiniones: OpinionDto[] = await OpinionModel.find({idArtist: idArtist });
+        //  // Calcular el promedio de estrellas
+        //  console.log('opiniones al artista: ', opiniones)
+        //  if (opiniones.length = 0) {
+        //      return res.json( 0 );
+        //  }
+ 
+        //  const totalEstrellas = opiniones.reduce((total, opinion) => total + opinion.estrellas, 0);
+        //  const promedio = totalEstrellas / opiniones.length;
+
+        //retorna solo el numero, ej: 3.5
+       // res.json(promedio)
+
+        // try {
+        //     const result = await OpinionModel.aggregate([
+        //         { $match: { idArtist: new mongoose.Types.ObjectId(id) } },
+        //         { $group: { _id: null, averageRating: { $avg: "$estrellas" } } }
+        //     ]);
+    
+        //     if (result.length > 0) {
+        //         res.json(result[0].averageRating)
+        //     } else {
+        //         res.json(0) // Si no hay opiniones para ese artista
+        //     }
+        // } catch (error) {
+        //     console.error("Error calculando el promedio de estrellas:", error);
+        //     throw error;
+        // }
+
+        //forma 3;
+         // Buscar todas las opiniones para el artista
+         const opiniones = await OpinionModel.find({ idArtist: idArtist });
+         console.log('opiniones al artista: ', opiniones)
+
+         if (opiniones.length === 0) {
+             return res.json(0) // Si no hay opiniones para ese artista
+         }
+
+         // Calcular el promedio de estrellas
+        const totalEstrellas = opiniones.reduce((acc, opinion) => acc + opinion.estrellas, 0);
+        const promedioEstrellas = totalEstrellas / opiniones.length;
+        console.log('promedio de estrellas de artista: ', promedioEstrellas)
+
+        res.json( promedioEstrellas)
+ 
+
+    }) )
 }

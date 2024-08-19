@@ -17,6 +17,7 @@ import { FeaturedArtists } from "../components/FeaturedArtists"
 import { roomService } from "../network/RoomService"
 import { LocalPhoneStorage, STORAGE_USER } from "../storage/LocalStorage"
 import { RoomCard } from "../components/RoomCard"
+import { CarouselVertical } from "../components/CarouselVertical";
 
 
 export default function CreateUserProfileScreen({ navigation }) {
@@ -106,15 +107,23 @@ export default function CreateUserProfileScreen({ navigation }) {
     const renderOwnerRooms = () => {
         if(ownerRooms && ownerRooms.length > 0) {
             return (
-                <Block style = {styles.ownerRoomsContainer}>
-                    <Text style = {styles.subtitle} >Tus salas</Text>
-                    {ownerRooms.map((room) => (
-                        <RoomCard room = {room} navigation = {navigation} />
-                    ))}
-                </Block>
+                // <Block style = {styles.ownerRoomsContainer}>
+                //     <Text style = {styles.subtitle} >Tus salas</Text>
+                //     {ownerRooms.map((room) => (
+                //         <RoomCard room = {room} navigation = {navigation} />
+                //     ))}
+                // </Block>
+                <CarouselVertical
+                        navigation  = {navigation}
+                        title = "Tus Salas"
+                        style = {[{marginTop: 26}]}
+                        ownerRooms = {ownerRooms}
+                    />
             )
         }
     }
+
+    //renderownerrooms vertical carrusel
 
     const openCreateRoom = () => {
         navigation.push("CreateRoom", {

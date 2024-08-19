@@ -16,14 +16,14 @@ import { StateScreen } from '../components/StateScreen'
 // const Tab = createBottomTabNavigator()
 
 export default function StartScreen({ navigation }) {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const seedData = async() =>{
-    await seed()
-    setIsLoading(false)
-  }
+  // const seedData = async() =>{
+  //   //await seed()
+  //   setIsLoading(false)
+  // }
 
-  seedData().then()
+  // seedData().then()
 
   return (
     <StateScreen loading = {isLoading}>

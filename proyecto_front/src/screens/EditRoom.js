@@ -110,8 +110,8 @@ export  function EditRoom({ route, navigation }) {
     }
 
     const fetchTypes = async () => {
-      console.log('typesFetched.length: ', typesFetched.length)
-      if(!typesFetched && typesFetched.length >1){
+      console.log('typesFetched.length: ', types.length)
+      if(!typesFetched && types.length <=1){
         try{
           const response  = await roomService.searchType()
           console.log("Got types")

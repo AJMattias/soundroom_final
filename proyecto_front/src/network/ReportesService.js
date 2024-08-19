@@ -149,9 +149,10 @@ class ReportesService{
         return reportena  
     }
     //reportes para sala de ensayo
-    async cantidadSalaReservas(fechaInicio, fechaHasta){
+    async cantidadSalaReservas(idSala, fechaInicio, fechaHasta){
         console.log('fechaI: ', fechaInicio)
         console.log('fechaH: ', fechaHasta)
+        console.log('id sala: ', idSala)
         //parsear fechas
         let fechaIn = formatFecha(fechaInicio)
         let fechaHa = formatFecha(fechaHasta)
@@ -163,34 +164,31 @@ class ReportesService{
 
         const reportena = api.post("/reservations/reservationsPorSalaMes/", {
             fechaI: fechaIn, 
-            fechaH: fechaHa})
+            fechaH: fechaHa, 
+            idRoom: idSala})
         console.log('reportena: ', reportena)
         return reportena  
     }
 
-    async valoraciones (fechaInicio, fechaHasta){
-        console.log('fechaI: ', fechaInicio)
-        console.log('fechaH: ', fechaHasta)
-        //parsear fechas
-        let fechaIn = formatFecha(fechaInicio)
-        let fechaHa = formatFecha(fechaHasta)
-        
-        console.log('fechaI: ', fechaIn)
-        console.log('fechaH: ', fechaHa)
-        console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
-        console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+    async valoraciones (idRoom){
 
-        const reportena = api.get("/salasdeensayo/cantidadVaoraciones", {
-            fechaI: fechaIn, 
-            fechaH: fechaHa})
+        const reportena = api.get("/salasdeensayo/cantidadVaoraciones/?idRoom="+idRoom)
         console.log('reportena: ', reportena)
         return reportena  
     }
 
-    //dia ams reservado
+
+    //dia mas reservado
+
+    async cantidadPorDia(idRoom){
+
+        const reportena = api.get("reservations/cantidadReservasPorDia/?idRoom="+idRoom)
+        console.log('reportena: ', reportena)
+        return reportena  
+    }
 
     //cancelaciones reserva
-    async cantidadCanceledSalaReservas(fechaInicio, fechaHasta){
+    async cantidadCanceledSalaReservas(sala, fechaInicio, fechaHasta){
         console.log('fechaI: ', fechaInicio)
         console.log('fechaH: ', fechaHasta)
         //parsear fechas
@@ -201,10 +199,12 @@ class ReportesService{
         console.log('fechaH: ', fechaHa)
         console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
         console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+        console.log('sala id: ', sala)
 
         const reportena = api.post("/reservations/reservationsCanceladasPorSalaMes/", {
             fechaI: fechaIn, 
-            fechaH: fechaHa})
+            fechaH: fechaHa, 
+            idRoom: sala})
         console.log('reportena: ', reportena)
         return reportena  
     }

@@ -41,9 +41,10 @@ class comisionService{
             porcentaje: porcentaje
         })
     }
-    async actualizarComision(idComision, porcentaje){
+    async actualizarComision(idComision){
         return await api.put("/comision/actualizarComision/?id="+idComision,
-        {porcentaje: porcentaje})
+        //{porcentaje: porcentaje}
+        )
     }
     
 

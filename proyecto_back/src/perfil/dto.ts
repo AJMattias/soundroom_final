@@ -7,7 +7,7 @@ export class PerfilDto{
     id: string;
     createdAt?: Date;
     deletedAt?: Date;
-    permisos?: [{type: string, unique: true}];
+    permisos?: [{type: string}];
 
 
 
@@ -22,7 +22,7 @@ export class PerfilPermisoDto{
     id: string;
     createdAt?: Date;
     deletedAt?: Date;
-    permisos?: [{type: string, unique: true}];
+    permisos?: [{type: string}];
 
 
     constructor(perfil: Perfil){
@@ -57,6 +57,15 @@ export interface CreatePerfilDto{
     name: string;
     createdAt?: Date;
     deletedAt?: Date;
-    permisos?: undefined;
+    //permisos?: undefined;
+    permisos?: string[];
+}
+
+export interface CreatePerfilDto2{
+    name: string;
+    createdAt?: Date;
+    deletedAt?: Date;
+    //permisos?: undefined;
+    permisos: string[];
 }
 

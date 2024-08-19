@@ -1,6 +1,9 @@
+import { UserModel } from "src/users/models";
+import { PerfilModel } from "../perfil/models";
 import * as dao from "./dao"
 import { CreateOpinionDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, OpinionDto, SalaDeEnsayoDto} from "./dto";
 import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoModel } from "./model";
+import { displayPartsToString } from "typescript";
 var mongoose = require('mongoose');
 
 export interface CreateSalaDeEnsayoDto{
@@ -120,20 +123,69 @@ export class SalaService{
 
     // rehacer, modificar codigo update y delete
     async updateSalaDeEnsayo(id: string, dto: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayoDto>{
-        console.log('service update Sala:', dto)
-        return this.mapToDto(
-            await this.dao.updateSala(id,{
-                nameSalaEnsayo: dto.nameSalaEnsayo,
-                calleDireccion: dto.calleDireccion,
-                numeroDireccion: dto.numeroDireccion,
-                duracionTurno: dto.duracionTurno,
-                precioHora: dto.precioHora,
-                comodidades: dto.comodidades,
-                descripcion: dto.descripcion,
-                enabled: dto.enabled
-            })
-        
-        )
+        const sala = await this.dao.findById(id)
+        console.log('sala encontrada: ', sala)
+        if(sala.enabled == dto.enabled){
+            console.log('service update Sala enabled iguales:', dto)
+            return this.mapToDto(
+                await this.dao.updateSala(id,{
+                    nameSalaEnsayo: dto.nameSalaEnsayo,
+                    calleDireccion: dto.calleDireccion,
+                    numeroDireccion: dto.numeroDireccion,
+                    duracionTurno: dto.duracionTurno,
+                    precioHora: dto.precioHora,
+                    comodidades: dto.comodidades,
+                    descripcion: dto.descripcion,
+                    enabled: dto.enabled,
+                    createdAt: dto.createdAt
+                })
+            )
+        }
+        if(sala.enabled != dto.enabled){
+            console.log('service update Sala enabled distintos:', dto)
+            await this.dao.stopEnabledSala(id)
+            //if(dto.enabled === "habilitado"){
+            return this.mapToDto(
+                await this.dao.updateSala(id,{
+                    nameSalaEnsayo: dto.nameSalaEnsayo,
+                    calleDireccion: dto.calleDireccion,
+                    numeroDireccion: dto.numeroDireccion,
+                    duracionTurno: dto.duracionTurno,
+                    precioHora: dto.precioHora,
+                    comodidades: dto.comodidades,
+                    descripcion: dto.descripcion,
+                    enabled: dto.enabled,
+                    createdAt: dto.createdAt
+                })
+            )
+            //} if(dto.enabled === "deshabilitado"){
+            //     return this.mapToDto(
+            //         await this.dao.updateSala(id,{
+            //             nameSalaEnsayo: dto.nameSalaEnsayo,
+            //             calleDireccion: dto.calleDireccion,
+            //             numeroDireccion: dto.numeroDireccion,
+            //             duracionTurno: dto.duracionTurno,
+            //             precioHora: dto.precioHora,
+            //             comodidades: dto.comodidades,
+            //             descripcion: dto.descripcion,
+            //             enabled: dto.enabled
+            //         })
+            //     )}
+        }else{
+            console.log('service update Sala otro:', dto)
+            return this.mapToDto(
+                await this.dao.updateSala(id,{
+                    nameSalaEnsayo: dto.nameSalaEnsayo,
+                    calleDireccion: dto.calleDireccion,
+                    numeroDireccion: dto.numeroDireccion,
+                    duracionTurno: dto.duracionTurno,
+                    precioHora: dto.precioHora,
+                    comodidades: dto.comodidades,
+                    descripcion: dto.descripcion,
+                    enabled: dto.enabled,
+                    createdAt: dto.createdAt
+                }))
+        }
     }
 
     async updateSalaDeEnsayoOpinion(id: string, dto: CreateSalaDeEnsayoDtoOpinion): Promise<SalaDeEnsayoDto>{
@@ -212,6 +264,73 @@ export class SalaService{
         
     }
 
+    //reporte nuevos sde por mes v2
+    async reporteNuevasSdE (fechaInicioStr: string, fechaFinStr: string) {
+        try {
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
+
+    
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
+    
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
+            }
+    
+            // Encontrar las reservas que coincidan con las condiciones
+            const sde = await SalaDeEnsayoModel.find({
+                createdAt: { $gte: fechaInicio, $lte: fechaFin },
+            });
+    
+            // Agrupar las reservas por mes
+            sde.forEach(sala => {
+                const mes = sala.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Salas de ensayo nuevas agrupados por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            }
+
+            } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo salas de ensayo por mes');
+        }
+    }
+
+    getMonthAbbreviation(month: string): string {
+        const monthAbbreviations = [
+          "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+        ];
+        // const [year, monthNumber] = month.split("-");
+        // return monthAbbreviations[parseInt(monthNumber, 10) - 1];
+        const yearMonth = month.split("-");
+        const monthIndex = parseInt(yearMonth[1], 10) - 1; // Convertir el mes en índice (0-11)
+        return monthAbbreviations[monthIndex];
+      }
+
     obtenerNombreDelMes = (mes: number): string => {
         const nombresDeMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         return nombresDeMeses[mes];
@@ -250,40 +369,82 @@ export class SalaService{
     }
 
     
-async  obtenerCantidadValoraciones(idOwner: string) {
+async  obtenerCantidadValoraciones(idRoom: string) {
     try {
-        // Buscar todas las salas de ensayo del usuario
-        const salas = await SalaDeEnsayoModel.find({ idOwner: mongoose.Types.ObjectId(idOwner) });
 
         // Crear un objeto para almacenar la cantidad de valoraciones de cada tipo
         const valoracionesCount: { [key: string]: number } = {};
 
-        // Iterar sobre cada sala de ensayo
-        for (const sala of salas) {
-            // Buscar las opiniones asociadas a la sala
-            const opiniones = await OpinionModel.find({ _id: { $in: sala.opiniones } });
+        // Buscar las opiniones asociadas a la sala
+        const idSala = mongoose.Types.ObjectId(idRoom);
+        const opiniones : OpinionDto[] = await OpinionModel.find({idRoom: idSala}).exec();
+        console.log('opiniones: ', opiniones)
 
-            // Contar la cantidad de valoraciones de cada tipo
-            for (const opinion of opiniones) {
-                const valoracionStr = opinion.estrellas.toString();
-                if (valoracionesCount[valoracionStr]) {
-                    valoracionesCount[valoracionStr]++;
-                } else {
-                    valoracionesCount[valoracionStr] = 1;
-                }
+        // Contar la cantidad de valoraciones de cada tipo
+        for (const opinion of opiniones) {
+            const valoracionStr = opinion.estrellas.toString();
+            if (valoracionesCount[valoracionStr]) {
+                valoracionesCount[valoracionStr]++;
+            } else {
+                valoracionesCount[valoracionStr] = 1;
             }
         }
+        // Crear el arreglo de labels y datasets en el formato deseado
+        const labels = Array.from({ length: 5 }, (_, i) => (i + 1).toString()); // "1", "2", "3", "4", "5"
+        const data = labels.map((label) => valoracionesCount[label] || 0);
 
         // Devolver el resultado en el formato deseado
-        return Object.keys(valoracionesCount).map((valoracionStr) => ({
-            valoracion: valoracionStr,
-            cantidad: valoracionesCount[valoracionStr]
-        }));
+        return {
+        labels,
+        datasets: [
+            {
+            data,
+            },
+        ],
+        };
+    
     } catch (error) {
         console.error("Error al obtener cantidad de valoraciones:", error);
         throw error;
     }
+
 }
+
+
+    async  obtenerCantidadValoracionesDos(idRoom: string) {
+        try {
+
+            // Crear un objeto para almacenar la cantidad de valoraciones de cada tipo
+            // const valoracionesCount: { [key: string]: number } = {};
+            const labels = Array.from({ length: 5 }, (_, i) => (i + 1).toString()); // "1", "2", "3", "4", "5"
+            const data = labels.map((label) => 0);
+            // Buscar las opiniones asociadas a la sala
+            const opiniones : OpinionDto[] = await OpinionModel.find({idRoom: idRoom}).exec();
+            console.log('opiniones: ', opiniones)
+            // for para contar la cantidad de estrellas que tiene la sala
+            for (let i: number = 1; i<5; i++){
+                const cantidad = await OpinionModel.countDocuments({
+                    estrellas: i,
+                    idRoom: idRoom
+                });
+                data[i-1] = cantidad;
+            }
+
+            // Devolver el resultado en el formato deseado
+            return {
+            labels,
+            datasets: [
+                {
+                data,
+                },
+            ],
+            };
+        
+        } catch (error) {
+            console.error("Error al obtener cantidad de valoraciones:", error);
+            throw error;
+        }
+    }
     
     // service para opinion
     async createOpinion(dto: CreateOpinionDto):Promise <OpinionDto>{
@@ -318,6 +479,11 @@ async  obtenerCantidadValoraciones(idOwner: string) {
         return this.mapToDtoOpinion(opinion)
     }
 
+
+    async getOpinionByUserAndArtist (idUser: string, idArtist: string):Promise<OpinionDto>{
+        const opinion = await this.dao.getOpinionByUserAndArtist(idUser, idArtist)
+        return this.mapToDtoOpinion(opinion)
+    }
     async getOpinionById(idOpinion: string): Promise<OpinionDto>{
         const opinion = await this.dao.getOpinionById(idOpinion)
         return this.mapToDtoOpinion(opinion)
@@ -326,6 +492,7 @@ async  obtenerCantidadValoraciones(idOwner: string) {
     //get opiniones sobre un artista
     async getOpinionToArtist(idArtist: string): Promise<Array<OpinionDto>>{
         const opiniones = await this.dao.getOpinionToArtist(idArtist)
+        console.log('service promedio estrellas de artista opiniones, get opiniones: ', opiniones)
         return opiniones.map((opinion: Opinion) => {
             return this.mapToDtoOpinion(opinion)
         })

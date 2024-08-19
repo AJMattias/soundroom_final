@@ -17,7 +17,9 @@ export class UserDto{
     estadoUsuario?:[{type: string}];
     userType: string;
     idSalaDeEnsayo:[{type: string}];
-    tipoArtista: string
+    tipoArtista: string;
+    opiniones?:[{type: string}];
+    enabledHistory?: { status: string;dateFrom: Date, dateTo: Date}[];
 
 
     /**
@@ -42,7 +44,9 @@ export class UserDto{
         this.estadoUsuario = user.estadoUsuario
         this.userType = user.userType
         this.idSalaDeEnsayo= user.idSalaDeEnsayo
-        this.tipoArtista= user.tipoArtista
+        this.tipoArtista= user.tipoArtista;
+        this.opiniones = user.opiniones;
+        this.enabledHistory = user.enabledHistory;
     
     }
 }
@@ -62,7 +66,10 @@ export interface CreateUserDto {
     estadoUsuario?: EstadoUsuario;
     userType: string;
     idSalaDeEnsayo:string;
-    tipoArtista: string;
+    tipoArtista: string; 
+    opiniones?: string; 
+    enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[]
+    
 
 }
 
@@ -109,7 +116,8 @@ export interface addSalaToUserDto{
     enabled: string;
     estadoUsuario?: EstadoUsuario;
     userType: string;
-    idSalaDeEnsayo: string
+    idSalaDeEnsayo: string;
+    
 }
 
 

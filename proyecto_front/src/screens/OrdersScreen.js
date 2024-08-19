@@ -108,7 +108,8 @@ export const OrdersScreen = ({navigation}) => {
     const cancelOrder = async (order) => {
         try {
             //send mail to user
-            await ordersService.cancelOrder(order)
+            //await ordersService.cancelOrder(order)
+            //console.log('email sended a user: ', order.idUser)
             //cancel reservation in bd
             await reservationService.cancelReservationBd(order.id)
             //await reservationService.sendEmail(email)

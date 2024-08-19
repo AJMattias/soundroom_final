@@ -21,6 +21,7 @@ export const ReservationsScreen = ({navigation}) => {
     const [reservationsFetched , setReservationsFetched] = useState(false)
     const [query, setQuery] = useState("")
     const [key, setKey] = useState('home');
+    const user = LocalPhoneStorage.get(STORAGE_USER)
 
     const renderReservations = () => {
         if(reservations && reservations.length > 0) {
@@ -254,6 +255,7 @@ export const ReservationsScreen = ({navigation}) => {
                 <ScrollView>
                     {reservationsSearch()}
                     {/* TODO en caso que sea tipo Sala de ensayo mostrar: Reservasa tus salas */}
+                    { user.idPerfil.name == 'Sala de Ensayo' &&
                     <Block style = {styles.ownerReservationsRow}>
                         <Icon name = "briefcase" family = "Feather" color = {theme.colors.blueAccent700} size = {28}/>
                         <Text 
@@ -261,6 +263,7 @@ export const ReservationsScreen = ({navigation}) => {
                             onPress = {() =>  openOwnerReservations()}
                         > Reservas a tus salas</Text>
                     </Block>
+                    }
                      {/*  en caso de que se rompa, mostrar, descomentar
                     { ownerResevations && ownerResevations.length >0 &&
                         <Block style = {styles.ownerReservationWrapper}>

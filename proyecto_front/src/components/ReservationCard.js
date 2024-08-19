@@ -19,6 +19,17 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
     const room =  reservation.idRoom
     const [showAlert, setShowAlert] = useState(false);
 
+    const loggedUser = LocalPhoneStorage.get(STORAGE_USER)
+
+    let email = {
+        receptor: String(loggedUser.email),
+        nombreUsuario: String(loggedUser.name),
+        sala: String(reservation.idRoom.nameSalaEnsayo),
+        inicio: String( "Front mensaje mail " + reservation.hsStart.toLocaleDateString() + " a las " + reservation.hsStart.toLocaleTimeString()),
+        duenoSala: String(reservation.idOwner.email)
+    }
+
+
     const openRoom = () => {
         console.log('room id: ', room._id)
         navigation.push("RoomScreen", {
@@ -28,9 +39,13 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
     
 
     const cancelReservation = async () => {
+        
+        //cancealr reserva
         const canceledReservation = await reservationService.cancelReservationBd(reservation.id)
         console.log(email)
+        //enviar mail a artista
         await reservationService.sendEmail(email)
+        // exite email.duenosala, se envia mail al dueño
         if(email.duenoSala){
             await reservationService.sendEmailOwner(email)
         }
@@ -41,6 +56,7 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
         }
     }
 
+    
     const handleCancelAlert = async () => {
         // Función para cancelar la reserva
         setShowAlert(false); // Ocultar el alerta después de responder
@@ -51,13 +67,14 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
         setShowAlert(true);
     }
 
-    const loggedUser = LocalPhoneStorage.get(STORAGE_USER)
+    
+    
 
-    const email = {
+    const emailDos = {
         receptor: String(loggedUser.email),
         nombreUsuario: String(loggedUser.name),
         sala: String(reservation.idRoom.nameSalaEnsayo),
-        inicio: String(reservation.hsStart.toLocaleDateString() + " a las " + reservation.hsStart.toLocaleTimeString()),
+        inicio: String( "Front mensaje mail " + reservation.hsStart.toLocaleDateString() + " a las " + reservation.hsStart.toLocaleTimeString()),
         duenoSala: String(reservation.idOwner.email)
     } 
 
@@ -173,8 +190,9 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     image: {
-        width: 100,
-        height: 100,
+        //se cambia tamaño width y length 100 por 80
+        width: 80,
+        height: 80,
         borderRadius: 8,
         marginEnd: 8
     },

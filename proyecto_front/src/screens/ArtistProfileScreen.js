@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Alert, StyleSheet, ScrollView } from "react-native";
 import { Avatar, Header } from "react-native-elements";
 import { Block, Text, Card, Icon } from "galio-framework";
@@ -26,45 +26,87 @@ import { ratingsService } from "../network/RatingsService";
 
 
 export const ArtistProfileScreen = ({ route, navigation }) => {
-    const [user, setUser] = useState()
+    const [userLogged, setUserLogged] = useState()
     const [artist, setArtist] = useState()
     const [userFetched, setUserFetched] = useState(false)
     const [ratings, setRatings] = useState([])
     const [rooms, setRooms] = useState([])
     // Reservas del artista hacia alguna sala del usuario logueado.
     const [artistReservations, setArtistReservations] = useState([])
+    // artista a mostrar en pantalla
     const { userId } = route.params
+    const [estrellasProm, setEstrellasProm] = useState(0)
 
-    const fetchUser = async () => {
-        try {
-            setArtist(
-                await userService.getUserBd(userId)
-            )
-            //get opinions to user artist
-            //await fetchProfile()
-            //await fetchRooms()
-            //fetchRatings(userId).then()
-            console.log('artista: ', user)
-            setUserFetched(true)
-        } catch (apiError) {
-            console.log("Error fetching user with Id")
-            console.log(apiError)
-        }
+    //usar useEffect en vez de !userFetched
+    useEffect(() => {
+        const fetchUser = async () => {
+            const userloged = LocalPhoneStorage.get(STORAGE_USER);
+            setUserLogged(userloged);
+            try {
+                const fetchedArtist = await userService.getUserBd(userId);
+                setArtist(fetchedArtist);
+                console.log('artista: ', fetchedArtist);
 
-    }
+                await fetchArtistReservations(userId);
+                await fetchRatings(userId);
+                await fetchPromedioEstrellas();
+                setUserFetched(true);
+            } catch (apiError) {
+                console.log("Error fetching user with Id");
+                console.log(apiError);
+            }
+        };
+        fetchUser();
+    }, [userId]);
 
-    const fetchProfile = async () => {
-        try {
-            const artist = await artistService.getArtistByUserId(userId)
-            setArtist(artist)
-            //etchArtistReservations(userId).then()
-            //fetchRatings(userId).then()
-        } catch (apiError) {
-            console.error("Error fetching profile")
-            console.error(apiError)
-        }
-    }
+    //Se renderizaba muchas veces, mejor usar useeffect
+    // const fetchUser = async () => {
+    //     //Usuario logueado
+    //     const userloged = LocalPhoneStorage.get(STORAGE_USER)
+    //     setUserLogged(userloged)
+    //     //artista a mostrar
+    //     try {
+    //         setArtist(
+    //             await userService.getUserBd(userId)
+    //         )
+    //         console.log('artista: ', artist)
+            
+    //         //get opinions to user artist
+    //         //buscar reservaciones a mis salas, si tiene el SdE puede opinar
+    //         fetchArtistReservations(userId).then()
+    //         //busco opiniones al artista
+    //         fetchRatings(userId).then()
+    //         fetchPromedioEstrellas().then()
+    //         //await fetchProfile()
+    //         //await fetchRooms()
+            
+            
+    //         //buscar reservaciones a mis salas, si tiene el SdE puede opinar
+    //         //fetchArtistReservations(userId).then()
+            
+    //         setUserFetched(true)
+    //     } catch (apiError) {
+    //         console.log("Error fetching user with Id")
+    //         console.log(apiError)
+    //     }
 
+    // }
+
+    //no se usa, ya se busca el usuario artista en la funcion  fetchUser
+    // const fetchProfile = async () => {
+    //     try {
+    //         const artist = await artistService.getArtistByUserId(userId)
+    //         setArtist(artist)
+    //         fetchArtistReservations(userId).then()
+    //         fetchRatings(userId).then()
+    //     } catch (apiError) {
+    //         console.error("Error fetching profile")
+    //         console.error(apiError)
+    //     }
+    // }
+
+    //no se usa la funcion fetchRooms
+    //rooms para el carrusel. Buscsar con mejores rating
     const fetchRooms = async () => {
         try {
             setRooms(
@@ -78,31 +120,43 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
 
     //opiniones al artista
     const fetchRatings = async (userId) => {
-        // try {
-        //     setRatings(
-        //        await ratingsService.getArtistOpinions(otherUserId)
-        //     )
-        //     console.log('ratings: ', ratings)
-        // } catch (apiError) {
-        //     console.error("Error fetching ratings")
-        //     console.error(apiError)
-        // }
+        try {
+            setRatings(
+               await ratingsService.getArtistOpinions(userId)
+            )
+            console.log('ratings: ', ratings)
+        } catch (apiError) {
+            console.error("Error fetching ratings")
+            console.error(apiError)
+        }
     }
 
     // si tiene mas de una reserva se le puede opinar
-    const fetchArtistReservations = async (otherUserId) => {
+    const fetchArtistReservations = async (userId) => {
         try {
             const myReservations = await reservationService.getArtistReservatiosToMyRooms(userId)
-            setArtistReservations(
-                myReservations.filter(
-                    (reservation) => {
-                        reservation.user.id == otherUserId
-                    }
-                )
-            )
+            setArtistReservations(myReservations)
+                //Ya busco las reservas del artista a mis sde 
+                // y me traigo de la bd esas reservas
+                // myReservations.filter(
+                //     (reservation) => {
+                //         reservation.user.id == userId
+                //     }
+                // ))
             console.log('artistReservations: ', artistReservations)
         } catch(ignored) {
             console.error(ignored)
+        }
+    }
+
+    const fetchPromedioEstrellas = async () =>{
+        try {
+            //const idArtista = room.id
+            const promedioSala = await artistService.getPromedioArtista(userId)
+            setEstrellasProm(promedioSala)
+            console.log("promedio sala: ", estrellasProm)
+        } catch (error) {
+            console.error(apiError)
         }
     }
 
@@ -110,7 +164,8 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         try {
             const currentUser = LocalPhoneStorage.get(STORAGE_USER)
             await emailService.sendEmailToUser(
-                user , `¡${currentUser.name + currentUser.last_name} te ha enviado una calificación! Logueate en la aplicación para verla.` 
+                // antes era user en vez de artist
+                artist , `¡${currentUser.name + currentUser.last_name} te ha enviado una calificación! Logueate en la aplicación para verla.` 
             )
         } catch (ignored) {
             console.error(ignored)
@@ -118,9 +173,14 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
     }
  
     const renderRatings = () => {
-        if (ratings.length > 0) {
+        console.log('ratings render', ratings)
+        if ( ratings && ratings.length > 0) {
             return (
-                <Rating ratings = {ratings} />
+                <Rating ratings = {ratings}  estrellasProm={estrellasProm} size={15}/>
+            )
+        } else {
+            return (
+                <Text style = {styles.ratingsText}>Sin opiniones todav&iacute;a</Text>
             )
         }
     }
@@ -129,7 +189,7 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         if (ratings.length > 0) {
             console.log("ratings")
             console.log(ratings)
-            const comments = ratings.map((rating) => <RateComment  rate={rating} user = {rating.user} onClick = {() => openProfile(rating.user)} />)
+            const comments = ratings.map((rating) => <RateComment  rate={rating} user = {rating.idUser} onClick = {() => console.log(rating.idUser._id)} />)
             return (
                 <Block style={styles.column}>
                     <Text style={[styles.subtitle, theme.styles.m24]}>Comentarios</Text>
@@ -140,6 +200,7 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         }
     }
 
+    //Es la pantalla de artista, se deberia navegar a la pantalla de otro artista o del usuario SdeE
     const openProfile = (other) => {
         console.log("navigate to "+other.id)
         navigation.push("ArtistProfileScreen", {userId: other.id})
@@ -172,12 +233,12 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         }
     }
 
-    if (!userFetched) {
-        fetchUser().then()
-        // fetchArtistReservations(userId).then()
-        // fetchRatings(userId).then()
+    // if (!userFetched) {
+    //     fetchUser().then()
+    //     // fetchArtistReservations(userId).then()
+    //     // fetchRatings(userId).then()
        
-    }
+    // }
 
     return (
         <StateScreen loading={!userFetched}>
@@ -187,11 +248,13 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
                     <Text style = {styles.ownerLabel}>Propietario</Text>
                 </Block>
                 { renderArtistProfile() }
+                {/* Como SdE puedo opinar del artista que reservo/uso mi sala */}
                 {
-                    user &&  artistReservations && artistReservations.length > 0 &&
+                    // se usaba user en vez de artist
+                    artist &&  artistReservations && artistReservations.length > 0 &&
                         <AddComment
                             otherId = {userId}
-                            title = {"Tu opinión sobre "+user.name}
+                            title = {"Tu opinión sobre "+artist.name}
                             placeholder = "Escribe tu reseña sobre este artista para ayudar a otros propietarios."
                             user = {LocalPhoneStorage.get(STORAGE_USER)} 
                             onRatingCreated = {() => sendCommentNotification().then()}
@@ -234,6 +297,10 @@ const styles = StyleSheet.create({
         fontSize: theme.SIZES.FONT,
         fontWeight: 600,
         marginTop: 8    
+    },
+    ratingsText: {
+        fontSize: theme.SIZES.FONT ,
+        color: theme.colors.primary
     }
 
 })

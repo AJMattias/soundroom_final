@@ -4,6 +4,7 @@ import { CreateReservationDto, DeleteReservationDto, ReservationDto } from "./dt
 import { Reservation, ReservationModel } from "./model";
 import * as Email from "../server/MailCtrl"
 import { User, UserModel } from "../users/models"
+import { SalaDeEnsayoModel } from "../sala_de_ensayo/model";
 var mongoose = require('mongoose');
 
 
@@ -25,6 +26,7 @@ export class ReservationService{
             idUser: reservation.idUser,
             idRoom: reservation.idRoom,
             canceled: reservation.canceled,
+            canceledDate: reservation.canceledDate,
             date: reservation.date,
             totalPrice: reservation.totalPrice
         }
@@ -94,7 +96,7 @@ export class ReservationService{
             canceledDate: new Date() 
         })
         let msg = `Usted ha cancelado la reserva del dia ${dto.date}  a las ${dto.hsStart}exitosamente. Gracias por elegir SoundRoom`
-        await this.sendMailPiola(email, msg)
+        await this.sendMailPiola(email, `Usted ha cancelado la reserva del dia ${dto.date}  a las ${dto.hsStart}exitosamente. Gracias por elegir SoundRoom`)
         return this.mapToDto(canceledReservation)
         
         
@@ -170,115 +172,138 @@ export class ReservationService{
         })
     }
 
-    async getReservasPorMes (idOwner: string, fechaInicio: Date, fechaFin: Date) {
+    async getReservasPorMes (idRoom: string, fechaInicioStr: string, fechaFinStr: string) {
         try {
-            console.log(`Buscando usuario con id: ${idOwner}`);
-            
-            // Obtener el usuario por idUser
-            const user = await UserModel.findById(idOwner);
-            if (!user) {
-                throw new Error('Usuario no encontrado');
+        
+            console.log(`Buscando sala con id: ${idRoom}`);
+
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Obtener la sala por idRoom
+            const room = await SalaDeEnsayoModel.findById(idRoom);
+            if (!room) {
+                throw new Error('Sala no encontrada');
             }
     
-            console.log(`Usuario encontrado: ${JSON.stringify(user)}`);
-            const salasDeEnsayo = user.idSalaDeEnsayo;
-            console.log(`Salas de ensayo del usuario: ${salasDeEnsayo}`);
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
     
-            // Crear el objeto para almacenar las reservas por mes
-            let reservasPorMes: { [key: string]: number } = {};
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
     
-            // Recorrer cada sala de ensayo del usuario
-            for (let sala of salasDeEnsayo) {
-                console.log(`Buscando reservas para la sala: ${sala}`);
-                const idSala = mongoose.Types.ObjectId(sala)
-    
-                // Encontrar las reservas que coincidan con las condiciones
-                const reservas = await ReservationModel.find({
-                    idRoom: idSala,
-                    idOwner: idOwner,
-                    canceled: "false",
-                    createdAt: { $gte: fechaInicio, $lte: fechaFin }
-                });
-    
-                console.log(`Reservas encontradas para la sala ${sala}: ${reservas.length}`);
-                // Agrupar las reservas por mes
-                reservas.forEach(reserva => {
-                    const mes = reserva.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
-                    if (!reservasPorMes[mes]) {
-                        reservasPorMes[mes] = 0;
-                    }
-                    reservasPorMes[mes]++;
-                });
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
             }
     
-            console.log(`Reservas agrupadas por mes: ${JSON.stringify(reservasPorMes)}`);
-            // Convertir el objeto en un array de objetos con formato { mes: string, cantidad: number }
-            const resultado = Object.keys(reservasPorMes).map(mes => ({
-                mes,
-                cantidad: reservasPorMes[mes]
-            }));
+            // Encontrar las reservas que coincidan con las condiciones
+            const reservas = await ReservationModel.find({
+                idRoom: idRoom,
+                canceled: 'false',
+                createdAt: { $gte: fechaInicio, $lte: fechaFin }
+            });
     
-            return resultado;
-        } catch (error) {
+            console.log(`Reservas encontradas para la sala ${idRoom}: ${reservas.length}`);
+    
+            // Agrupar las reservas por mes
+            reservas.forEach(reserva => {
+                const mes = reserva.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Reservas agrupadas por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            }
+
+            } catch (error) {
             console.error(error);
             throw new Error('Error obteniendo las reservas por mes');
         }
     }
 
     //reservas canceladas reporte
-    async getReservasCanceladasPorMes (idOwner: string, fechaInicio: Date, fechaFin: Date) {
-        try {
-            console.log(`Buscando usuario con id: ${idOwner}`);
+    async getReservasCanceladasPorMes (idRoom: string, idOwner: string, fechaInicioStr: Date, fechaFinStr: Date) {
+        try{
             
-            // Obtener el usuario por idUser
-            const user = await UserModel.findById(idOwner);
-            if (!user) {
-                throw new Error('Usuario no encontrado');
+            console.log(`Buscando sala con id: ${idRoom}`);
+
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Obtener la sala por idRoom
+            const room = await SalaDeEnsayoModel.findById(idRoom);
+            if (!room) {
+                throw new Error('Sala no encontrada');
             }
     
-            console.log(`Usuario encontrado: ${JSON.stringify(user)}`);
-            const salasDeEnsayo = user.idSalaDeEnsayo;
-            console.log(`Salas de ensayo del usuario: ${salasDeEnsayo}`);
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
     
-            // Crear el objeto para almacenar las reservas por mes
-            let reservasPorMes: { [key: string]: number } = {};
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
     
-            // Recorrer cada sala de ensayo del usuario
-            for (let sala of salasDeEnsayo) {
-                console.log(`Buscando reservas para la sala: ${sala}`);
-                const idSala = mongoose.Types.ObjectId(sala)
-    
-                // Encontrar las reservas que coincidan con las condiciones
-                const reservas = await ReservationModel.find({
-                    idRoom: idSala,
-                    idOwner: idOwner,
-                    canceled: "true",
-                    createdAt: { $gte: fechaInicio, $lte: fechaFin }
-                });
-    
-                console.log(`Reservas encontradas para la sala ${sala}: ${reservas.length}`);
-                // Agrupar las reservas por mes
-                reservas.forEach(reserva => {
-                    const mes = reserva.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
-                    if (!reservasPorMes[mes]) {
-                        reservasPorMes[mes] = 0;
-                    }
-                    reservasPorMes[mes]++;
-                });
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
             }
     
-            console.log(`Reservas agrupadas por mes: ${JSON.stringify(reservasPorMes)}`);
-            // Convertir el objeto en un array de objetos con formato { mes: string, cantidad: number }
-            const resultado = Object.keys(reservasPorMes).map(mes => ({
-                mes,
-                cantidad: reservasPorMes[mes]
-            }));
+            // Encontrar las reservas que coincidan con las condiciones
+            const reservas = await ReservationModel.find({
+                idRoom: idRoom,
+                canceled: 'true',
+                createdAt: { $gte: fechaInicio, $lte: fechaFin }
+            });
     
-            return resultado;
+            console.log(`Reservas encontradas para la sala ${idRoom}: ${reservas.length}`);
+    
+            // Agrupar las reservas por mes
+            reservas.forEach(reserva => {
+                const mes = reserva.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Reservas agrupadas por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            };
+            
         } catch (error) {
             console.error(error);
             throw new Error('Error obteniendo las reservas por mes');
         }
+        
     }
 
 
@@ -287,6 +312,17 @@ export class ReservationService{
         const nombresDeMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         return nombresDeMeses[mes];
     }
+    getMonthAbbreviation(month: string): string {
+        const monthAbbreviations = [
+          "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+        ];
+        // const [year, monthNumber] = month.split("-");
+        // return monthAbbreviations[parseInt(monthNumber, 10) - 1];
+        const yearMonth = month.split("-");
+        const monthIndex = parseInt(yearMonth[1], 10) - 1; // Convertir el mes en índice (0-11)
+        return monthAbbreviations[monthIndex];
+      }
 
     // const reservas = await ReservationModel.find({
     //     canceled: "false",

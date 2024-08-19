@@ -37,13 +37,12 @@ export function AdminSalaReportes({ navigation }) {
     { id: 3, value: 'DiamasReservado', label: 'Dia mas Reservado' },
     { id: 4, value: 'cancelacionesReserva', label: 'Cancelaciones de Reserva' },
   ])
-  const [ownerSalas, setOwnerSalas] = useState([
-    { id: 5, value: '', label: 'Elige una Sala' },
-    { id: 6, value: 'salaJavier', label: 'Sala Javier' },
+  const [ownerRooms, setOwnerRooms] = useState([
+    { id: 0, value: '', label: 'Elige una Sala' },
   ])
-  const [rooms, setRooms] = useState([
-    {id: 0, value: '', label: 'Elige una Sala' }])
+  const [rooms, setRooms] = useState()
 
+  
   const currentDay = new Date()
   const [fechaI, setFechaI] = useState(Date)
   const [fechaH, setFechaH] = useState(new Date())
@@ -52,6 +51,8 @@ export function AdminSalaReportes({ navigation }) {
 
   const [mostrarFechaI, setMostrarFechaI] = useState(false)
   const [mostrarFechaH, setMostrarFechaH] = useState(false)
+  const [mostrarReporte, setMostrarReporte] = useState(false)
+  const [mostrarValoraciones, setMostrarValoraciones] = useState(false)
   const [reporte, setReporte] = useState( {
     labels: [],
     datasets: [
@@ -60,6 +61,7 @@ export function AdminSalaReportes({ navigation }) {
       }
     ]
   })
+
 
   const onDayPressI = (calendarDay) => {
     const dayI = new Date()
@@ -86,14 +88,7 @@ export function AdminSalaReportes({ navigation }) {
 
   const [selectedReporte, setSelectedReporte] = useState()
   const [selectedSala, setSelectedSala] = useState()
-  const listReportes = tipoReporte.map((reporte) => (
-    <Picker.Item key={reporte.id} label={reporte.label} value={reporte.value} />
-  ))
-  // va o no va ?
-  const [selectedRoom, setSelectedRoom] = useState()
-    const listOwnerRooms = ownerRooms.map((room) =>
-    <Picker.Item key={room.id} label={room.name} value={room.id} />
-  )
+ 
 
   const chartConfig = {
     backgroundGradientFrom: '#fff',
@@ -129,31 +124,8 @@ export function AdminSalaReportes({ navigation }) {
       },
     ],
   }
-  const Valoraciones = {
-    labels: ['1', '2', '3', '4', '5'],
-    datasets: [
-      {
-        data: [1, 2, 5, 7, 6],
-      },
-    ],
-  }
-  const DiamasReservado = {
-    labels: ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'],
-    datasets: [
-      {
-        data: [6, 8, 7, 9, 11, 13, 15],
-      },
-    ],
-  }
-  const cancelacionesReserva = {
-    labels: ['Dic', 'En', 'Feb', 'Mar', 'Abr', 'Mayo'],
-    datasets: [
-      {
-        data: [7, 10, 13, 11, 9, 13],
-      },
-    ],
-  }
 
+  //No se usa selectDay
   const selectDay = (calendarDay) => {
     console.log('selecting date')
     console.log(calendarDay)
@@ -167,6 +139,7 @@ export function AdminSalaReportes({ navigation }) {
 
   const title = { name: 'Usuarios Nuevos' }
 
+  // A Borrar
   const captureScreen = async () => {
     try {
       const captureURI = await viewShotRef.current.capture();
@@ -203,9 +176,6 @@ export function AdminSalaReportes({ navigation }) {
     }
   };
 
-  
-
-
   const downloadPDF = () => {
     if (pdfData) {
       const blob = new Blob([pdfData], { type: 'application/pdf' });
@@ -222,7 +192,10 @@ export function AdminSalaReportes({ navigation }) {
     }
   };
 
+  //Hasta aca borrar
+
   const descargarReporte = async () => {
+    //TODO: Crear el rporte y llamar a la url para verlo
     captureScreen().then()
     downloadPDF()
   }
@@ -251,96 +224,130 @@ export function AdminSalaReportes({ navigation }) {
   }
 
   const cantidadSalaReservas = async () => {
+    setMostrarValoraciones(false)
     console.log("onpressed ver reporte")
-    const response = await reportesService.cantidadSalaReservas(fechaI, fechaH);
+    const response = await reportesService.cantidadSalaReservas(selectedSala, fechaI, fechaH);
     
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
-      
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
-    console.log('reporte nuevos usuarios, response: ', reporte, response);
-    return data;
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
+    console.log(response)
+    setReporte(response)
+    setMostrarReporte(true)
+      // setReporte({
+      //   labels: labels,
+      //   datasets: [
+      //     {
+      //       data: data
+      //     }
+      //   ]
+      // });
+    console.log('response cantidad reserva por sala: ', response)
+    //response ? setMostrarReporte(true) : console.log('esperando respuesta servidor')
+    return;
   }
 
   const cantidadCanceledSalaReservas = async () => {
+    setMostrarValoraciones(false)
     console.log("onpressed ver reporte")
-    const response = await reportesService.cantidadCanceledSalaReservas(fechaI, fechaH);
-    
+    const response = await reportesService.cantidadCanceledSalaReservas(selectedSala, fechaI, fechaH);
+    setReporte(response)
+    if(reporte.labels){
+    setMostrarReporte(true)}
     //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+      // setReporte({
+      //   labels: labels,
+      //   datasets: [
+      //     {
+      //       data: data
+      //     }
+      //   ]
+      // });
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
   }
 
   const valoraciones = async () => {
     console.log("onpressed ver reporte")
-    const response = await reportesService.valoraciones(fechaI, fechaH);
-    
-    //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
+    setMostrarReporte(false)
+    const response = await reportesService.valoraciones(selectedSala);
+    setReporte(response)
+    // //setear reporte con labesl y data
+    // const labels = response.map(item => item.mes);
+    // const data = response.map(item => item.cantidad);
       
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
+    //   setReporte({
+    //     labels: labels,
+    //     datasets: [
+    //       {
+    //         data: data
+    //       }
+    //     ]
+    //   });
+    setMostrarValoraciones(true)
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
   }
 
   const diamasvalorado = async () => {
+    setMostrarReporte(false)
     console.log("onpressed ver reporte")
-    const response = await reportesService.diamasvalorado(fechaI, fechaH);
+    const response = await reportesService.cantidadPorDia(selectedSala);
+    setReporte(response)
+    if(reporte.labels){
+      setMostrarValoraciones(true)}
     
-    //setear reporte con labesl y data
-    const labels = response.map(item => item.mes);
-    const data = response.map(item => item.cantidad);
-      
-      setReporte({
-        labels: labels,
-        datasets: [
-          {
-            data: data
-          }
-        ]
-      });
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
   }
 
-  const fetRooms = async () =>{
-    const response = await roomService.getMyRoomsBd(user.id)
-    const salas = response
-    setR
+  const fetchRooms = async () =>{
+    // const response = await roomService.getMyRoomsBd(user.id)
+    // response.map(room=>{
+    //   ownerRooms.push({id: room.id, label: room.nameSalaEnsayo, value: room.id})
+    // })
+    // console.log(ownerRooms)
+    // setRoomsFetched(true)
+    try {
+      const response = await roomService.getMyRoomsBd(user.id);
+      if (response && response.length > 0) {
+        const rooms = response.map(room => ({
+          id: room.id,
+          label: room.nameSalaEnsayo,
+          value: room.id,
+        }));
+        setOwnerRooms(prevRooms => [...prevRooms, ...rooms]);
+      } else {
+        setOwnerRooms([{ id: 0, value: '', label: 'No tiene salas aún' }]);
+      }
+      setRoomsFetched(true);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      setOwnerRooms([{ id: 0, value: '', label: 'Error al obtener salas' }]);
+      setRoomsFetched(true);
+    }
   }
+
+  const salaPicker = ownerRooms.map((sala) =>
+    <Picker.Item key={sala.id} label={sala.label} value={sala.id} />
+  );
+
+  const listReportes = tipoReporte.map((reporte) => (
+    <Picker.Item key={reporte.id} label={reporte.label} value={reporte.value} />
+  ))
+
 
   useEffect(() => {
     // setFechaI(undefined)
     // setFechaH(undefined)
+    console.log('ownerRooms: ', ownerRooms)
     setMostrarFechaI(false)
     setMostrarFechaH(false)
+    fetchRooms().then()
+    console.log('ownerRooms after Fetched: ', ownerRooms)
   }, [])
 
   return (
@@ -390,6 +397,7 @@ export function AdminSalaReportes({ navigation }) {
               {openI == true && (
                 <Calendar
                   //testID={testIDs.calendars.FIRST}
+                  hideArrows={false}
                   enableSwipeMonths
                   current={currentDay}
                   style={styles.calendar}
@@ -429,7 +437,7 @@ export function AdminSalaReportes({ navigation }) {
                 />
               )}
             </View>
-            <Button color="warning" size="small">
+            <Button color="warning" size="small" onPress={() => getReportes()}>
               Ver Reporte
             </Button>
             {/* <TouchableOpacity>
@@ -455,12 +463,16 @@ export function AdminSalaReportes({ navigation }) {
                     style={styles.graphStyle} /></>
              } */}
             {/* reportes mockeados */}
-            {selectedReporte == 'cantidadReservasporMes' && mostrarFechaI && mostrarFechaH && (
+            {selectedReporte && selectedSala && 
+            // mostrarFechaI && mostrarFechaH &&
+             mostrarReporte && (
               <>
                 <View style={styles.titleContainer}>
                   <ViewShot ref={viewShotRef} style={{ flex: 1 }}>
-                    <Text style={styles.subtitle}>Cantidad de Reservas</Text>
+                    <Text style={styles.subtitle}>{selectedReporte.value}</Text>
                     <Block style={styles.descarga}>
+                      
+                      {/* descargar reporte */}
                       <Icon
                         style={styles.icon}
                         name="download"
@@ -469,9 +481,9 @@ export function AdminSalaReportes({ navigation }) {
                         size={24}
                       />
                     </Block>
-
+                    {/* grafico de barras */}
                     <BarChart
-                      data={cantidadReservasporMes}
+                      data={reporte}
                       width={screenWidth}
                       height={220}
                       chartConfig={chartConfig}
@@ -483,78 +495,37 @@ export function AdminSalaReportes({ navigation }) {
                 </View>
               </>
             )}
-            {selectedReporte == 'Valoraciones' && mostrarFechaI && mostrarFechaH && (
+           {selectedReporte && selectedSala && mostrarValoraciones && (
               <>
                 <View style={styles.titleContainer}>
-                  <Text style={styles.subtitle}>Valoraciones </Text>
-                  <Block style={styles.descarga}>
-                    <Icon
-                      style={styles.icon}
-                      name="download"
-                      family="AntDesign"
-                      color={theme.colors.green50}
-                      size={24}
+                  <ViewShot ref={viewShotRef} style={{ flex: 1 }}>
+                    <Text style={styles.subtitle}>{selectedReporte.value}</Text>
+                    <Block style={styles.descarga}>
+                      
+                      {/* descargar reporte */}
+                      <Icon
+                        style={styles.icon}
+                        name="download"
+                        family="AntDesign"
+                        color={theme.colors.green50}
+                        size={24}
+                      />
+                    </Block>
+                    {/* grafico de barras */}
+                    <BarChart
+                      data={reporte}
+                      width={screenWidth}
+                      height={220}
+                      chartConfig={chartConfig}
+                      showBarTops={true}
+                      style={styles.graphStyle}
                     />
-                    
-                  </Block>
+                  </ViewShot>
+                
                 </View>
-                <BarChart
-                  data={Valoraciones}
-                  width={screenWidth}
-                  height={220}
-                  chartConfig={chartConfig}
-                  showBarTops={true}
-                />
               </>
             )}
-            {selectedReporte == 'DiamasReservado' && mostrarFechaI && mostrarFechaH && (
-              <>
-                <View style={styles.titleContainer}>
-                  <Text style={styles.subtitle}>Dia mas reservado</Text>
-                  <Block style={styles.descarga}>
-                    <Icon
-                      style={styles.icon}
-                      name="download"
-                      family="AntDesign"
-                      color={theme.colors.green50}
-                      size={24}
-                    />
-                   
-                  </Block>
-                </View>
-                <BarChart
-                  data={DiamasReservado}
-                  width={screenWidth}
-                  height={220}
-                  chartConfig={chartConfig}
-                  showBarTops={true}
-                />
-              </>
-            )}
-            {selectedReporte == 'cancelacionesReserva' && mostrarFechaI && mostrarFechaH && (
-              <>
-                <View style={styles.titleContainer}>
-                  <Text style={styles.subtitle}>Cancelaciones por mes</Text>
-                  <Block style={styles.descarga}>
-                    <Icon
-                      style={styles.icon}
-                      name="download"
-                      family="AntDesign"
-                      color={theme.colors.green50}
-                      size={24}
-                    />
-                   
-                  </Block>
-                </View>
-                <BarChart
-                  data={cancelacionesReserva}
-                  width={screenWidth}
-                  height={220}
-                  chartConfig={chartConfig}
-                  showBarTops={true}
-                />
-              </>
-            )}
+           
           </View>
         </SafeAreaView>
       </Screen>

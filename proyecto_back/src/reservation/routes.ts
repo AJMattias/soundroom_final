@@ -6,6 +6,8 @@ import { ReservationDto } from "./dto";
 import * as validator from "express-validator"
 import {ErrorCode} from "../common/utils/constants"
 import { ValidatorUtils } from "../common/utils/validator_utils";
+import { ReservationModel } from "./model";
+var mongoose = require('mongoose');
 
 
 export const route = (app: Application) =>{
@@ -251,6 +253,7 @@ export const route = (app: Application) =>{
         auth,
         validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        validator.body("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
         run(async (req: any, resp: Response) => {
             const idUser = req.user.id
             const errors = validator.validationResult(req)
@@ -258,26 +261,28 @@ export const route = (app: Application) =>{
                 throw ValidatorUtils.toArgumentsException(errors.array())
             }
             const dto = req.body 
-            console.log('dto fechas I y H: ', dto)
+            console.log('dto sala, fechas I y H: ', dto)
             //fechaID = 'YYYY-MM-DD'
             console.log("ruta reporte reservas por mes")
             console.log(dto.fechaI)
             console.log(dto.fechaH)
+            console.log(dto.idRoom)
             // const users : UserDto[] = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             let dtoNewUsersReport = [] 
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //falta pasar parametro idRoom
-            const NewUsersReport = await  service.instance.getReservasPorMes(idUser, dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.getReservasPorMes(dto.idRoom, dto.fechaI, dto.fechaH)
             console.log(NewUsersReport)
             resp.json(NewUsersReport)    
     }))
     
-
+//TODO;: revisar
     app.post("/reservations/reservationsCanceladasPorSalaMes/", 
         auth,
         validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        validator.body("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
         run(async (req: any, resp: Response) => {
             const idUser = req.user.id
             const errors = validator.validationResult(req)
@@ -294,9 +299,52 @@ export const route = (app: Application) =>{
             let dtoNewUsersReport = [] 
             //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
             //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
-            const NewUsersReport = await  service.instance.getReservasPorMes(idUser, dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.getReservasCanceladasPorMes(dto.idRoom, idUser, dto.fechaI, dto.fechaH)
             console.log(NewUsersReport)
             resp.json(NewUsersReport)    
     }))
+
+    //endpoint para  contar la cantidad de reserva por dia de semana por sala
+    app.get("/reservations/cantidadReservasPorDia/", 
+        auth, 
+        validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run (async (req: any, res: Response)=>{
+            const idRoom = req.query.idRoom as string
+            const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+
+                const reservations = await ReservationModel.aggregate([
+                {
+                    $match: {
+                        idRoom: new mongoose.Types.ObjectId(idRoom),
+                    },
+                },
+                {
+                    $group: {
+                        _id: { $dayOfWeek: "$date" }, // Agrupa por día de la semana
+                        count: { $sum: 1 },
+                    },
+                },
+                {
+                    $sort: { "_id": 1 }, // Ordena por día de la semana (1 = Domingo, 7 = Sábado)
+                },
+            ]);
+
+            // Mapea los resultados a los días de la semana y asegura que cada día tenga un conteo, incluso si es 0
+            const data = daysOfWeek.map((day, index) => {
+                const reservation = reservations.find(res => res._id === (index + 1));
+                return reservation ? reservation.count : 0;
+            });
+            let response = {
+            labels: daysOfWeek,
+            datasets: [
+                {
+                    data,
+                },
+            ],
+            }
+            console.log('response dia mas valorado: ', response)
+            res.json(response)
+        })
+    )
 
 }

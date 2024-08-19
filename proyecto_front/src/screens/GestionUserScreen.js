@@ -1,5 +1,5 @@
 import { Block, Text } from "galio-framework";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import Button from "../components/Button";
 import { Screen } from "../components/Screen";
@@ -13,24 +13,24 @@ export function GestionUserScreen ({route, navigation}){
     const [userFetched, setUserFetched] = useState(false);
     const [user, setUser] = useState({});
 
-    const getUser = async () =>{
-        console.log(userId)
-        const response =  await userService.getUser(userId)
-        console.log(response)
+    // const getUser = async () =>{
+    //     console.log(userId)
+    //     const response =  await userService.getUser(userId)
+    //     console.log(response)
     
-        if(response.createdAt){
-            const createdAt = new Date(response.createdAt)
-            response.createdAt = `${createdAt.getDate()} del ${createdAt.getMonth() + 1 } ${createdAt.getFullYear()}`
-           }
-           if(response.deletedAt){
-               const deletedAt = new Date(response.deletedAt)
-               response.deletedAt = `${deletedAt.getDate()} del ${deletedAt.getMonth() + 1 } ${deletedAt.getFullYear()}`
-           }
+    //     if(response.createdAt){
+    //         const createdAt = new Date(response.createdAt)
+    //         response.createdAt = `${createdAt.getDate()} del ${createdAt.getMonth() + 1 } ${createdAt.getFullYear()}`
+    //        }
+    //        if(response.deletedAt){
+    //            const deletedAt = new Date(response.deletedAt)
+    //            response.deletedAt = `${deletedAt.getDate()} del ${deletedAt.getMonth() + 1 } ${deletedAt.getFullYear()}`
+    //        }
         
-        setUser(response)
-        console.log(user)
-        console.log(user.name)
-    }
+    //     setUser(response)
+    //     console.log(user)
+    //     console.log(user.name)
+    // }
 
     //  const deshabilitarUser = async () =>{
     //      const response = await userService.deshabilitarUser(userId, 
@@ -40,17 +40,56 @@ export function GestionUserScreen ({route, navigation}){
     //      console.log(user)
     // }
 
-    if(!userFetched){
-        getUser().then()
-        setUserFetched(true)
-    }
+    // if(!userFetched){
+    //     getUser().then()
+    //     setUserFetched(true)
+    // }
+
+    useEffect(() => {
+        let isMounted = true;
+    
+        const getUser = async () => {
+          console.log(userId);
+          const response = await userService.getUser(userId);
+          console.log(response);
+    
+          if (response.createdAt) {
+            const createdAt = new Date(response.createdAt);
+            response.createdAt = `${createdAt.getDate()} del ${
+              createdAt.getMonth() + 1
+            } ${createdAt.getFullYear()}`;
+          }
+          if (response.deletedAt) {
+            const deletedAt = new Date(response.deletedAt);
+            response.deletedAt = `${deletedAt.getDate()} del ${
+              deletedAt.getMonth() + 1
+            } ${deletedAt.getFullYear()}`;
+          }
+    
+          if (isMounted) {
+            setUser(response);
+            setUserFetched(true);
+          }
+        };
+    
+        getUser();
+    
+        return () => {
+          isMounted = false;
+        };
+      }, [userId]);
 
     const deshabilitar = async () => {
         console.log("deshabilitando")
+        console.log(userId, 
+            user.email,
+            user.name,
+            user.last_name,
+            "deshabilitado")
         const response = await userService.update(userId, 
             user.email,
             user.name,
-            user.lastName,
+            user.last_name,
             "deshabilitado")
         console.log(response)
         setUserFetched(false)
@@ -60,10 +99,15 @@ export function GestionUserScreen ({route, navigation}){
     }
     const habilitar = async () => {
         console.log("habilitando")
+        console.log(userId, 
+            user.email,
+            user.name,
+            user.last_name,
+            "habilitado")
         const response = await userService.update(userId,
             user.email,
             user.name,
-            user.lastName, 
+            user.last_name, 
             "habilitado")
         console.log(response)
         setUserFetched(false)

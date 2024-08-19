@@ -163,6 +163,8 @@ export function ProfileScreen2({ route, navigation }) {
   }
 
   const guardarPermisos =() => {
+    const nuevosPermisos = perfilPermisos
+    console.log('nuevosPermisos: ', nuevosPermisos)
     perfilPermisos.map(permiso=>{
       console.log(permiso.id)
       console.log(permiso.checked)
@@ -178,8 +180,26 @@ export function ProfileScreen2({ route, navigation }) {
   })
   }
 
-  const addPermisosPerfil = async (id) => {
-    const response = await perfilesService.addPermisosToProfile(perfilId, id)
+  const guardarPermisos2 =() => {
+    const nuevosPermisos =[]
+    console.log('nuevosPermisos: ', nuevosPermisos)
+    perfilPermisos.map(permiso=>{
+      console.log(permiso.id)
+      console.log(permiso.checked)
+      if(permiso.checked === true){
+      nuevosPermisos.push(permiso.id)
+      }   
+  })
+  console.log('nuevosPermisos: ', nuevosPermisos)
+  const response =  addPermisosPerfil(nuevosPermisos)
+  if(response){
+    console.log('respuesta a la llamada al back para actualizar permisos: ', response)
+    navigation.navigate("ProfileListScreen")
+  }
+  }
+
+  const addPermisosPerfil = async (permisos) => {
+    const response = await perfilesService.addPermisosToProfile(perfilId, permisos)
     console.log("added")
     return response
 }
@@ -242,7 +262,7 @@ const deletePermisos = async (id) =>{
           <View>
           <Button
           mode="contained"
-          onPress={guardarPermisos}
+          onPress={guardarPermisos2}
           >Guardar Permisos</Button>
           </View>
         </ScrollView>

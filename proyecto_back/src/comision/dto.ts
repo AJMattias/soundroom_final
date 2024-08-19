@@ -5,7 +5,7 @@ export class ComisionDto{
     porcentaje: number;
     createdAt: Date;
     deletedAt?: Date;
-    enabled: boolean;
+    enabled: string;
 
     constructor(comision: Comision){
         this.id= comision.id
@@ -19,7 +19,7 @@ export class ComisionDto{
 export interface CreateComisionDto{
     id?: string
     porcentaje: number;
-    enabled?: boolean;
+    enabled?: string;
     createdAt?: Date;
     deletedAt?: Date
 }

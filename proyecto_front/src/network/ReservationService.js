@@ -43,8 +43,7 @@ class ReservationService {
 
     async sendEmail(email) {
         console.log("Enviando email")
-        //return await api.post("/email/send/", {
-        return await api.post("/email", {
+        return await api.post("/email/", {
             receptor: email.receptor,
             sala: email.sala,
             inicio: email.inicio,
@@ -55,7 +54,7 @@ class ReservationService {
     async sendEmailOwner(email) {
         console.log("Enviando email Owner")
         console.log(email)
-        return await api.post("emailOwner", {
+        return await api.post("/emailOwner/", {
             receptor: email.duenoSala,
             sala: email.sala,
             inicio: email.inicio,

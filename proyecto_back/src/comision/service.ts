@@ -1,9 +1,10 @@
 import  * as dao from "./dao"
 import { ComisionDto, CreateComisionDto } from "./dto"
-import { Comision } from "./model"
+import { Comision, ComisionModel } from "./model"
 import {AuthenticationException, ServerException} from "../common/exception/exception"
 import * as jwt from "jsonwebtoken"
 import * as dotenv from "dotenv"
+import { Types } from "mongoose"
 dotenv.config()
 
 export class ComisionService{
@@ -30,15 +31,15 @@ export class ComisionService{
             porcentaje: (await comisionEnabled).porcentaje,
             createdAt: (await comisionEnabled).createdAt,
             deletedAt: new Date(),
-            enabled: false,
+            enabled: 'false',
         })
-    }catch(error){
-        console.log("no comision enabled")
-    }
+        }catch(error){
+            console.log("no comision enabled")
+        }
         return this.mapToComision(
             await this.dao.store({
                 porcentaje: dto.porcentaje,
-                enabled: true,
+                enabled: 'true',
                 createdAt: new Date()
             })
         )
@@ -77,27 +78,106 @@ export class ComisionService{
         )
     }
 
-     async actualizarComision(comisionId: string, dto: CreateComisionDto) : Promise<ComisionDto>{
+     async actualizarComision(comisionId: string
+        //, dto: CreateComisionDto
+    ) : Promise<ComisionDto>{
      
-        const comisionEnabled = this.findEnabled()
-        const comisionNotEnabled = this.dao.updateComision((await comisionEnabled).id,{
-            porcentaje: (await comisionEnabled).porcentaje,
-            createdAt: (await comisionEnabled).createdAt,
-            deletedAt: new Date(),
-            enabled: false,
-        })
-        const updated = this.updateComision(comisionId, {
-            porcentaje: dto.porcentaje,
-            enabled: true,
-            createdAt: new Date()
-        })
-        return this.mapToComision({
-            id: (await updated).id,
-            porcentaje: (await updated).porcentaje,
-            enabled: (await updated).enabled,
-            createdAt: (await updated).createdAt,
-        })
+        if (!Types.ObjectId.isValid(comisionId)) {
+            throw new Error('ID inválido');
+        }
+
+        const exists = await ComisionModel.exists({ _id: comisionId });
+        const comisionToEnable = await this.dao.findById(comisionId)
+        if (exists) {
+            //busco comision habilitada
+            //const comisionEnabled = await this.findEnabled()
+            const comisionEnabled =await this.dao.findEnabled()
+            
+            console.log('comision service, comisionenabled:' , comisionEnabled)
+            //deshabilito comision
+            const comisionNotEnabled = this.dao.updateComision(( comisionEnabled).id,{
+                porcentaje: (comisionEnabled).porcentaje,
+                createdAt: (comisionEnabled).createdAt,
+                deletedAt: new Date(),
+                enabled: 'false',
+            })
+            //habilito comision nueva
+            //const comisionToEnable = await this.dao.findById(comisionId)
+            const updated = await this.dao.updateComision(comisionId, {
+                porcentaje: comisionToEnable.porcentaje,
+                enabled: 'true',
+                createdAt: new Date()
+            })
+            return this.mapToComision({
+                id: ( updated).id,
+                porcentaje: ( updated).porcentaje,
+                enabled: ( updated).enabled,
+                createdAt: ( updated).createdAt,
+            })
+        }
+        else{
+            //si no existe comision 
+            
+            const updated = await this.dao.updateComision(comisionId, {
+                porcentaje: comisionToEnable.porcentaje,
+                enabled: 'true',
+                createdAt: new Date()
+            })
+            return this.mapToComision({
+                id: (updated).id,
+                porcentaje: (updated).porcentaje,
+                enabled: (updated).enabled,
+                createdAt: (updated).createdAt,
+            })
+        }
      }
+
+     async updateComisionEnabled(comisionId: string): Promise<ComisionDto>{
+        console.log('service update comision')
+        
+        const exists = await ComisionModel.exists({ enabled: 'true' });
+        console.log('servicio comisionEnabled: ', exists)
+        if(exists){
+            const comisionEnabled = await this.dao.findEnabled()
+            try{
+                //deshabiltar comision habilitada
+                const comisionNotEnabled = this.dao.updateComision(comisionEnabled.id,{
+                    porcentaje: ( comisionEnabled).porcentaje,
+                    createdAt: ( comisionEnabled).createdAt,
+                    deletedAt: new Date(),
+                    enabled: 'false',
+                })
+                console.log('comision dehsbilitada: ', comisionNotEnabled)
+            }catch(error){
+                console.log("no comision enabled")
+            }
+            const comisionToUpdate = await this.dao.findById(comisionId)
+            return this.mapToComision(
+                await this.dao.updateComision(comisionId,{
+                    porcentaje: comisionToUpdate.porcentaje,
+                    enabled: 'true',
+                    createdAt: new Date()
+                })
+            )
+        }
+        // sino hay comision habilitada
+        else{
+            const comisionToUpdate = await this.dao.findById(comisionId)
+            console.log('comision ha habilitar: ', comisionToUpdate)
+            try {
+                const comisionUpdated = await this.dao.updateComision(comisionId,{
+                    porcentaje: comisionToUpdate.porcentaje,
+                    createdAt: new Date(),
+                    enabled: 'true',
+                })
+                console.log('comision habilitada: ', comisionUpdated)
+                return this.mapToComision(comisionUpdated)
+            } catch (error) {
+                console.log("comision no actualizada")
+            }   
+        }
+        throw new Error('No se pudo actualizar o crear una nueva comisión');
+        }
 
 
 

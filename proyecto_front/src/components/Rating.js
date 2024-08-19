@@ -5,11 +5,20 @@ import { theme } from '../core/theme'
 import { avg } from '../utils/avg'
 
 export const Rating = ({ ratings, estrellasProm, size, showNumber = true }) => {
-    const scores = ratings.map((rating) => rating.score)
+    const scores = ratings.map((rating) => rating.estrellas)
     const avgScore = avg(scores)
 
     const renderRating = () => {
-        const qty = Math.round(avgScore)
+        //const qty = Math.round(avgScore)
+        let qty
+        if(ratings){
+             qty = ratings.estrellas    
+        }
+        if(estrellasProm){
+             qty = estrellasProm 
+        }
+        console.log('qty: ', qty)
+        console.log('avgScore: ', avgScore)
         const stars = []
         for(let i = 0; i < qty;  i++) {
             stars.push(

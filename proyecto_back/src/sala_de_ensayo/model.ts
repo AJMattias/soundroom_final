@@ -23,6 +23,8 @@ export interface SalaDeEnsayo{
     descripcion: string;
     comodidades:[{type: string}];
     opiniones: [{type: string, unique: true}];
+    enabledHistory: [{ status: string; dateFrom: Date, dateTo: Date }]; 
+
 }
 
 export interface SalaDeEnsayoDoc extends Document{
@@ -43,7 +45,28 @@ export interface SalaDeEnsayoDoc extends Document{
     descripcion: string;
     comodidades:[{type: string}];
     opiniones: [{type: string, unique: true}];
+    enabledHistory:[{ status: string; dateFrom: Date, dateTo: Date }];
+
 }
+
+export interface enabledHistoy {
+    status: String;
+    dateFrom: Date; 
+    dateTo: Date
+}
+
+export interface enabledHistoy{
+    status: String,
+    dateFrom: Date, 
+    dateTo: Date
+}
+
+
+export const enabledHistoy = new Schema({
+    status: String,
+    dateFrom: Date, 
+    dateTo: Date
+})
 
 export const SalaDeEnsayoSchema = new Schema({
     nameSalaEnsayo: {type: String, unique: true},
@@ -79,14 +102,18 @@ export const SalaDeEnsayoSchema = new Schema({
     opiniones:[{
         type: Schema.Types.ObjectId,
         ref:"Opinion"
-    }]
+    }],
+    enabledHistory: [{
+        status: String,
+        dateFrom: Date, 
+        dateTo: Date
+    }] 
 })
 // index for another search room call to db
 //SalaDeEnsayoSchema.index({ nameSalaEnsayo: 'text' });
 
 
 export const SalaDeEnsayoModel = mongoose.model<SalaDeEnsayoDoc>("Sala_De_Ensayo", SalaDeEnsayoSchema)
-
 
  //TODO 
     /** crear entidad anidada opinion con los

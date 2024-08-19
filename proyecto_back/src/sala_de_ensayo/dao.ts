@@ -78,6 +78,11 @@ async getByOwner(idOwner: string):Promise<Array<SalaDeEnsayo>>{
 }
 
 async store(salaDeEnsayo: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayo>{
+    const enabledHistoryEntry = {
+        status: "habilitado",
+        dateFrom: new Date(),
+        dateTo: null,
+    };
     console.log("dao idImagen: ", salaDeEnsayo.idImagen)
     console.log("dao sde e imagen ", salaDeEnsayo)
     const idImagen = salaDeEnsayo.idImagen as string
@@ -95,6 +100,7 @@ async store(salaDeEnsayo: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayo>{
         createdAt: new Date(),
         enabled: salaDeEnsayo.enabled,
         comodidades:salaDeEnsayo.comodidades,
+        enabledHistory: [enabledHistoryEntry],
     }); 
      return this.mapToSalaDeEnsayo(SalaDeEnsayoDoc)
 
@@ -122,26 +128,94 @@ async store(salaDeEnsayo: CreateSalaDeEnsayoDto): Promise<SalaDeEnsayo>{
 
 async updateSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2): Promise<SalaDeEnsayo>{
     console.log('dao update sala: ', sala)
-    const updated = await SalaDeEnsayoModel.findOneAndUpdate(
-        { _id: salaEnsayoId },
+    // const updated = await SalaDeEnsayoModel.findOneAndUpdate(
+    //     { _id: salaEnsayoId },
+    //     {
+    //         $set: {
+    //             enabled: sala.enabled,
+    //             nameSalaEnsayo: sala.nameSalaEnsayo,
+    //             calleDireccion: sala.calleDireccion,
+    //             numeroDireccion: sala.numeroDireccion,
+    //             precioHora: sala.precioHora,
+    //             createdAt: sala.createdAt,
+    //             comodidades: sala.comodidades,
+    //             descripcion:sala.descripcion,
+    //             enabledHistory: sala.enabledHistory,
+    //         }
+    //     },
+    //     { new: true, runValidators: true }
+    // ).exec();
+    const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId,
         {
-            $set: {
-                enabled: sala.enabled,
+            enabled: sala.enabled,
+            nameSalaEnsayo: sala.nameSalaEnsayo,
+            calleDireccion: sala.calleDireccion,
+            numeroDireccion: sala.numeroDireccion,
+            precioHora: sala.precioHora,
+            createdAt: sala.createdAt,
+            comodidades: sala.comodidades,
+            descripcion:sala.descripcion,
+            $push: { enabledHistory: { status: sala.enabled, dateFrom: new Date() } },
+        },
+        { new: true
+            //, runValidators: true 
+            }
+    ).exec();
+    if(!updated){
+        throw new ModelNotFoundException() 
+    }
+    return this.mapToSalaDeEnsayo(updated)
+}
+
+async disableSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2):Promise<SalaDeEnsayo>{
+    console.log('dao disable sala')
+    const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId, {
+                enabled: "deshabilitado",
                 nameSalaEnsayo: sala.nameSalaEnsayo,
                 calleDireccion: sala.calleDireccion,
                 numeroDireccion: sala.numeroDireccion,
                 precioHora: sala.precioHora,
                 createdAt: sala.createdAt,
                 comodidades: sala.comodidades,
-                descripcion:sala.descripcion
-            }
-        },
-        { new: true, runValidators: true }
-    ).exec();
-    if(!updated){
-        throw new ModelNotFoundException() 
+                descripcion:sala.descripcion,
+                $push: { enabledHistory: { status: 'deshabilitado', dateFrom: new Date() } },
+    },{new: true})
+    if (!updated) {
+        throw new ModelNotFoundException()
     }
     return this.mapToSalaDeEnsayo(updated)
+}
+
+async enableSala(salaEnsayoId: string, sala: CreateSalaDeEnsayoDto2):Promise<SalaDeEnsayo>{
+    console.log('dao enable sala')
+    const updated = await SalaDeEnsayoModel.findByIdAndUpdate(salaEnsayoId, {
+                enabled: "habilitado",
+                nameSalaEnsayo: sala.nameSalaEnsayo,
+                calleDireccion: sala.calleDireccion,
+                numeroDireccion: sala.numeroDireccion,
+                precioHora: sala.precioHora,
+                createdAt: sala.createdAt,
+                comodidades: sala.comodidades,
+                descripcion:sala.descripcion,
+                $push: { enabledHistory: { status: 'habilitado', dateFrom: new Date() } },
+    },{new: true})
+    if (!updated) {
+        throw new ModelNotFoundException()
+    }
+    return this.mapToSalaDeEnsayo(updated)
+}
+
+async stopEnabledSala(salaId: string): Promise<SalaDeEnsayo>{
+    console.log('dao stop enable sala')
+    const updated = await SalaDeEnsayoModel.findOneAndUpdate(
+        { _id: salaId, "enabledHistory.dateTo": null },
+        { $set: { "enabledHistory.$.dateTo": new Date() } }
+    );
+     
+     if (!updated) {
+         throw new ModelNotFoundException()
+     }
+     return this.mapToSalaDeEnsayo(updated)
 }
 
 
@@ -211,7 +285,9 @@ mapToSalaDeEnsayo(document: SalaDeEnsayoDoc): SalaDeEnsayo {
         enabled: document.enabled,
         descripcion: document.descripcion,
         comodidades:  document.comodidades,
-        opiniones: document.opiniones
+        opiniones: document.opiniones,
+        enabledHistory: document.enabledHistory
+
     }
 } 
 
@@ -230,7 +306,7 @@ async createOpinion(opinion: CreateOpinionDto): Promise<Opinion>{
         idUser: opinion.idUser,
         estrellas: opinion.estrellas,
         idRoom: opinion.idRoom,
-        idArtist:undefined,
+        idArtist: opinion.idArtist,
     })
     return this.mapToOpinion(opinionDoc)
 }
@@ -258,6 +334,17 @@ async getOpinionByUserAndRoom(idUser: string, idRoom: string): Promise<Opinion>{
 
 }
 
+async getOpinionByUserAndArtist(idUser: string, idArtist: string): Promise<Opinion>{
+    const idartista = mongoose.Types.ObjectId(idArtist);
+    const iduser = mongoose.Types.ObjectId(idUser);
+
+    const opinionDoc = await OpinionModel.findOne({ idUser: iduser, idArtist: idartista }).exec()
+    console.log('dao getted opinion to room: ', opinionDoc)
+    if(!opinionDoc) throw new ModelNotFoundException()
+    return this.mapToOpinion(opinionDoc)
+
+}
+
 async getOpinionById( opinionId: string): Promise<Opinion>{
     const model = await OpinionModel.findById(opinionId).exec()
     if (!model) throw new ModelNotFoundException()
@@ -269,7 +356,7 @@ async getOpinionById( opinionId: string): Promise<Opinion>{
 // instead of using `Mongoose.Schema.ObjectId`
 async getOpinionToArtist( artistId: string): Promise<Array<Opinion>>{
     const idArtist = mongoose.Types.ObjectId(artistId);
-    return (await OpinionModel.find({idArtist: idArtist}).exec())
+    return (await OpinionModel.find({idArtist: idArtist}).populate("idUser").exec())
     .map((doc: OpinionDoc)=>{
         return this.mapToOpinion(doc)
     })

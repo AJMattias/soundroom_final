@@ -62,11 +62,18 @@ export function CreatePerfilPermisoScreen({navigation}){
         const size = selectedCheckBoxes.length
         console.log(permisosChecked)
         console.log(`Permisos Array length: ${size}`)
+        const permisos= []
         for( var i = 0; i < size; i++){
-            const response = await perfilesService.addPermisosToProfile(newPerfil.id, selectedCheckBoxes[i])
-            console.log(selectedCheckBoxes[i])
+            permisos.push(selectedCheckBoxes[i])
+            //const response = await perfilesService.addPermisosToProfile(newPerfil.id, selectedCheckBoxes[i])
+            //console.log(selectedCheckBoxes[i])
         }
-       
+        console.log('permisos a añadir: ', permisos)
+        const response = await perfilesService.addPermisosToProfile(newPerfil.id, permisos)
+        if(response){
+            console.log('respuesta a la llamada al back para actualizar permisos: ', response)
+            navigation.navigate("ProfileListScreen")
+          }
     }   
     const showPermiso = (item) => {
         console.log(item)

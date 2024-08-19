@@ -5,7 +5,7 @@ import { UserDto,
          LoginResponseDto, 
          CreateUserDtoTwo,
          LoginWithTokenDto}  from "./dto"
-import {User, UserModel} from "./models"
+import {User, UserDoc, UserModel} from "./models"
 import {AuthenticationException, AuthorizationException, ServerException} from "../common/exception/exception"
 import * as jwt from "jsonwebtoken"
 import * as dotenv from "dotenv"
@@ -16,8 +16,13 @@ import { ultimoDia } from "../dateUtils/dateUtils"
 //import { ReporteDto } from "../reporte/reporteDto";
 import { Reporte } from "../reporte/modelReporte";
 import { ReporteUsersDto } from "../reporte/reporteDto"
-import { SalaDeEnsayoModel } from "../sala_de_ensayo/model"
+import { SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel } from "../sala_de_ensayo/model"
 import { StringLiteral } from "typescript"
+import { PerfilModel } from "../perfil/models"
+import { addMonths, endOfMonth, format, isWithinInterval, startOfMonth } from "date-fns"
+import { CreateSalaDeEnsayoDto, SalaDeEnsayoDto } from "../sala_de_ensayo/dto"
+var mongoose = require('mongoose');
+
 
 
 export class UsersService{
@@ -50,6 +55,7 @@ export class UsersService{
             tipoArtista: dto.tipoArtista
 
         })
+        console.log('service user created: ', user)
         await this.sendMailPiola(user.email, "Usted ha creado la cuenta exitosamente. Gracias por elegir SoundRoom")
         return  this.mapToDto(user)
     }
@@ -136,31 +142,12 @@ export class UsersService{
         })
     }
 
-
-
     async updateUser(userId: string, dto : CreateUserDto) : Promise<UserDto>{
         if(dto.enabled === "baja"){
             console.log("service baja: ", dto.enabled)
+            await this.dao.stopDisableUser(userId)
             return  this.mapToDto( 
                 await this.dao.bajaUser(userId,{
-                    name:  dto.name,
-                    last_name : dto.last_name,
-                    email: dto.email,
-                    password : dto.password,
-                    createdAt: dto.createdAt,
-                    image_id: undefined,
-                    enabled: dto.enabled,
-                    idPerfil: dto.idPerfil as unknown as string,
-                    idArtistType: dto.idArtistType as unknown as string,
-                    idArtistStyle: dto.idArtistStyle as unknown as string,
-                    userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
-                    tipoArtista: dto.tipoArtista
-                }))
-        }
-        if(dto.enabled === "deshabilitado"){
-            return  this.mapToDto( 
-                await this.dao.disableUser(userId,{
                     name:  dto.name,
                     last_name : dto.last_name,
                     email: dto.email,
@@ -176,7 +163,48 @@ export class UsersService{
                     idSalaDeEnsayo: dto.idSalaDeEnsayo,
                     tipoArtista: dto.tipoArtista
                 }))
-        } else {
+        }
+        if(dto.enabled === "deshabilitado"){
+            await this.dao.stopDisableUser(userId)
+            return  this.mapToDto( 
+                await this.dao.disableUser(userId,{
+                    name:  dto.name,
+                    last_name : dto.last_name,
+                    email: dto.email,
+                    password : dto.password,
+                    createdAt: dto.createdAt,
+                    deletedAt: new Date(),
+                    image_id: undefined,
+                    enabled: dto.enabled,
+                    idPerfil: dto.idPerfil as unknown as string,
+                    idArtistType: dto.idArtistType as unknown as string,
+                    idArtistStyle: dto.idArtistStyle as unknown as string,
+                    userType: dto.userType,
+                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                    tipoArtista: dto.tipoArtista,   
+                }))
+        } 
+        if(dto.enabled === "habilitado"){
+            await this.dao.stopDisableUser(userId)
+            return  this.mapToDto( 
+                await this.dao.enabledUser(userId,{
+                    name:  dto.name,
+                    last_name : dto.last_name,
+                    email: dto.email,
+                    password : dto.password,
+                    createdAt: dto.createdAt,
+                    deletedAt: new Date(),
+                    image_id: undefined,
+                    enabled: dto.enabled,
+                    idPerfil: dto.idPerfil as unknown as string,
+                    idArtistType: dto.idArtistType as unknown as string,
+                    idArtistStyle: dto.idArtistStyle as unknown as string,
+                    userType: dto.userType,
+                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                    tipoArtista: dto.tipoArtista,   
+                }))
+        } 
+        else {
             console.log('service update user, dtoUser: ', dto)
         return  this.mapToDto( 
             await this.dao.updateUser(userId,{
@@ -197,6 +225,9 @@ export class UsersService{
             })
         )}
     }
+
+    //TODO-> Agregar funcion para cambiar el estado anterior, es decir agregar fecha hasta en
+    //TODO-> enabledHistory y cambiar al estado nuevo
     async updatePassword(userId: string, dto : CreateUserDto) : Promise<UserDto>{
         const passwordU = dto.password
         return  this.mapToDto( 
@@ -282,7 +313,8 @@ export class UsersService{
             createdAt: user.createdAt,
             deletedAt: user.deletedAt,
             userType: user.userType,
-            tipoArtista: user.tipoArtista
+            tipoArtista: user.tipoArtista,
+            enabledHistory: user.enabledHistory
         }
     }
     mapToReporte(reporte: Reporte): ReporteUsersDto{
@@ -390,16 +422,17 @@ export class UsersService{
     // }
     
 
+    //reporte nuevos usuarios
     // funcionando: Función para obtener la cantidad de documentos por mes entre dos fechas
     async obtenerCantidadDocumentosPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
         try {
             // Parsear fechas
-            const fechaInicioObj = new Date(fechaInicio);
+            const fechaInicioObj = new Date(fechaInicio) ;
             const fechaFinObj = new Date(fechaFin);
             console.log("fecha Inicio", fechaInicioObj)
             console.log("fecha Fin", fechaFinObj)
             // Obtener la diferencia en meses
-            const diffMeses = (fechaFinObj.getFullYear() - fechaInicioObj.getFullYear()) * 12 + fechaFinObj.getMonth() - fechaInicioObj.getMonth() + 1;
+            const diffMeses = (fechaFinObj.getFullYear() - fechaInicioObj.getFullYear()) * 12 + fechaFinObj.getMonth() - fechaInicioObj.getMonth();
 
             // Inicializar el array de resultados
             const resultados: { año: number, mes: string, cantidad: number }[] = [];
@@ -427,37 +460,65 @@ export class UsersService{
             console.error('Error al obtener la cantidad de documentos por mes:', error);
             throw error;
         }
-        
-        // intento uno
-        // try {
-        //     const inicio = new Date(fechaInicio);
-        //     const fin = new Date(fechaFin);
-        //     const resultados = await SalaDeEnsayoModel.aggregate([
-        //       {
-        //         $match: {
-        //           createdAt: { $gte: inicio, $lte: fin }
-        //         }
-        //       },
-        //       {
-        //         $group: {
-        //           _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-        //           count: { $sum: 1 }
-        //         }
-        //       },
-        //       {
-        //         $project: {
-        //           _id: 0,
-        //           mes: '$_id',
-        //           cantidad: '$count'
-        //         }
-        //       }
-        //     ]);
+    }
 
-        //     console.log(resultados)
-        // }catch (error) {
-        //     throw new Error('Error al consultar los documentos por mes');
+    //reporte nuevos usuarios v2
+    async reporteNuevosUsuarios (fechaInicioStr: string, fechaFinStr: string) {
+        try {
+        
+
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
+    
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
+    
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
+            }
+    
+            // Encontrar las reservas que coincidan con las condiciones
+            const users = await UserModel.find({
+                createdAt: { $gte: fechaInicio, $lte: fechaFin }
+            });
+    
+            // Agrupar las reservas por mes
+            users.forEach(user => {
+                const mes = user.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Usuarios nuevos agrupados por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            }
+
+            } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo las reservas por mes');
+        }
     }
     
+    //reporte nuevos artistas por mes
     async obtenerArtistasNuevosPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
         try {
             // Parsear fechas
@@ -496,53 +557,277 @@ export class UsersService{
             throw error;
         }
     }
-    // helper parsea
-    obtenerNombreDelMes = (mes: number): string => {
-        const nombresDeMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        return nombresDeMeses[mes];
+
+    //reporte nuevos artistas por mes v2
+    async reporteNuevosArtistas (fechaInicioStr: string, fechaFinStr: string) {
+        try {
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
+
+            // Busca el perfil con el nombre "artista"
+            const perfilArtista = await PerfilModel.findOne({ name: "Artista" }).select('_id');
+            if (!perfilArtista) {
+                throw new Error('Perfil "artista" no encontrado');
+            }
+    
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
+    
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
+            }
+            const perfilArtistaId = mongoose.Types.ObjectId(perfilArtista._id);
+    
+            // Encontrar las reservas que coincidan con las condiciones
+            const users = await UserModel.find({
+                createdAt: { $gte: fechaInicio, $lte: fechaFin },
+                idPerfil : perfilArtistaId
+            });
+    
+            // Agrupar las reservas por mes
+            users.forEach(user => {
+                const mes = user.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Usuarios Artista nuevos agrupados por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            }
+
+            } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo usuarios artistas por mes');
+        }
     }
 
-    async obtenerUsuariosActivosPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
+    //reporte usuariosactivos v1
+    async reporteUsuariosActivos (fechaInicioStr: string, fechaFinStr: string) {
         try {
-            // Parsear fechas
-            const fechaInicioObj = new Date(fechaInicio);
-            const fechaFinObj = new Date(fechaFin);
-            console.log("fecha Inicio", fechaInicioObj)
-            console.log("fecha Fin", fechaFinObj)
-            // Obtener la diferencia en meses
-            const diffMeses = (fechaFinObj.getFullYear() - fechaInicioObj.getFullYear()) * 12 + fechaFinObj.getMonth() - fechaInicioObj.getMonth() + 1;
+            // Convertir las fechas de string a Date
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+    
+            // Crear arrays para labels y data
+            let labels: string[] = [];
+            let data: number[] = [];
 
-            // Inicializar el array de resultados
-            const resultados: { año: number, mes: string, cantidad: number }[] = [];
-
-            // Consultar la cantidad de documentos por mes
-            for (let i = 0; i < diffMeses; i++) {
-                const fechaActual = new Date(fechaInicioObj.getFullYear(), fechaInicioObj.getMonth() + i, 1);
-                const fechaSiguiente = new Date(fechaInicioObj.getFullYear(), fechaInicioObj.getMonth() + i + 1, 1);
-
-                const cantidad = await UserModel.countDocuments({
-                    createdAt: {
-                        $gte: fechaActual,
-                        $lt: fechaSiguiente
-                    },
-                    enabled:"habilitado"
-                });
-                const nombreDelMes = this.obtenerNombreDelMes(fechaActual.getMonth());
-                resultados.push({ año: fechaActual.getFullYear(), mes: //fechaActual.getMonth() + 1
-                    nombreDelMes
-                    , cantidad });
+    
+            // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            let current = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            console.log('current month: ', current)
+            let end = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
+            console.log('last month: ', end)
+    
+            while (current <= end) {
+                const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+                if (current >= fechaInicio && current <= fechaFin) {
+                    labels.push(this.getMonthAbbreviation(mes));
+                    data.push(0); // Inicializar a 0
+                }
+                current.setMonth(current.getMonth() + 1);
+                console.log('labels: ', labels);
             }
-            
-            console.log(resultados)
-            return resultados;
-        } catch (error) {
-            console.error('Error al obtener la cantidad de documentos por mes:', error);
-            throw error;
+    
+            // Encontrar los usuarios activos que coincidan con las condiciones
+            const users = await UserModel.find({
+                createdAt: { $gte: fechaInicio, $lte: fechaFin },
+                enabled : "habilitado"
+            });
+    
+            // Agrupar las reservas por mes
+            users.forEach(user => {
+                const mes = user.createdAt.toISOString().substring(0, 7); // formato YYYY-MM
+                const index = labels.findIndex(label => label === this.getMonthAbbreviation(mes));
+                if (index !== -1) {
+                    data[index] += 1; // Incrementar contador
+                }
+            });
+    
+            console.log(`Salas de ensayo nuevas agrupados por mes: ${JSON.stringify({ labels, data })}`);
+    
+            return {
+                labels,
+                datasets: [{ data }]
+            }
+
+            } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo salas de ensayo por mes');
         }
     }
 
 
-    async obtenerUsuariosBajaPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
+    // helper parsea
+    obtenerNombreDelMes = (mes: number): string => {
+        const nombresDeMeses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        return nombresDeMeses[mes];
+    }
+
+    getMonthAbbreviation(month: string): string {
+        const monthAbbreviations = [
+          "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+        ];
+        // const [year, monthNumber] = month.split("-");
+        // return monthAbbreviations[parseInt(monthNumber, 10) - 1];
+        const yearMonth = month.split("-");
+        const monthIndex = parseInt(yearMonth[1], 10) - 1; // Convertir el mes en índice (0-11)
+        return monthAbbreviations[monthIndex];
+      }
+
+      //reporte usuariosactivos v1
+    async obtenerUsuariosActivosPorMes(fechaInicio: string, fechaFin: string) {
+        try {
+       
+            const startDate = new Date(fechaInicio);
+            const endDate = new Date(fechaFin);
+
+            // Declaración del objeto resultado
+            const result = {
+                labels: [] as string[],
+                datasets: [
+                {
+                    data: [] as number[],
+                },
+                ],
+            };
+
+            let currentYear = startDate.getFullYear();
+            let currentMonth = startDate.getMonth();
+
+            while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
+                const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+                const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+
+                const count = await UserModel.countDocuments({
+                enabledHistory: {
+                    $elemMatch: {
+                    status: 'habilitado',
+                    dateFrom: { $lte: endOfCurrentMonth },
+                    $or: [
+                        { dateTo: { $gte: startOfCurrentMonth } },
+                        { dateTo: null }, // Si dateTo es null, significa que aún está habilitado
+                    ],
+                    },
+                },
+                });
+
+                // Llenado del objeto result
+                let monthLabel = startOfCurrentMonth.toLocaleString('default', { month: 'short' });
+                monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+                
+                result.labels.push(monthLabel);
+                result.datasets[0].data.push(count);
+
+                // Avanzar al siguiente mes
+                currentMonth++;
+                if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+                }
+            }
+            result.labels.shift()
+            result.datasets[0].data.shift()
+
+            // Retorno del objeto result con los datos llenados
+            return result;
+
+       
+        } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo usuarios activos por mes');
+        }
+    }
+
+    //nueva version reporte baja 
+     //reporte usuarios baja
+     async obtenerUsuariosBajaPorMes(fechaInicio: string, fechaFin: string) {
+        try {
+       
+            const startDate = new Date(fechaInicio);
+            const endDate = new Date(fechaFin);
+
+            // Declaración del objeto resultado
+            const result = {
+                labels: [] as string[],
+                datasets: [
+                {
+                    data: [] as number[],
+                },
+                ],
+            };
+
+            let currentYear = startDate.getFullYear();
+            let currentMonth = startDate.getMonth();
+
+            while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
+                const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+                const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+
+                const count = await UserModel.countDocuments({
+                enabledHistory: {
+                    $elemMatch: {
+                    status: 'baja',
+                    dateFrom: { $lte: endOfCurrentMonth },
+                    $or: [
+                        { dateTo: { $gte: startOfCurrentMonth } },
+                        { dateTo: null }, // Si dateTo es null, significa que aún está habilitado
+                    ],
+                    },
+                },
+                });
+
+                // Llenado del objeto result
+                let monthLabel = startOfCurrentMonth.toLocaleString('default', { month: 'short' });
+                monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+                
+                result.labels.push(monthLabel);
+                result.datasets[0].data.push(count);
+
+                // Avanzar al siguiente mes
+                currentMonth++;
+                if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+                }
+            }
+            result.labels.shift()
+            result.datasets[0].data.shift()
+
+            // Retorno del objeto result con los datos llenados
+            return result;
+
+       
+        } catch (error) {
+            console.error(error);
+            throw new Error('Error obteniendo usuarios activos por mes');
+        }
+    }
+
+    //reporte baja version deprecada
+    async reporteUsuariosBajaPorMes(fechaInicio: string, fechaFin: string): Promise<{ mes: string, cantidad: number }[]> {
         try {
             // Parsear fechas
             const fechaInicioObj = new Date(fechaInicio);
@@ -561,7 +846,7 @@ export class UsersService{
                 const fechaSiguiente = new Date(fechaInicioObj.getFullYear(), fechaInicioObj.getMonth() + i + 1, 1);
 
                 const cantidad = await UserModel.countDocuments({
-                    createdAt: {
+                    deletedAt: {
                         $gte: fechaActual,
                         $lt: fechaSiguiente
                     },
@@ -678,5 +963,317 @@ export class UsersService{
         }
     }
 
+
+      // const startDate = new Date(fechaInicioS);
+            // const endDate = new Date(fechaFinS);
+
+            // // Crear arrays para labels y data
+            // let labels: string[] = [];
+            // let data: number[] = [];
+
+            // // Generar la lista de todos los meses entre fechaInicio y fechaFin
+            // let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            // let end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+            // // Buscar los usuarios creados desde la fechaInicio y con perfil.name = 'saladeensayo'
+            // const perfil = await PerfilModel.findOne({ name: 'Sala de Ensayo' }).exec();
+            // if (!perfil) return { labels, datasets: [{ data }] };
+
+            // const perfilid = new mongoose.Types.ObjectId(perfil._id);
+            // const usuarios = await UserModel.find({
+            //     idPerfil: perfilid,
+            //     createdAt: { $lte: endDate }
+            // }).exec();
+            // console.log('usuarios sde: ', usuarios)
+
+            // while (current <= end) {
+            //     const mes = current.toISOString().substring(0, 7); // formato YYYY-MM
+            //     labels.push(this.getMonthAbbreviation(mes));
+            //     data.push(0); // Inicializar a 0
+            //     current.setMonth(current.getMonth() + 1);
+            // }
+            // data[1]=0
+            // labels.shift()
+            // data.shift()
+
+            // let startDateM = startDate
+            // // Iterar sobre los meses
+            // while (startDateM <= endDate) {
+            //     let c = 0
+            //     // Obtener el primer día del mes
+            //     const firstDayOfMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+            //     // Obtener el último día del mes
+            //     const lastDayOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+
+            //     console.log(`Primer día del mes: ${firstDayOfMonth}`);
+            //     console.log(`Último día del mes: ${lastDayOfMonth}`);
+
+            //     for (const usuario of usuarios){
+            //         const userid = new mongoose.Types.ObjectId(usuario._id);
+
+            //         const salasDeEnsayo = await SalaDeEnsayoModel.find({
+            //             idOwner: userid,
+            //             enabledHistory: {
+            //                 $elemMatch: {
+            //                     $or: [
+            //                         { dateTo: null }, // Si la sala aún está habilitada
+            //                         {
+            //                             dateFrom: { $gte: startDate, $lt: endDate }, // Fecha de inicio dentro del mes
+            //                             dateTo: { $gte: startDate, $lt: endDate } // Fecha de fin dentro del mes, si está definida
+            //                         }
+            //                     ],
+            //                     status: 'habilitado' // Status especificado
+            //                 }
+            //             },
+            //             enabled: 'habilitado' // Condición para asegurarse de que la sala está habilitada
+            //         }).limit(1).exec();
+            //         console.log('sala de ensayo encontrada: ', salasDeEnsayo)
+            //         data[c]++
+            //         c++
+            //     }
+
+            //     // Avanzar al siguiente mes
+            //     startDateM = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+            // }
+
+            // return {
+            //     labels,
+            //     datasets: [
+            //         {
+            //             data
+            //         }
+            //     ]
+            // }
+    
+    
+    //propietarios que alquilan v3
+    async propietariosAlquilanSala3(fechaInicioS: string, fechaFinS: string) {
+        
+        // try {
+
+        //     // Convertir fechas de inicio y fin a Date
+        //     //otra version:
+        //     const startDate = new Date(fechaInicioS);
+        //     const endDate = new Date(fechaFinS);
+
+        //     // Declaración del objeto resultado
+        //     const result = {
+        //         labels: [] as string[],
+        //         datasets: [
+        //         {
+        //             data: [] as number[],
+        //         },
+        //         ],
+        //     };
+        //     result.datasets[0].data[0] = 0;
+        //     result.datasets[0].data[1] = 0;
+
+
+        //     let currentYear = startDate.getFullYear();
+        //     let currentMonth = startDate.getMonth();
+
+        //     // Buscar los usuarios creados desde la fechaInicio y con perfil.name = 'saladeensayo'
+        //     const perfil = await PerfilModel.findOne({ name: 'Sala de Ensayo' }).exec();
+        //     if (!perfil) return {msg: "no se encontraron usuarios sala de ensayo"};
+
+        //     const perfilid = new mongoose.Types.ObjectId(perfil._id);
+        //     const usuarios = await UserModel.find({
+        //         idPerfil: perfilid,
+        //         enabled: 'habilitado',
+        //         createdAt: { $lte: endDate }
+        //     }).exec();
+        //     console.log('usuarios sde: ', usuarios)
+
+        //     let c = 0
+        //     while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
+        //         result.datasets[0].data[c] = 0;
+        //         const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+        //         const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+
+        //         //
+        //         for (const usuario of usuarios){
+        //             const userid = new mongoose.Types.ObjectId(usuario._id);
+
+        //             const salasDeEnsayo = await SalaDeEnsayoModel.find({
+        //                 idOwner: userid,
+        //                 enabledHistory: {
+        //                     $elemMatch: {
+        //                         $or: [
+        //                             { dateTo: null }, // Si la sala aún está habilitada
+        //                             {
+        //                                 dateFrom: { $gte: startOfCurrentMonth, $lt: endOfCurrentMonth }, // Fecha de inicio dentro del mes
+        //                                 dateTo: { $gte: startOfCurrentMonth, $lt: endOfCurrentMonth } // Fecha de fin dentro del mes, si está definida
+        //                             }
+        //                         ],
+        //                         status: 'habilitado' // Status especificado
+        //                     }
+        //                 },
+        //                 enabled: 'habilitado' // Condición para asegurarse de que la sala está habilitada
+        //             }).limit(1).exec();
+        //             console.log('mes analizado: ', currentMonth, currentYear)
+        //             console.log('sala de ensayo encontrada: ', salasDeEnsayo)
+        //             result.datasets[0].data[c] ++;
+        //             console.log('data: ', result.datasets)
+                    
+        //         }
+
+        //         // Llenado del objeto result
+        //         let monthLabel = startOfCurrentMonth.toLocaleString('default', { month: 'short' });
+        //         monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+        //         result.labels.push(monthLabel);
+        //         //result.datasets[0].data.push(count);
+
+        //         // Avanzar al siguiente mes
+        //         currentMonth++;
+        //         if (currentMonth > 11) {
+        //         currentMonth = 0;
+        //         currentYear++;
+        //         }
+        //         c++
+        //     }
+        //     result.labels.shift()
+        //     result.datasets[0].data.shift()
+
+        //     // Retorno del objeto result con los datos llenados
+        //     return result;
+            
+        //     } catch (error) {
+        //         console.error("Error en propietariosAlquilanSala3:", error);
+        //         throw error;
+        //     }
+
+        try {
+            // Convertir fechas de inicio y fin a Date
+            const startDate = new Date(fechaInicioS);
+            const endDate = new Date(fechaFinS);
+    
+            // Declaración del objeto resultado
+            const result = {
+                labels: [] as string[],
+                datasets: [
+                    {
+                        data: [] as number[],
+                    },
+                ],
+            };
+    
+            // Inicializar el arreglo de datos con ceros para cada mes en el rango
+            const totalMonths = ((endDate.getFullYear() - startDate.getFullYear()) * 12) + endDate.getMonth() - startDate.getMonth() + 1;
+            result.datasets[0].data = new Array(totalMonths).fill(0);
+    
+            let currentYear = startDate.getFullYear();
+            let currentMonth = startDate.getMonth();
+            let index = 0;
+    
+            // Buscar el perfil "Sala de Ensayo"
+            const perfil = await PerfilModel.findOne({ name: 'Sala de Ensayo' }).exec();
+            if (!perfil) return { msg: "no se encontraron usuarios sala de ensayo" };
+    
+            const perfilid = new mongoose.Types.ObjectId(perfil._id);
+            const usuarios = await UserModel.find({
+                idPerfil: perfilid,
+                enabled: 'habilitado',
+                createdAt: { $lte: endDate }
+            }).exec();
+            console.log('usuarios:', usuarios);
+    
+            while (currentYear < endDate.getFullYear() || (currentYear === endDate.getFullYear() && currentMonth <= endDate.getMonth())) {
+                const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+                const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+    
+                let count = 0;
+    
+                for (const usuario of usuarios) {
+                    console.log('for de usuarios ')
+                    const userid = new mongoose.Types.ObjectId(usuario._id);
+    
+                    const salasDeEnsayo = await SalaDeEnsayoModel.countDocuments({
+                        idOwner: userid,
+                        enabledHistory: {
+                            // $elemMatch: {
+                            //     $or: [
+                            //         { dateTo: null }, // Si la sala aún está habilitada
+                            //         {
+                            //             dateFrom: { $gte: startOfCurrentMonth, $lt: endOfCurrentMonth }, // Fecha de inicio dentro del mes
+                            //             dateTo: { $gte: startOfCurrentMonth, $lt: endOfCurrentMonth } // Fecha de fin dentro del mes, si está definida
+                            //         }
+                            //     ],
+                            //     status: 'habilitado' // Status especificado
+                            // }
+                           
+                            // $elemMatch: {
+                            //     dateFrom: { $lt: endOfCurrentMonth }, // La fecha de inicio debe ser antes del final del mes actual
+                            //     dateTo: { $gte: startOfCurrentMonth }, // La fecha de fin debe ser después del inicio del mes actual o null
+                            //     status: 'habilitado' // El estado debe ser habilitado
+                            // }
+
+                            $elemMatch: {
+                                status: 'habilitado',
+                                dateFrom: { $lte: endOfCurrentMonth },
+                                $or: [
+                                    { dateTo: { $gte: startOfCurrentMonth } },
+                                    { dateTo: null }, // Si dateTo es null, significa que aún está habilitado
+                                ],
+                                },
+                        },
+                        enabled: 'habilitado' // Condición para asegurarse de que la sala está habilitada
+                    }).exec();
+                    console.log('salasDeEnsayo: ', salasDeEnsayo)
+                    
+                    if (salasDeEnsayo > 0) {
+                        count++;
+                    }
+                }
+    
+                // Llenado del objeto result
+                let monthLabel = startOfCurrentMonth.toLocaleString('default', { month: 'short' });
+                monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+    
+                result.labels.push(monthLabel);
+                result.datasets[0].data[index] = count;
+    
+                // Avanzar al siguiente mes
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                index++;
+            }
+    
+            // Retorno del objeto result con los datos llenados
+            result.labels.shift()
+            result.datasets[0].data.shift()
+            return result;
+    
+        } catch (error) {
+            console.error("Error en propietariosAlquilanSala3:", error);
+            throw error;
+        }
+
+    }
+
+    mapToSalaDto(sala: SalaDeEnsayo): SalaDeEnsayoDto{
+        return{
+            id: sala.id,
+            nameSalaEnsayo: sala.nameSalaEnsayo,
+            calleDireccion: sala.calleDireccion,
+            numeroDireccion: sala.numeroDireccion,
+            idImagen: sala.idImagen,
+            idLocality: sala.idLocality,
+            idOwner: sala.idOwner,
+            precioHora: sala.precioHora,
+            idType: sala.idType,
+            duracionTurno: sala.duracionTurno,
+            enabled: sala.enabled,
+            descripcion: sala.descripcion,
+            comodidades: sala.comodidades,
+            opiniones: sala.opiniones,
+        }
+    }
+
 }
+
 export const instance = new UsersService(dao.instance)

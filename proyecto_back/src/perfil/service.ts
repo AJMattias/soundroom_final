@@ -1,5 +1,5 @@
 import * as dao from "./dao"
-import { CreatePerfilDto, CreatePermisoDto, PerfilDto, PermisoDto } from "./dto"
+import { CreatePerfilDto, CreatePerfilDto2, CreatePermisoDto, PerfilDto, PermisoDto } from "./dto"
 import { Permiso } from "./modelPermiso";
 import { Perfil } from "./models"
 
@@ -42,8 +42,12 @@ export class PerfilService{
             })
         )  
     }
+    async addPermisoToPerfil(id: string, dto: CreatePerfilDto2): Promise<PerfilDto>{
+        return this.mapToDto(
+            await this.dao.addPermisosToPerfil(id, dto.permisos)
+        )  
+    }
     
-
     async deletePermisoFromPerfil(id: string, dto: CreatePerfilDto): Promise<PerfilDto>{
         return this.mapToDto(
             await this.dao.deletePermisoFromProfile(id, {

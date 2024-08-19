@@ -67,6 +67,7 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
     }
 
     const updateComment = async () => {
+        
         if(!validateComment()) {
             return
         }
@@ -80,12 +81,31 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
         }
     }
 
+    const updateCommentToArtist = async () => {
+        if(!validateComment()) {
+            return
+        }
+        await ratingsService.updateRatingBd(previousRating.id, {
+            comment: comment.value,
+            score: score,
+            artistId: roomId
+        })
+        await fetchPreviousRating()
+        if(onRatingUpdated) {
+            onRatingUpdated()
+        }
+    }
+
     const deleteComment =  async () => {
         await ratingsService.deleteRating(previousRating.id)
         await fetchPreviousRating()
     }
 
     const fetchPreviousRating = async () => {
+        //si userlogged es SdE buscar opinion a artista
+        
+        
+        //si userlogged es artsita buscar opinion a SdE
         const rating = await  ratingsService.getMyRatingsForOtherIdBd(otherId)
         console.log("previous rating")
         console.log(rating)
@@ -113,12 +133,19 @@ export const AddComment = ({ user, otherId, title , placeholder , onRatingCreate
     }
 
     const onSubmitClicked  = () => {
-        if(previousRating) {
-            updateComment().then()
-        } else {
-            postComment().then()
-        }
-    }
+        if(user.idPerfil.name="sala de ensayo"){
+            if(previousRating) {
+                updateComment().then()
+            } else {
+                postComment().then()
+            }
+        }else if (user.idPerfil.name="artista"){
+            if(previousRating) {
+                updateCommentToArtist().then()
+            } else {
+                postComment().then()
+            }
+    }}
  
     const renderRatingsBar = () => {
         const currentValue = score? score : 0
