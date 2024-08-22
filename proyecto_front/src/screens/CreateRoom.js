@@ -5,6 +5,7 @@ import { Text } from 'react-native-paper'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
+import { LocalPhoneStorage, STORAGE_USER } from '../storage/LocalStorage'
 import Button from '../components/Button'
 import TextInput from '../components/TextInput'
 import BackButton from '../components/BackButton'
@@ -224,6 +225,10 @@ export  function CreateRoom({ navigation }) {
             }
         }
     }
+    const getUser = () => {
+      //console.log(LocalPhoneStorage.get(STORAGE_USER))
+      return LocalPhoneStorage.get(STORAGE_USER)
+  }
 
 
     //Crear sala y guardar en base de datos
@@ -268,6 +273,14 @@ export  function CreateRoom({ navigation }) {
               //const stored2 = await roomService.saveRoom2(nameSalaDeEnsayo, calleDireccion, 
               //  descripcion, precioHora, comodidades)
               console.log('room created in db', stored)
+              const user = getUser()
+              if(user.idPerfil.name="artista"){
+                console.log(user.idPerfil.name)
+                const userPerfil = await userService.getUserBd(stored.idRoom)
+                if(userPerfil){
+                  await LocalPhoneStorage.set(STORAGE_USER, userPerfil)
+                }
+            }
               //console.log('room created in db', stored2)
               navigation.navigate("RoomScreen", {
                   roomId: stored.id

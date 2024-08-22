@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {Card, Block , Text } from 'galio-framework'
 import { StyleSheet, ScrollView } from 'react-native'
 import { theme } from '../core/theme'
@@ -7,8 +7,11 @@ import { theme } from '../core/theme'
 export const Carousel = ({navigation, title, rooms, style}) => {
 
     const openRoom = (room) => {
-        navigation.push("RoomScreen", { roomId: room.id })
+        navigation.push("RoomScreen", { roomId: room._id })
     }
+    const userAvatar=require("../assets/user.png")
+    const roomImage =require('../assets/theatre.png')
+    
 
     return (
         <Block style = {[style , styles.wrapper]}>
@@ -20,13 +23,14 @@ export const Carousel = ({navigation, title, rooms, style}) => {
             showsHorizontalScrollIndicator={false} 
             contentContainerStyle={{width: '100%'}}>
                 {rooms.map((room)=>  (
+                    
                     <Card borderless
-                    title = {room.name}
-                    caption = {room.ownerName}
-                    avatar = {room.ownerImage}
-                    location = {room.address}
+                    title = {room.nameSalaEnsayo}
+                    caption = {room.nombreDueño}
+                    avatar = {userAvatar}
+                    location = {room.calleDireccion}
                     shadow
-                    image = {room.image}
+                    image = {roomImage}
                     style = {{marginRight: 5}}
                     onClick = {() => openRoom(room) }
                 

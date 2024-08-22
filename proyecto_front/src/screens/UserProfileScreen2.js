@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Alert, StyleSheet, ScrollView } from "react-native";
 import { Avatar, Header } from "react-native-elements";
 import { Block, Text, Card, Icon } from "galio-framework";
@@ -35,8 +35,10 @@ export default function CreateUserProfileScreen({ navigation }) {
     const [rooms, setRooms] = useState([])
 
     const [popular, setPopular] = useState([])
+    const [populares, setPopulares] = useState([])
 
     const [ownerRooms, setOwnerRooms] = useState([])
+   
 
     const fetchUser = async () => {
         try {
@@ -51,6 +53,20 @@ export default function CreateUserProfileScreen({ navigation }) {
             const ownerRoomsBd = response
             setOwnerRooms(ownerRoomsBd)
             console.log('ownerRooms fetched: ', ownerRooms)
+       
+            //fetch popular rooms
+            const popularRooms = await roomService.getPopulars()
+            console.log('popularRooms: ', popularRooms)
+            const responsePopular = popularRooms
+            // const updatedData = responsePopular.map((item) => ({
+            //     ...item,
+            //     nombreDueño: `${item.idOwner.name} ${item.idOwner.lastName}`  }));
+            // const responsePopularT = updatedData
+            setPopular(responsePopular)
+            //console.log('updatedData: ', updatedData)
+            
+            
+            
         } catch (apiError) {
             console.error("Error fetching user")
             console.log(apiError)
@@ -83,17 +99,25 @@ export default function CreateUserProfileScreen({ navigation }) {
     }
 
     const fetchPopular = async() => {
-        const popular = await roomService.recomended(20)
-        setPopular(popular)
+        const popularRooms = await roomService.recomended(20)
+        setPopular(popularRooms)
     }
 
-    if (!userFetched) {
-        fetchUser().then()
-        fetchRooms().then()
-        //fetchOwnerRooms().then()
-        //fetchPopular().then()
-        setUserFetched(true)
-    }
+    // if (!userFetched) {
+    //     fetchUser().then()
+    //     //fetchRooms().then()
+    //     //fetchOwnerRooms().then()
+    //     //fetchPopular().then()        
+    //     setUserFetched(true)
+    
+    // }
+
+    useEffect(() => {
+        if (!userFetched) {
+            fetchUser();
+            setUserFetched(true);
+        }
+    }, [userFetched]);
 
     const logOut = () => {
         LocalPhoneStorage.reset()
@@ -114,11 +138,11 @@ export default function CreateUserProfileScreen({ navigation }) {
                 //     ))}
                 // </Block>
                 <CarouselVertical
-                        navigation  = {navigation}
-                        title = "Tus Salas"
-                        style = {[{marginTop: 26}]}
-                        ownerRooms = {ownerRooms}
-                    />
+                    navigation  = {navigation}
+                    title = "Tus Salas"
+                    style = {[{marginTop: 26}]}
+                    ownerRooms = {ownerRooms}
+                />
             )
         }
     }
@@ -138,7 +162,7 @@ export default function CreateUserProfileScreen({ navigation }) {
     //TODO hacer una peticion a endpoint updatePErfil con enable:"desahbilitado"
     const deleteUser = async () =>{
         const disabledUser = await userService.deshabilitarUser(
-            user.id, user.email, user.name, user.last_name, 'deshabilitado'
+            user.id, user.email, user.name, user.last_name, 'baja'
         )
         if(disabledUser){
            logOut()
@@ -171,13 +195,14 @@ export default function CreateUserProfileScreen({ navigation }) {
                         navigation  = {navigation}
                         title = "Salas recomendadas"
                         style = {[{marginTop: 26}]}
-                        rooms = {rooms}
+                       // rooms = {rooms}
+                       rooms = {popular}
                     />
 
                    <Button mode ="outlined" onPress = {openCreateRoom} >Publica tu sala</Button>
                    
                    {
-                user.idPerfil && user2.idPerfil.name =="Sala de Ensayo" && (
+                    user.idPerfil && user2.idPerfil.name =="Sala de Ensayo" && (
                    <Button mode ="contained" onPress = {()=>navigation.navigate("AdminSalaReportes")} >Reportes de tus Salas</Button>
                    )
                 }

@@ -70,6 +70,39 @@ export const OrderRow = ({order, onOrderCancelled }) => {
     //calcula el total de la reserva mas comision del 5% 
     const fee = order.totalPrice*1.05 - order.totalPrice //order.totalNet
 
+    //logica de fechas
+    // let currentDate = new Date()
+    // console.log('current date: ', currentDate)
+    // console.log('reservation date: ', order.date)
+    // console.log('cuurent hour: ', currentDate.getHours())
+    // console.log('hora inicio reserva: ', order.hsStart.getHours())
+    // console.log('currentDate <= order.date: ', currentDate <= order.date)
+    // let showCancel = false
+    // if(currentDate < order.date){
+    //     showCancel = true
+    // }
+    // if(currentDate = order.date){
+    //     if(currentDate.getHours() < order.hsStart.getHours()){
+    //         showCancel=true
+    //     }
+    // }
+
+    //nuevo logica:
+    // Lógica para determinar si mostrar el botón "Cancelar"
+    const currentDate = new Date();
+    const orderDate = new Date(order.date);
+    const orderStartTime = new Date(order.hsStart);
+
+    let showCancel = false;
+    if (currentDate < orderDate) {
+        showCancel = true;
+    } else if (
+        currentDate.toDateString() === orderDate.toDateString() &&
+        currentDate.getHours() < orderStartTime.getHours()
+    ) {
+        showCancel = true;
+    }
+
     return (
 
         <Block shadown style = {[ styles.orderRowContainer, rowColor]} >
@@ -77,7 +110,8 @@ export const OrderRow = ({order, onOrderCancelled }) => {
                 <Text style = {styles.orderTitle}>{order.idUser.name} {order.idUser.lastName}</Text>
                 {/* <Text style = {styles.orderTitle}>{order.user.name} {order.user.last_name}</Text> */}
                 <Block style = {styles.statusColumn}>
-                    { order.canceled == 'false' &&
+                    {/* { order.canceled == 'false' && currentDate <= order.date && currentDate.getHours() < order.hsStart.getHours() && */}
+                    {showCancel &&
                     <DeleteButton 
                         innerText = "Cancelar" 
                         onDelete = {() => {onOrderCancelled(order)}} />

@@ -78,6 +78,24 @@ export interface CreateSalaDeEnsayoDto{
     enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[]
 }
 
+export interface PopularSalaDeEnsayoDto{
+    nameSalaEnsayo: string;
+    calleDireccion: string;
+    // numeroDireccion: number;
+    // idLocality: string;
+    createdAt: Date;
+    idImagen?: string;
+    duracionTurno: number;
+    precioHora: number;
+    idOwner?: string;
+    idType: string;
+    enabled: string;
+    descripcion: string;
+    comodidades:[string];
+    enabledHistory?: { status: string; dateFrom: Date, dateTo: Date }[];
+    salaOwner: string;
+}
+
 export interface UpdateSalaDeEnsayoDto{
     name: string,
     calleDireccion: string,

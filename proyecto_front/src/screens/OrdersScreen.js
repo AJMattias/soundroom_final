@@ -96,7 +96,7 @@ export const OrdersScreen = ({navigation}) => {
         console.log("End "+ endDate )
         if(startDate && endDate) {
             setOrders(
-                (await ordersService.getMyOrders()).filter((order) => order.created >= startDate && order.created < endDate)
+                (await ordersService.getMyOrdersBd()).filter((order) => order.date >= startDate && order.date < endDate)
             )
         } else {
             // Si la start date está vacía significa que se ha elegido el rango "Todas"

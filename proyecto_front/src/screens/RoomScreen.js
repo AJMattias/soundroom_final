@@ -59,7 +59,7 @@ export const RoomScreen = ({ route, navigation }) => {
     let idSala = ''
     //let ownerName =''
     const [name, setName] = useState('')
-    const img =''
+    const img =require("../assets/user.png")
     let comodities =[]
     const [comodities2, setComodities2] = useState([])
     const [showAlert, setShowAlert] = useState(false);
@@ -68,7 +68,7 @@ export const RoomScreen = ({ route, navigation }) => {
     
 
      
-    const fetchRoom = async () => {
+    const   fetchRoom = async () => {
         try {
         //TODO: la llamada a getRoomBd debe retornar solo la sala
         // hacer otra llamada para obtener el owner, cuyo id estara en la sala
@@ -138,7 +138,7 @@ export const RoomScreen = ({ route, navigation }) => {
             // const promedioSala = await userService.getUserDb(idSala)
             // setEstrellasProm(promedioSala)
             // console.log("promedio sala: ", estrellasProm)
-            img = require("../assets/user.png")
+            //img = require("../assets/user.png")
 
         } catch (apiError) {
             console.error(apiError)
@@ -178,7 +178,7 @@ export const RoomScreen = ({ route, navigation }) => {
         try {
             const response = await ratingsService.getRoomOpinions(roomId)
             const opiniones = response
-            setRatings(opiniones.opiniones)
+            setRatings(opiniones)
             console.log('response to room opinions: ', response)
             console.log('opiniones useState: ', ratings)
         } catch (apiError) {
@@ -189,11 +189,11 @@ export const RoomScreen = ({ route, navigation }) => {
 
     const fetchUserReservations = async () => {
         try {
-            const reservationss = await reservationService.getMyRoomReservationBd(getUser().id, roomId)
-            setUserReservations(reservationss)
-            //console.log('reservas del usuario logueado a la sala: ', userReservations)
+            const reservations = await reservationService.getMyRoomReservationBd(getUser().id, roomId)
+            setUserReservations(reservations)
+            console.log('reservas del usuario logueado a la sala: ', userReservations)
         } catch (ignored){
-            console.log(ignored)
+            console.log('fetchUserReservations error:', ignored)
         }
     }
 
@@ -236,10 +236,20 @@ export const RoomScreen = ({ route, navigation }) => {
 
     const renderComments = () => {
         if (ratings) {
+            console.log('render comments: ', ratings)
             return ratings.map((rating) => {
-                const idUserRating = rating.idUser._id
-                console.log('idUserRating: ', idUserRating)
-               return ( <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.idUser} rate={rating} onClick = {()=>openArtistScreen(idUserRating) } /> )
+                const idUserRating = rating.idUser ? rating.idUser._id : null;
+                if (idUserRating) {
+                console.log('idUserRating: ', idUserRating);
+                } else {
+                console.warn('Rating sin idUser:', rating);
+                }
+               return (
+                ( rating.idUser && 
+                 <RateComment style = {{marginTop: 4, marginBottom: 4}} user={rating.idUser} rate={rating} onClick = {()=>openArtistScreen(idUserRating) } /> 
+                )
+                )
+                
               })
         }
     }

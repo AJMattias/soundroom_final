@@ -35,6 +35,12 @@ class ArtistService {
         return opinion
     }
 
+    async getPopularArtists(){
+        const artistas = await api.get("/user/findPopularsArtists/")
+        console.log('artistas populares: ', artistas)
+        return artistas
+    }
+
 }
 
 export const artistService = new ArtistService()

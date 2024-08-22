@@ -1,7 +1,7 @@
 import { UserModel } from "src/users/models";
 import { PerfilModel } from "../perfil/models";
 import * as dao from "./dao"
-import { CreateOpinionDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, OpinionDto, SalaDeEnsayoDto} from "./dto";
+import { CreateOpinionDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, OpinionDto, PopularSalaDeEnsayoDto, SalaDeEnsayoDto} from "./dto";
 import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoModel } from "./model";
 import { displayPartsToString } from "typescript";
 var mongoose = require('mongoose');
@@ -82,6 +82,16 @@ export class SalaService{
         return salas.map((sala: SalaDeEnsayo) =>{
             return this.mapToDto(sala)
         })
+    }
+    async getPopulars(): Promise<Array<SalaDeEnsayoDto>>{
+        const salas = await this.dao.getPopulars()
+        return salas.map((sala: SalaDeEnsayo) =>{
+            return this.mapToDto(sala)
+        })
+        // const salas2 = salas.map((sala: SalaDeEnsayo) =>{
+        // return this.mapToDto(sala)})
+
+
     }
 
     async counterSalasActivas(): Promise<Array<SalaDeEnsayoDto>> {
@@ -356,6 +366,26 @@ export class SalaService{
             opiniones: sala.opiniones,
         }
     }
+    // maptoPopularSalaDto(sala: SalaDeEnsayoDto):PopularSalaDeEnsayoDto{
+    //     return{
+    //         id: sala.id,
+    //         nameSalaEnsayo: sala.nameSalaEnsayo,
+    //         calleDireccion: sala.calleDireccion,
+    //         numeroDireccion: sala.numeroDireccion,
+    //         idImagen: sala.idImagen,
+    //         idLocality: sala.idLocality,
+    //         idOwner: sala.idOwner,
+    //         precioHora: sala.precioHora,
+    //        // idType: sala.idType,
+    //         duracionTurno: sala.duracionTurno,
+    //         enabled: sala.enabled,
+    //         descripcion: sala.descripcion,
+    //         //comodidades: sala.comodidades,
+    //         opiniones: sala.opiniones,
+    //         salaOwner: sala.id
+
+    //     }
+    // }
 
     mapToDtoOpinion(document: Opinion): OpinionDto{
         return {

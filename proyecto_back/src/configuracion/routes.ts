@@ -6,6 +6,11 @@ import { ConfiguracionDto } from "./dto";
 import { ErrorCode } from "../common/utils/constants";
 import { ValidatorUtils } from "../common/utils/validator_utils";
 require('dotenv').config();
+//nuevas importaciones fix bugs
+import path from 'path';
+import { spawn } from 'child_process';
+import fs from 'fs';
+
 
 /**
 *
@@ -72,28 +77,81 @@ export const route = (app: Application) => {
         })
     )
 
-    app.put("/configuraciones/backup",
-        run(async (req: Request, resp: Response) => {
-            let nombre = "backup.bson"
-            const rutaArchivo = "../" + nombre
-            const spawn = require('child_process').spawn
-            const rutaDump = process.env.MONGODUMP
-            let backupProcess = spawn(rutaDump, [
-                '--db=sound_room',
-                '--archive=' + rutaArchivo
-            ]);
-            var options = {
-                root: rutaDump
-            };
-            resp.sendFile("Archivo", options, function (err) {
-                if (err) {
-                    
-                } else {
-                    console.log('Sent:', nombre);
-                }
-            });
+    //ruta backup original
+    // app.put("/configuraciones/backup",
+    //     run(async (req: Request, resp: Response) => {
+    //         let nombre = "backup.bson"
+    //         const rutaArchivo = "../" + nombre
+    //         const spawn = require('child_process').spawn
+    //         const rutaDump = process.env.MONGODUMP
+    //         let backupProcess = spawn(rutaDump, [
+    //             '--db=sound_room',
+    //             '--archive=' + rutaArchivo
+    //         ]);
+    //         var options = {
+    //             root: rutaDump
+    //         };
+    //         resp.sendFile("Archivo", options, function (err) {
+    //             if (err) {
+    //                 console.log('Back, error descargando archivo: ', err)
+    //             } else {
+    //                 console.log('Sent:', nombre);
+    //             }
+    //         });
+    // }))
 
-        }))
+    //ruta chatgpt idea:
+    app.put("/configuraciones/backup", run(async (req: Request, resp: Response) => {
+        const today = new Date()
+        const day = today.getDay()
+        const motnh = today.getMonth()
+        const year = today.getFullYear()
+        const nombre = `backup-${day}${motnh}${year}.bson`;
+        const rutaArchivo = path.join(__dirname, '..', nombre);  // Construir la ruta correcta para el archivo
+        const rutaDump = process.env.MONGODUMP;
+    
+        // Verifica que `rutaDump` esté correctamente definida.
+        if (!rutaDump) {
+            return resp.status(500).send("Error: MONGODUMP no está configurado");
+        }
+    
+        let backupProcess = spawn(rutaDump, [
+            '--db=sound_room',
+            '--archive=' + rutaArchivo,
+            //'--gzip' // Agrega --gzip si deseas comprimir el archivo de respaldo
+        ]);
+    
+        // Escuchar eventos de proceso
+        backupProcess.on('close', (code) => {
+            if (code === 0) {
+                console.log('Backup creado exitosamente.');
+    
+                // Verifica si el archivo existe antes de enviarlo
+                if (fs.existsSync(rutaArchivo)) {
+                    resp.download(rutaArchivo, nombre, (err) => {
+                        if (err) {
+                            console.error('Error enviando el archivo:', err);
+                            resp.status(500).send("Error al descargar el archivo");
+                        } else {
+                            console.log('Archivo enviado:', nombre);
+                            console.log('ruta: ', rutaArchivo)
+                        }
+                    });
+                } else {
+                    console.error('Archivo no encontrado:', rutaArchivo);
+                    resp.status(404).send("Archivo no encontrado");
+                }
+            } else {
+                console.error('Proceso de backup fallido con código:', code);
+                resp.status(500).send("Error al crear el backup");
+            }
+        });
+        backupProcess.on('error', (err) => {
+            console.error('Error al iniciar el proceso de backup:', err);
+            resp.status(500).send("Error al iniciar el proceso de backup");
+        });
+    }));
+
 
     app.put("/configuraciones/backupLoad",
         run(async (req: Request, resp: Response) => {

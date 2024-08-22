@@ -5,20 +5,24 @@ import { theme } from '../core/theme'
 import { avg } from '../utils/avg'
 
 export const Rating = ({ ratings, estrellasProm, size, showNumber = true }) => {
-    const scores = ratings.map((rating) => rating.estrellas)
-    const avgScore = avg(scores)
+    // const scores = ratings.map((rating) => rating.estrellas)
+    // const avgScore = avg(scores)
 
     const renderRating = () => {
+        console.log(ratings)
         //const qty = Math.round(avgScore)
-        let qty
-        if(ratings){
-             qty = ratings.estrellas    
+        let qty = 0
+        if(ratings.lenght == 1){
+             qty = ratings[0]  
         }
-        if(estrellasProm){
+        if(ratings !== undefined && ratings !== null){
+            qty= ratings
+        }
+        if(estrellasProm !== undefined && estrellasProm !== null){
              qty = estrellasProm 
         }
         console.log('qty: ', qty)
-        console.log('avgScore: ', avgScore)
+        //console.log('avgScore: ', avgScore)
         const stars = []
         for(let i = 0; i < qty;  i++) {
             stars.push(
@@ -30,6 +34,7 @@ export const Rating = ({ ratings, estrellasProm, size, showNumber = true }) => {
         )
 
     }
+   
 
     console.log("Ratings")
     console.log(renderRating())
@@ -37,7 +42,7 @@ export const Rating = ({ ratings, estrellasProm, size, showNumber = true }) => {
     return (
         <Block row style={styles.container} >
             {/* <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{avgScore.toFixed(1)}</Text> */}
-            <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{estrellasProm}</Text>
+                <Text style={[styles.ratingNumber, {display: showNumber? 'flex': 'none'}]}>{estrellasProm}</Text>
             { renderRating() }
         </Block>
     )

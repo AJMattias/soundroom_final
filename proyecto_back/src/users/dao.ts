@@ -220,7 +220,8 @@ export class UsersDao {
             lastName: user.last_name,
             email: user.email,
             enabled: user.enabled,
-            idPerfil: idPerfil2
+            idPerfil: idPerfil2,
+            createdAt:user.createdAt,
             /*
             *idPerfil: user.idPerfil,
             * idPerfil: (user.idPerfil != null)? StringUtils.toObjectId(user.idPerfil) : undefined,
@@ -256,6 +257,7 @@ export class UsersDao {
             lastName: user.last_name,
             email: user.email,
             enabled: "deshabilitado",
+            createdAt:user.createdAt,
             deletedAt: user.deletedAt,
             $push: { enabledHistory: { status: 'deshabilitado', dateFrom: new Date() } },
         },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
@@ -281,6 +283,7 @@ export class UsersDao {
              lastName: user.last_name,
              email: user.email,
              enabled: "habilitado",
+             createdAt:user.createdAt,
              deletedAt: user.deletedAt,
              $push: { enabledHistory: { status: 'habilitado', dateFrom: new Date() } },
          },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado
@@ -306,6 +309,7 @@ export class UsersDao {
             lastName: user.last_name,
             email: user.email,
             enabled: "baja",
+            createdAt:user.createdAt,
             deletedAt: user.deletedAt,
             $push: { enabledHistory: { status: 'baja', dateFrom: new Date() } },
         },{ new: true } // Esto es opcional, pero si se establece en true, devuelve el documento actualizado

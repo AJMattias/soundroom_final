@@ -56,7 +56,9 @@ export class UsersService{
 
         })
         console.log('service user created: ', user)
-        await this.sendMailPiola(user.email, "Usted ha creado la cuenta exitosamente. Gracias por elegir SoundRoom")
+        const msg =  "Usted ha creado la cuenta exitosamente. Gracias por elegir SoundRoom"
+        //en caso que no funcione bien el mail, pasar la cadena de string directamente como parametro en sendMailPiola en vez de var msg
+        await this.sendMailPiola(user.email, msg)
         return  this.mapToDto(user)
     }
     async createUser2(dtotwo : CreateUserDtoTwo) : Promise<UserDto>{
@@ -215,13 +217,14 @@ export class UsersService{
                 createdAt: dto.createdAt,
                 deletedAt: dto.deletedAt,
                 image_id: undefined,
-                enabled: dto.enabled,
+                enabled: 'habilitado',
                 idPerfil: dto.idPerfil,
                 idArtistType: dto.idArtistType as unknown as string,
                 idArtistStyle: dto.idArtistStyle as unknown as string,
                 userType: dto.userType,
                 idSalaDeEnsayo: dto.idSalaDeEnsayo,
-                tipoArtista: dto.tipoArtista
+                tipoArtista: dto.tipoArtista,
+                enabledHistory: dto.enabledHistory
             })
         )}
     }
@@ -333,6 +336,7 @@ export class UsersService{
             text: message,
             //borrar todo html en caso de que se rompa je
             }
+            
       await Email.sendEmailAsync(mailOptions)
     }
 

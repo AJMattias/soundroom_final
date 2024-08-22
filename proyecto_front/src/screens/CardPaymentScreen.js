@@ -22,6 +22,7 @@ import { nombreCompletoValidator } from '../helpers/nombreCompletoValidator'
 import { fechaVencimientoValidator } from '../helpers/fechaVencimientoValidator'
 import { cardNumberValidator } from './cardNumberValidator'
 import { ccvValidator } from '../helpers/ccvValidator'
+import { emailService } from '../network/EmailService'
 
 export const CardPaymentScreen = ({ route, navigation }) => {
   const { order } = route.params
@@ -121,6 +122,9 @@ export const CardPaymentScreen = ({ route, navigation }) => {
       // endpoint en backend
       console.log('pago: ', pago)
       const pagoCreated = await pagoService.createPago(pago)
+      if(pagoCreated.name){
+         await emailService.sendEmailToUser(loggedUser, "Usted ha realizado una reserva exitosamente. Gracias por elegir SoundRoom")
+      }
       navigation.reset({
         index: 0,
         routes: [{ name: 'ReservationsScreen' }],

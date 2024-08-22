@@ -36,6 +36,26 @@ class RoomService {
         return ownerRooms
     }
 
+    //buscar salas populares
+    async getPopulars() {
+        console.log('fetching popular rooms')
+        const response  = await api.get("/salasdeensayo/findPopulars/")
+        const popularRooms = response; // Asegúrate de acceder a los datos correctamente
+        console.log('popularRooms: ', popularRooms);
+    
+        // Actualiza los datos con el nuevo atributo nombreDueño
+        const updatedData = popularRooms.map((item) => ({
+          ...item,
+          nombreDueño: item.idOwner
+            ? `${item.idOwner.name} ${item.idOwner.lastName}`
+            : '', // Usa una cadena vacía si idOwner es null
+        }));
+    
+        console.log('updatedData: ', updatedData);
+        return updatedData;
+        return updatedData
+    }
+
     async findByName(name) {
         return MockStore.getRooms().filter(
             (room) => room.name.toLowerCase().startsWith(name.toLowerCase())
@@ -88,6 +108,7 @@ class RoomService {
         if(roomCreated){
             await LocalPhoneStorage.set(STORAGE_ROOMOWNED, roomCreated)
         }
+        
         return roomCreated
     }
 
@@ -108,7 +129,6 @@ class RoomService {
         console.log('room updated: ', roomCreated)
         if(roomCreated){
             await LocalPhoneStorage.set(STORAGE_ROOMOWNED, roomCreated)
-
         }
         }catch(error){
             console.log('error updateing room', error)

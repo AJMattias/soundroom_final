@@ -12,7 +12,7 @@ export const route = (app: Application) => {
         validator.body("to").isEmail(),
         run(async (req: Request, resp: Response) => {
            await mailService.sendMessage(req.body.to, req.body.message)
-           resp.send()
+           resp.send({result: 'msj enviado'})
         })
     )
 }

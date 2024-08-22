@@ -18,6 +18,17 @@ async getAll():Promise<Array<SalaDeEnsayo>>{
     })
 }
 
+async getPopulars():Promise<Array<SalaDeEnsayo>>{
+    return(await SalaDeEnsayoModel.find()
+    .sort({ createdAt: -1 }) // Ordena por createdAt en orden descendente (los más recientes primero)
+    .limit(5)                 // Limita los resultados a 5 documentos
+    .populate("idOwner")                 
+    .exec())
+    .map((doc:SalaDeEnsayoDoc)=>{
+        return this.mapToSalaDeEnsayo(doc)
+    })
+}
+
 async findById(salaEnsayoId: string): Promise<SalaDeEnsayo>{
     const model = await SalaDeEnsayoModel.findById(salaEnsayoId)
     .populate("idImagen").populate("idOwner").exec()

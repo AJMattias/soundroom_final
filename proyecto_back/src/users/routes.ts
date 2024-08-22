@@ -21,6 +21,8 @@ var mongoose = require('mongoose');
 
 //opinion service
 import * as opinionService from "../sala_de_ensayo/service"
+import { UserDoc, UserModel } from "./models"
+import { PerfilModel } from "../perfil/models"
 
 /**
  * 
@@ -62,6 +64,27 @@ export const route = (app: Application) => {
         const users : UserDto = await  service.instance.findUserById(id)
         resp.json(users) 
      }))
+
+    //buscar ssalas populares, busca las ultimas 5 creadas.
+    //para mas/menos numeros cambiar limit(X)
+    app.get("/user/findPopularsArtists/", auth,
+        run(async (req: Request, resp: Response) => {
+        // Buscar perfiles con el nombre especificado
+        const perfil = await PerfilModel.findOne({ name: "Artista" });
+
+        if (!perfil) {
+            console.log(`Perfil con nombre Artista no encontrado.`);
+            return;
+        }
+        const perfilId = mongoose.Types.ObjectId(perfil._id)
+        const artistas: UserDoc[] = await UserModel.find({ idPerfil: perfilId})
+        .sort({ createdAt: -1 }) // Ordena por createdAt en orden descendente (los más recientes primero)
+        .limit(5)                 // Limita los resultados a 5 documentos           
+        .exec();                  // Ejecuta la consulta
+        console.log('ruta artistas populares: ', artistas)
+        resp.json(artistas)    
+    }))
+
 
      app.put("/users/update/",
         auth,

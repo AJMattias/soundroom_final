@@ -14,11 +14,12 @@ export const FeaturedArtists = ({ navigation }) => {
 
     const [artsits, setArtists] = useState([])
     const [fetched, setFetched] = useState(false)
+    const userAvatar=require("../assets/user.png")
 
     const fetchArtists = async () => {
         try {
             setArtists(
-                await artistService.featured(5)
+                await artistService.getPopularArtists()
             )
             setFetched(true)
         } catch (apiError) {
@@ -48,9 +49,10 @@ export const FeaturedArtists = ({ navigation }) => {
             {/* {addProfileInfoBanner()}             */}
             {artsits.map((artist) => (
                 <Card borderless shadow
-                    avatar={artist.user.image}
-                    title={artist.user.name + " " + artist.user.last_name}
-                    caption={artist.style}
+                    //avatar={artist.user.image}
+                    avatar={userAvatar}
+                    title={artist.name + " " + artist.lastName}
+                    caption={artist.tipoArtista}
                     onClick = {() => navigation.navigate('ArtistProfileScreen', {userId: artist.user.id})}
                 />
             )

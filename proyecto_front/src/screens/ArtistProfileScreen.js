@@ -23,6 +23,7 @@ import { AddComment } from "../components/AddComment";
 import { reservationService } from "../network/ReservationService";
 import { emailService } from "../network/EmailService";
 import { ratingsService } from "../network/RatingsService";
+import { AddCommentTA } from "../components/AddCommentTA";
 
 
 export const ArtistProfileScreen = ({ route, navigation }) => {
@@ -57,7 +58,7 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
             }
         };
         fetchUser();
-    }, [userId]);
+    }, [userId, ratings]);
 
     //Se renderizaba muchas veces, mejor usar useeffect
     // const fetchUser = async () => {
@@ -107,16 +108,16 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
 
     //no se usa la funcion fetchRooms
     //rooms para el carrusel. Buscsar con mejores rating
-    const fetchRooms = async () => {
-        try {
-            setRooms(
-                await roomService.getRoomsByUserId(userId)
-            )
-        } catch (apiError) {
-            console.error("Error fetching user rooms")
-            console.error(apiError)
-        }
-    }
+    // const fetchRooms = async () => {
+    //     try {
+    //         setRooms(
+    //             await roomService.getRoomsByUserId(userId)
+    //         )
+    //     } catch (apiError) {
+    //         console.error("Error fetching user rooms")
+    //         console.error(apiError)
+    //     }
+    // }
 
     //opiniones al artista
     const fetchRatings = async (userId) => {
@@ -160,6 +161,11 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         }
     }
 
+    const getUser = () => {
+        //console.log(LocalPhoneStorage.get(STORAGE_USER))
+        return LocalPhoneStorage.get(STORAGE_USER)
+    }
+
     const sendCommentNotification = async () => {
         try {
             const currentUser = LocalPhoneStorage.get(STORAGE_USER)
@@ -172,6 +178,17 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
         }
     }
  
+    const sendUpdateCommentNotification = async () => {
+        try {
+            const user = getUser()
+            emailService.sendEmailToUser(
+                artist, `¡${user.name} ${user.last_name} ha actualizado su calificacion a tu perfil! Logueate en la app para ver las calificaciones.`
+            )
+        } catch (ignored) {
+            console.log(ignored)
+        }
+    }
+
     const renderRatings = () => {
         console.log('ratings render', ratings)
         if ( ratings && ratings.length > 0) {
@@ -252,13 +269,14 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
                 {
                     // se usaba user en vez de artist
                     artist &&  artistReservations && artistReservations.length > 0 &&
-                        <AddComment
+                        <AddCommentTA
                             otherId = {userId}
                             title = {"Tu opinión sobre "+artist.name}
                             placeholder = "Escribe tu reseña sobre este artista para ayudar a otros propietarios."
                             user = {LocalPhoneStorage.get(STORAGE_USER)} 
                             onRatingCreated = {() => sendCommentNotification().then()}
-                            onRatingUpdated = {() => fetchRatings().then()}
+                            //onRatingUpdated = {() => fetchRatings().then()}
+                            onRatingUpdated = {() => sendUpdateCommentNotification().then()}
                         />
                 }
                 { renderArtistRating() }

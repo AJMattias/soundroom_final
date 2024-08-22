@@ -62,7 +62,7 @@ export interface CreateUserDto {
     idPerfil: string; 
     createdAt?: Date;
     deletedAt?: Date;
-    enabled: string;
+    enabled?: string;
     estadoUsuario?: EstadoUsuario;
     userType: string;
     idSalaDeEnsayo:string;

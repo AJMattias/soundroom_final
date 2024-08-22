@@ -57,7 +57,8 @@ export class ReservationService{
             date: dto.date,
             totalPrice: dto.totalPrice
         })
-        await this.sendMailPiola(email, "Usted ha realizado una reserva exitosamente. Gracias por elegir SoundRoom")
+        const msg=  "Usted ha realizado una reserva exitosamente. Gracias por elegir SoundRoom"
+        //await this.sendMailPiola(email, msg )
         return this.mapToDto(reservation)
     }
 

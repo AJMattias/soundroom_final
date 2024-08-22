@@ -20,6 +20,22 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
     const [showAlert, setShowAlert] = useState(false);
 
     const loggedUser = LocalPhoneStorage.get(STORAGE_USER)
+    console.log('loggedUser: ', loggedUser)
+
+    // Lógica para determinar si mostrar el botón "Cancelar"
+    const currentDate = new Date();
+    const orderDate = new Date(reservation.date);
+    const orderStartTime = new Date(reservation.hsStart);
+
+    let showCancel = false;
+    if (currentDate < orderDate) {
+        showCancel = true;
+    } else if (
+        currentDate.toDateString() === orderDate.toDateString() &&
+        currentDate.getHours() < orderStartTime.getHours()
+    ) {
+        showCancel = true;
+    }
 
     let email = {
         receptor: String(loggedUser.email),
@@ -95,7 +111,7 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
         doc.text(ejex, ejey+40, "Dirección : " + reservation.idRoom.calleDireccion);
         doc.text(ejex, ejey+50, "Fecha de la reserva : " + reservation.hsStart.toLocaleDateString());
         doc.text(ejex, ejey + 60, "Hora de la reserva : " + reservation.hsStart.toLocaleTimeString());
-        doc.text(ejex, ejey + 70, "Usuario : " + String(loggedUser.name).charAt(0).toUpperCase() + String(loggedUser.name).slice(1) + " " + String(loggedUser.last_name).charAt(0).toUpperCase() + String(loggedUser.lastName).slice(1));
+        doc.text(ejex, ejey + 70, "Usuario : " + String(loggedUser.name).charAt(0).toUpperCase() + String(loggedUser.name).slice(1) + " " + String(loggedUser.last_name).charAt(0).toUpperCase() + String(loggedUser.last_name).slice(1));
         doc.save(reservation.hsStart.toLocaleDateString()+reservation.hsStart.toLocaleTimeString()+".pdf");
 
     }
@@ -156,7 +172,8 @@ export const ReservationCard = ({reservation, navigation, onReservationCancelled
                 </Block>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
             </Block>
-            <Text style = {styles.cancelText} onClick = {onCancelClicked} >Cancelar reserva</Text>
+            {showCancel &&
+            <Text style = {styles.cancelText} onClick = {onCancelClicked} >Cancelar reserva</Text>}
             <Icon size={24} color={theme.colors.grey600} onClick = {printReservation} name='printer' family='AntDesign' />
             <AwesomeAlert
                 show={showAlert}

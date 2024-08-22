@@ -19,7 +19,7 @@ export const RateComment = ({ user, rate, style, onClick }) => {
         })
     }
     
-    const lastname = user.last_name ? user.last_name : user.lastName;
+    const lastname = user.lastName ? user.lastName : user.last_name;
     console.log(lastname)
     console.log('user: ', user)
     return (
@@ -28,7 +28,7 @@ export const RateComment = ({ user, rate, style, onClick }) => {
                 <UserImage user={user} size = {40} />
                 <Block style={styles.ratingRow}>
                     <Text style={styles.title}>{user.name + " " + lastname}</Text>
-                    <Rating ratings={[rate.estrellas]} showNumber={false} />
+                    <Rating ratings={rate.estrellas} showNumber={false} />
                 </Block>
             </Block>
             <Text style = {styles.comment} >{rate.descripcion}</Text>

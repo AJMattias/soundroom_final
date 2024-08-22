@@ -7,7 +7,7 @@ import { OpinionDto, SalaDeEnsayoDto} from "./dto";
 import {StringUtils} from "../common/utils/string_utils"
 import {ArgumentsException} from "../common/exception/exception"
 import {ErrorCode} from "../common/utils/constants"
-import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoModel } from "./model";
+import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel } from "./model";
 import {ValidatorUtils} from "../common/utils/validator_utils"
 import multer from "../common/utils/storage";
 import  * as imageService from "../imagen/service"
@@ -15,6 +15,7 @@ import { admin, auth } from "../server/middleware";
 import { UserDto } from "src/users/dto";
 import * as userService from "../users/service"
 import { PerfilModel } from "../perfil/models";
+var mongoose = require('mongoose');
 
 
 /**
@@ -52,12 +53,19 @@ export const route = (app: Application) => {
             
             resp.json(sala)
     }))
-    /*
-    app.get("/salasdeensayo/find", run(async (req: Request, resp: Response) => {
-        const salas: SalaDeEnsayoDto[] = await dao.instance.finsdByName(req.query.q as string)
+    
+    //buscar ssalas populares, busca las ultimas 5 creadas.
+    //para mas/menos numeros cambiar limit(X)
+    app.get("/salasdeensayo/findPopulars/", run(async (req: Request, resp: Response) => {
+        const salas: SalaDeEnsayoDoc[] = await SalaDeEnsayoModel.find()
+        .sort({ createdAt: -1 }) // Ordena por createdAt en orden descendente (los más recientes primero)
+        .limit(5)                 // Limita los resultados a 5 documentos
+        .populate("idOwner")                 
+        .exec();                  // Ejecuta la consulta
+        console.log('ruta salas populares: ', salas)
         resp.json(salas)    
     }))
-   */
+   
     app.get("/salasdeensayo/findByName/", run(async (req: Request, resp: Response) => {
         const busqueda = req.query.q
         console.log('req.query.q: ', req.query.q)
@@ -208,6 +216,18 @@ export const route = (app: Application) => {
                 //idLocality: dto["idLocality"],
                 
             })
+            // Buscar el perfil "Sala de Ensayo"
+            const perfil = await PerfilModel.findOne({ name: 'Sala de Ensayo' }).exec();
+            let perfilid =''
+            if(perfil){
+            //const perfilid = new mongoose.Types.ObjectId(perfil._id);
+            //si existe perfil de sala de ensayo se cambiara el perfil
+             perfilid = perfil._id
+            }else{
+            //sino existe el perfil sde seguira con el perfil asignado anteriormente
+             perfilid = user.idPerfil
+            }
+
             //añadir sala creado al array idSalaDeEnsayo de User
             const idSala = sala.id
             const userUpdate = await userService.instance.updateAddSala(user.id, {
@@ -215,7 +235,7 @@ export const route = (app: Application) => {
                 last_name: user.last_name,
                 email: user.email,
                 password: user.password,
-                idPerfil: user.idPerfil,
+                idPerfil: perfilid,
                 idArtistType: user.idArtistType,
                 idArtistStyle: user.idArtistStyle,
                 image_id: undefined,
@@ -225,9 +245,35 @@ export const route = (app: Application) => {
                 tipoArtista: user.tipoArtista
             })
             //si usuario es artista, cambiarlo a SdE
-            const perfilUserLogged = PerfilModel.findById(user.idPerfil)
-            if(user.idPerfil)
-            resp.json({user, perfilUserLogged})
+            console.log( 'ruta actualizar perfil de usuario',
+                 user.name,
+                 user.last_name,
+                 user.email,
+                 user.password,
+                 perfilid,
+                 user.idArtistType,
+                 user.idArtistStyle,
+                 user.userType,
+                 idSala,
+                 user.tipoArtista,
+                 user.enabledHistory)
+            const userUpdatePerfil = await userService.instance.updateUser(user.id, {
+                name: user.name,
+                last_name: user.last_name,
+                email: user.email,
+                password: user.password,
+                idPerfil: perfilid,
+                createdAt: user.createdAt,
+                idArtistType: user.idArtistType,
+                idArtistStyle: user.idArtistStyle,
+                image_id: undefined,
+                //enabled: user.enabled,
+                userType: user.userType,
+                idSalaDeEnsayo: idSala,
+                tipoArtista: user.tipoArtista,
+                enabledHistory: user.enabledHistory
+            })
+            //resp.json( userUpdatePerfil)
 
            // copiar a perfil con usuario
             resp.json(sala)
@@ -578,7 +624,7 @@ export const route = (app: Application) => {
         // idType: mongoose.Types.ObjectId(sala.idType)
         const opiniones: OpinionDto[] = await OpinionModel.find({ idRoom: id }).populate("idUser").exec();
 
-        res.json({ opiniones });
+        res.json(opiniones);
 
     }))
 
@@ -608,7 +654,7 @@ export const route = (app: Application) => {
     )
 
      //get opinion hecha por usuario logueado SdE,  get mi opinion sobre una artista en particular
-     app.get("/salaOpinion/getMyOpinionToArtist/", 
+     app.get("/salaOpinion/ /", 
         auth, 
         validator.query("idArtist").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: any, resp: Response)=>{

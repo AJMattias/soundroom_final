@@ -17,7 +17,10 @@ import { LocalPhoneStorage } from "../storage/LocalStorage"
 import Paragraph from "../components/Paragraph";
 import  Divider  from "react-native-elements/dist/divider/Divider";
 import { WebStorage } from "../storage/WebStorage";
-// import * as fs from 'fs'
+//fs no funciona con entornos web, solo back
+//import * as fs from 'fs'
+
+
 
 
 
@@ -52,14 +55,45 @@ export function BackupBD({ navigation}){
         })
     }
 
-    const downloadBackup = () => {
+    // const downloadBackup = () => {
 
-        console.log("Downloading backup")
-        //WebStorage.downloadBackup()
-        const ruta = userService.backupBD()
-        console.log(ruta)
-        fs.writeFile('/BackupLala', ruta, { flag: 'a+' }, err => { })
-    }
+    //     console.log("Downloading backup")
+    //     //WebStorage.downloadBackup()
+    //     const ruta = userService.backupBD()
+    //     console.log(ruta)
+    //     fs.writeFile('/BackupLala', ruta, { flag: 'a+' }, err => { })
+    // }
+
+    const downloadBackup = async () => {
+        try {
+            console.log("Downloading backup");
+            const ruta = await userService.backupBD(); // Supongamos que `ruta` es un string con los datos de la copia de seguridad
+    
+            // Crear un blob con los datos del backup
+            const blob = new Blob([ruta], { type: 'text/plain' });
+    
+            // Crear una URL para el blob
+            const url = URL.createObjectURL(blob);
+    
+            // Crear un enlace para descargar el archivo
+            const a = document.createElement('a');
+            a.href = url;
+            const today = new Date()
+            const day = today.getDay()
+            const motnh = today.getMonth()
+            const year = today.getFullYear()
+            a.download = `Backup-${day}_${motnh}_${year}.bson`; // Nombre del archivo
+            document.body.appendChild(a); // Añadir el enlace al DOM
+            a.click(); // Simular un click para iniciar la descarga
+    
+            // Limpiar el DOM
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log("Backup descargado correctamente");
+        } catch (error) {
+            console.error("Error al descargar el backup", error);
+        }
+    };
 
     const loadBackup = () => {
         console.log("Loading backup")
