@@ -69,7 +69,7 @@ class RatingsService {
     // buscar opiniones para el artista otherId con mi id de usuario q reservo
     async getMyRatingsForArtistIdBd(otherId) {
         //const user = LocalPhoneStorage.get(STORAGE_USER)
-        const opinion = await api.get("/salaOpinion/getMyOpinionToArtist/?idArtist="+otherId)
+        const opinion = await api.get("/salaOpinion/?idArtist="+otherId)
         console.log('Opinion fetcheada: ', opinion)
         return opinion
     

@@ -714,6 +714,8 @@ export const route = (app: Application) => {
     })
     )
 
+
+    
      //get opinion hecha por usuario logueado SdE,  get mi opinion sobre una artista en particular
      app.get("/salaOpinion/", 
         auth, 

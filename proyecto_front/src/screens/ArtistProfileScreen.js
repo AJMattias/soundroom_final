@@ -58,7 +58,9 @@ export const ArtistProfileScreen = ({ route, navigation }) => {
             }
         };
         fetchUser();
-    }, [userId, ratings]);
+    }, [userId, 
+        //ratings
+        ]);
 
     //Se renderizaba muchas veces, mejor usar useeffect
     // const fetchUser = async () => {
