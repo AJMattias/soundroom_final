@@ -34,6 +34,29 @@ class ReportesService{
         return reportena  
     }
 
+    async descargarReportesNuevosUsuarios(fechaInicio, fechaHasta){
+        console.log('fechaI: ', fechaInicio)
+        console.log('fechaH: ', fechaHasta)
+        //parsear fechas
+        let fechaIn = formatFecha(fechaInicio)
+        let fechaHa = formatFecha(fechaHasta)
+        
+        console.log('fechaI: ', fechaIn)
+        console.log('fechaH: ', fechaHa)
+        console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+        console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+        const reporte = api.post("/users/descargarReportesNuevosUsers", {
+            fechaI: fechaIn, 
+            fechaH: fechaHa}
+            , {responseType: 'blob', // Especifica que esperas un Blob en la respuesta
+              headers: { 'Accept': 'application/pdf' } // Asegúrate de aceptar PDF
+            },
+        )
+        console.log('reporte descargar: ', await reporte)
+        return reporte
+    }
+
     //primero funcionando
     async reportesNuevosArtistas(fechaInicio, fechaHasta){
         console.log('fechaI: ', fechaInicio)

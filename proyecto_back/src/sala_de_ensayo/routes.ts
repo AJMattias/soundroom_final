@@ -15,7 +15,9 @@ import { admin, auth } from "../server/middleware";
 import { UserDto } from "src/users/dto";
 import * as userService from "../users/service"
 import { PerfilModel } from "../perfil/models";
+import { generateReporteBarChart, generateReportePDF, generateReportePieChart, generateReporteValoracionesPDF } from "../common/utils/generateReportePdf";
 var mongoose = require('mongoose');
+const fs = require('fs-extra');
 
 
 /**
@@ -425,6 +427,65 @@ export const route = (app: Application) => {
         })
     )
 
+    //descargar reporte nuevas salas de ensayo:
+    app.post("/salasdeensayo/descargarReportesNuevasSdE", 
+        auth,
+        admin,
+        validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        run(async (req: any, resp: Response) => {
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body 
+            //fechaID = 'YYYY-MM-DD'
+            console.log("ruta reporte nuevos usuarios")
+            console.log(dto.fechaI)
+            console.log(dto.fechaH)
+            // const users : UserDto[] = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            let dtoNewUsersReport = [] 
+            //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.reporteNuevasSdE(dto.fechaI, dto.fechaH)
+            
+            const fechaInicio =  dto.fechaI
+            const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReporteBarChart(NewUsersReport.labels, NewUsersReport.datasets[0].data, 'Salas de Ensayo Nuevas'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReportePDF(chartImage, 'Reporte - Salas de Ensayo Nuevas', fechaInicio, fechaHasta); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            resp.setHeader('Content-Type', 'application/pdf');
+            resp.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        resp.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
+        })
+    )
+
     app.post("/salasdeensayo/createOpinion/",
         auth,
         //validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -553,7 +614,7 @@ export const route = (app: Application) => {
             if(!dto["idRoom"]){
                 dto["idRoom"] = opinionOriginal["idRoom"]
             }
-            
+        
             const opinionUpdate = await service.instance.updateOpinion(id,{
                 descripcion:dto["descripcion"],
                 estrellas:dto["estrellas"],
@@ -561,30 +622,30 @@ export const route = (app: Application) => {
                 idRoom: dto["idRoom"],
                 idArtist: '',
             })
+        resp.json(opinionUpdate)
+    }))
+
+    app.put("/saladeensayo/updateOpinionToArtist/",
+        auth,
+        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: any, resp: Response) =>{
+            const errors = validator.validationResult(req)
+                if(errors && !errors.isEmpty()){
+                    throw ValidatorUtils.toArgumentsException(errors.array())
+                }
+            const dto = req.body
+            const id = req.query.id as string
+            console.log("ruta update Opinion: ", dto)
+            
+            const opinionUpdate = await service.instance.updateOpinion(id,{
+                descripcion:dto["descripcion"],
+                estrellas:dto["estrellas"],
+                idUser:req.user.id,
+                idRoom: '',
+                idArtist: dto["idArtist"],
+            })
             resp.json(opinionUpdate)
         }))
-
-        app.put("/saladeensayo/updateOpinionToArtist/",
-            auth,
-            validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-            run(async (req: any, resp: Response) =>{
-                const errors = validator.validationResult(req)
-                    if(errors && !errors.isEmpty()){
-                        throw ValidatorUtils.toArgumentsException(errors.array())
-                    }
-                const dto = req.body
-                const id = req.query.id as string
-                console.log("ruta update Opinion: ", dto)
-                
-                const opinionUpdate = await service.instance.updateOpinion(id,{
-                    descripcion:dto["descripcion"],
-                    estrellas:dto["estrellas"],
-                    idUser:req.user.id,
-                    idRoom: '',
-                    idArtist: dto["idArtist"],
-                })
-                resp.json(opinionUpdate)
-            }))
 
     app.get("/salaPromedio/", run( async(req: Request, res: Response)=>{
 
@@ -654,7 +715,7 @@ export const route = (app: Application) => {
     )
 
      //get opinion hecha por usuario logueado SdE,  get mi opinion sobre una artista en particular
-     app.get("/salaOpinion/ /", 
+     app.get("/salaOpinion/", 
         auth, 
         validator.query("idArtist").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: any, resp: Response)=>{
@@ -693,9 +754,12 @@ export const route = (app: Application) => {
         name: string;
         population: number;
     }
+    interface GrafTortaTipoSala2 {
+        labels: string;
+        population: number;
+    }
 
-    app.post(
-        "/salasDeEnsayo/reporteTipoSalaTorta",
+    app.post("/salasDeEnsayo/reporteTipoSalaTorta",
         auth,
         admin,
         validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -758,7 +822,139 @@ export const route = (app: Application) => {
       
           try {
             const resultados = await obtenerGrafTortaTipoSala(fechaInicioObj, fechaFinObj);
+            console.log('resultados tipo Torta: ', resultados)
             return resp.status(200).json(resultados);
+          } catch (error) {
+            return resp.status(500).json({ error: "Error al generar el reporte" });
+          }
+        })
+    );
+
+    //reporte tipos de sala grafico torta:
+    app.post("/salasDeEnsayo/descargarReporteTipoSalaTorta",
+        auth,
+        admin,
+        validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: Request, resp: Response) => {
+          const errors = validator.validationResult(req);
+          if (errors && !errors.isEmpty()) {
+            throw ValidatorUtils.toArgumentsException(errors.array());
+          }
+      
+          const dto = req.body;
+          console.log("ruta reporte tipo sala de ensayo");
+          console.log(dto.fechaI);
+          console.log(dto.fechaH);
+      
+          const fechaInicioObj = new Date(dto.fechaI);
+          const fechaFinObj = new Date(dto.fechaH);
+      
+          async function obtenerGrafTortaTipoSala(fechaInicio: Date, fechaFin: Date): Promise<GrafTortaTipoSala[]> {
+            try {
+              const resultados = await SalaDeEnsayoModel.aggregate([
+                {
+                  $match: {
+                    createdAt: { $gte: fechaInicio, $lte: fechaFin },
+                    deletedAt: { $exists: false }
+                  }
+                },
+                {
+                  $group: {
+                    _id: "$idType",
+                    count: { $sum: 1 }
+                  }
+                },
+                {
+                  $lookup: {
+                    from: "types", // Nombre de la colección de tipos en MongoDB
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "typeInfo"
+                  }
+                },
+                {
+                  $unwind: "$typeInfo"
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    name: "$typeInfo.name",
+                    population: "$count"
+                  }
+                }
+              ]);
+
+
+
+      
+              return resultados as GrafTortaTipoSala[];
+            } catch (error) {
+              console.error("Error al obtener el gráfico de torta por tipo de sala:", error);
+              throw error;
+            }
+          }
+      
+          try {
+            const resultados = await obtenerGrafTortaTipoSala(fechaInicioObj, fechaFinObj);
+            
+            // Calcular el total de la población para calcular los porcentajes
+            const totalPopulation = resultados.reduce((acc, result) => acc + result.population, 0);
+
+
+            // Formatear los resultados para Chart.js
+            const labels: string[] = resultados.map(result => {
+                const percentage = ((result.population / totalPopulation) * 100).toFixed(2); // Calcular porcentaje
+                return `${result.name} (${percentage}%)`; // Incluir porcentaje en el label
+            });
+            const data: number[] = resultados.map(result => result.population);
+
+            const formattedResult = {
+            labels: labels,
+            datasets: [
+                {
+                data: data
+                }
+            ]
+            };
+
+            const fechaInicio =  dto.fechaI
+            const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReportePieChart(formattedResult.labels, formattedResult.datasets[0].data, ' Tipos de Salas de Ensayo'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReportePDF(chartImage, 'Reporte - Tipos de Salas de Ensayo', fechaInicio, fechaHasta); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            resp.setHeader('Content-Type', 'application/pdf');
+            resp.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        resp.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
+
+        
+        
           } catch (error) {
             return resp.status(500).json({ error: "Error al generar el reporte" });
           }
@@ -783,12 +979,66 @@ export const route = (app: Application) => {
           const NewUsersReport = await  service.instance.obtenerCantidadValoracionesDos(id)
           
       resp.json(NewUsersReport)    
-      })
-      
+      }))
 
-      
+    //descargar reporte cantidad valoraciones por sala:
+    app.get("/salasdeensayo/descargarCantidadVaoraciones/", 
+        auth,
+        run(async (req: any, resp: Response) => {
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body 
+            const id = req.query.idRoom as string
+            
+            console.log("ruta cantidad valoraciones")
+          
+            //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.obtenerCantidadValoracionesDos(id)
+            
+            //obtener sala de ensayo para tener su nombre:
+            const sala = await service.instance.findSalaById(id)
+            const salaNombre= sala.nameSalaEnsayo 
 
-  )
+            const fechaInicio =  dto.fechaI
+            const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReporteBarChart(NewUsersReport.labels, NewUsersReport.datasets[0].data, 'Cantidad de valoraciones'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReporteValoracionesPDF(chartImage, 'Reporte - Cantidad de valoraciones', salaNombre,  fechaInicio, fechaHasta ); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            resp.setHeader('Content-Type', 'application/pdf');
+            resp.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        resp.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
+    }))
+
+  
 
 
 

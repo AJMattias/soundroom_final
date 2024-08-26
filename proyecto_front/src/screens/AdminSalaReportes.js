@@ -12,8 +12,9 @@ import { Calendar, CalendarProps } from 'react-native-calendars'
 import { formatDate } from '../utils/DateUtils'
 import ViewShot from 'react-native-view-shot'
 import { PDFDocument, PDFPage  } from 'react-native-pdf-lib';
-import { LocalPhoneStorage, STORAGE_USER } from '../storage/LocalStorage'
+import { LocalPhoneStorage, STORAGE_USER, STORAGE_JWT_KEY } from '../storage/LocalStorage'
 import { roomService } from '../network/RoomService'
+import { formatFecha as formatFecha2} from '../helpers/dateHelper'
 
 //const screenWidth = Dimensions.get('window').width
 const screenWidth = 350
@@ -222,6 +223,24 @@ export function AdminSalaReportes({ navigation }) {
         console.log("No report selected");
     }
   }
+  const descargarReportes = async () => {
+    switch (selectedReporte) {
+      case "cantidadReservasporMes":
+        descargarReporteCantidadSalaReservas();
+        break;
+      case "Valoraciones":
+        descargarReporteValoraciones();
+        break;
+      case "DiamasReservado":
+        descargarReporteDiamasvalorado();
+        break;
+      case "cancelacionesReserva":
+        descargarReporteCantidadCanceledSalaReservas();
+        break;
+      default:
+        console.log("No report selected");
+    }
+  }
 
   const cantidadSalaReservas = async () => {
     setMostrarValoraciones(false)
@@ -247,6 +266,72 @@ export function AdminSalaReportes({ navigation }) {
     return;
   }
 
+  //descargar Tipo Sala:
+  const descargarReporteCantidadSalaReservas = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/reservations/descargarReporteReservationsPorSalaMes", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa,
+          idRoom: selectedSala
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
+
   const cantidadCanceledSalaReservas = async () => {
     setMostrarValoraciones(false)
     console.log("onpressed ver reporte")
@@ -269,7 +354,73 @@ export function AdminSalaReportes({ navigation }) {
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
   }
+  
+  //descargar canticad reservas canceladas
+  //descargar Tipo Sala:
+  const descargarReporteCantidadCanceledSalaReservas = async() =>{
 
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/reservations/descargarReservationsCanceladasPorSalaMes", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa,
+          idRoom: selectedSala
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
   const valoraciones = async () => {
     console.log("onpressed ver reporte")
     setMostrarReporte(false)
@@ -289,8 +440,141 @@ export function AdminSalaReportes({ navigation }) {
     //   });
     setMostrarValoraciones(true)
     console.log('reporte nuevos artistas, response: ', reporte, response);
-    return data;
+    return ;
   }
+
+
+    //descargar Valoraciones sala:
+    const descargarReporteValoraciones = async() =>{
+
+      const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+      let fechaIn = formatFecha2(fechaI)
+      let fechaHa = formatFecha2(fechaH)
+      
+      // console.log('fechaI: ', fechaIn)
+      // console.log('fechaH: ', fechaHa)
+      // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+      // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+  
+      const response = await fetch("http://localhost:3000/salasdeensayo/descargarCantidadVaoraciones/?idRoom="+selectedSala, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+            'Accept': 'application/pdf' // Espera una respuesta PDF
+        },
+        // body: JSON.stringify({
+        //     fechaI: fechaIn,
+        //     fechaH: fechaHa
+        // })
+      })
+  
+      if (!response.ok) {
+        throw new Error('Error en la solicitud');
+      }
+  
+      // Obtén el nombre del archivo desde el encabezado Content-Disposition
+      const disposition = response.headers.get('content-disposition');
+      const currentDatee = new Date()
+      const currenDay = currentDatee.getDate()
+      const currenMonth = currentDatee.getMonth()
+      const currenYear = currentDatee.getFullYear()
+      const currenHour = currentDatee.getTime()
+  
+      const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+      let fileName = `${rutaPdf2}`; // Nombre predeterminado
+  
+      if (disposition) {
+          const fileNameMatch = disposition.match(/filename="(.+)"/);
+          if (fileNameMatch) {
+              fileName = fileNameMatch[1];
+          }
+      }
+  
+      // Lee la respuesta como Blob
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+  
+      // Crea un enlace para descargar el archivo
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName; // Usa el nombre del archivo
+      document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+      link.click();
+      document.body.removeChild(link); // Elimina el enlace después de hacer clic
+  
+      // Libera el objeto URL después de la descarga
+      URL.revokeObjectURL(url);
+  
+      return;
+    }
+
+
+    //descargar dia mas valorado
+    const descargarReporteDiamasvalorado = async() =>{
+
+      const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+      let fechaIn = formatFecha2(fechaI)
+      let fechaHa = formatFecha2(fechaH)
+      
+      // console.log('fechaI: ', fechaIn)
+      // console.log('fechaH: ', fechaHa)
+      // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+      // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+  
+      const response = await fetch("http://localhost:3000/reservations/descargarReporteCantidadReservasPorDia/?idRoom="+selectedSala, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+            'Accept': 'application/pdf' // Espera una respuesta PDF
+        },
+        // body: JSON.stringify({
+        //     fechaI: fechaIn,
+        //     fechaH: fechaHa
+        // })
+      })
+  
+      if (!response.ok) {
+        throw new Error('Error en la solicitud');
+      }
+  
+      // Obtén el nombre del archivo desde el encabezado Content-Disposition
+      const disposition = response.headers.get('content-disposition');
+      const currentDatee = new Date()
+      const currenDay = currentDatee.getDate()
+      const currenMonth = currentDatee.getMonth()
+      const currenYear = currentDatee.getFullYear()
+      const currenHour = currentDatee.getTime()
+  
+      const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+      let fileName = `${rutaPdf2}`; // Nombre predeterminado
+  
+      if (disposition) {
+          const fileNameMatch = disposition.match(/filename="(.+)"/);
+          if (fileNameMatch) {
+              fileName = fileNameMatch[1];
+          }
+      }
+  
+      // Lee la respuesta como Blob
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+  
+      // Crea un enlace para descargar el archivo
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName; // Usa el nombre del archivo
+      document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+      link.click();
+      document.body.removeChild(link); // Elimina el enlace después de hacer clic
+  
+      // Libera el objeto URL después de la descarga
+      URL.revokeObjectURL(url);
+  
+      return;
+    }
+
 
   const diamasvalorado = async () => {
     setMostrarReporte(false)
@@ -301,8 +585,8 @@ export function AdminSalaReportes({ navigation }) {
       setMostrarValoraciones(true)}
     
     console.log('reporte nuevos artistas, response: ', reporte, response);
-    return data;
-  }
+    return };
+  
 
   const fetchRooms = async () =>{
     // const response = await roomService.getMyRoomsBd(user.id)
@@ -439,6 +723,9 @@ export function AdminSalaReportes({ navigation }) {
             </View>
             <Button color="warning" size="small" onPress={() => getReportes()}>
               Ver Reporte
+            </Button>
+            <Button color="warning" size="small" onPress={() => descargarReportes()}>
+              Descargar
             </Button>
             {/* <TouchableOpacity>
                <Text style={styles.linkReporte}> VER REPORTE</Text>

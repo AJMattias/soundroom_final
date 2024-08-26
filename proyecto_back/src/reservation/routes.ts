@@ -8,6 +8,10 @@ import {ErrorCode} from "../common/utils/constants"
 import { ValidatorUtils } from "../common/utils/validator_utils";
 import { ReservationModel } from "./model";
 var mongoose = require('mongoose');
+const fs = require('fs-extra');
+import { generateBarChartExample, generatePDF, generateBarChart  } from '../common/utils/generatePdf'
+import { generateReporteBarChartExample, generateReportePDF, generateReporteBarChart, generateReporteValoracionesPDF  } from '../common/utils/generateReportePdf'
+import { SalaDeEnsayoModel } from "../sala_de_ensayo/model";
 
 
 export const route = (app: Application) =>{
@@ -276,8 +280,81 @@ export const route = (app: Application) =>{
             console.log(NewUsersReport)
             resp.json(NewUsersReport)    
     }))
+
+    //descargar reporte reservas por mes
+    app.post("/reservations/descargarReporteReservationsPorSalaMes/", 
+        auth,
+        validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        validator.body("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        run(async (req: any, resp: Response) => {
+            const idUser = req.user.id
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body 
+            console.log('dto sala, fechas I y H: ', dto)
+            //fechaID = 'YYYY-MM-DD'
+            console.log("ruta reporte reservas por mes")
+            console.log(dto.fechaI)
+            console.log(dto.fechaH)
+            console.log(dto.idRoom)
+            // const users : UserDto[] = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            let dtoNewUsersReport = [] 
+            //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //falta pasar parametro idRoom
+            const NewUsersReport = await  service.instance.getReservasPorMes(dto.idRoom, dto.fechaI, dto.fechaH)
+            console.log(NewUsersReport)
+            
+            //obtener sala de ensayo para tener su nombre:
+            const salaId = mongoose.Types.ObjectId(dto.idRoom)
+            const sala = await SalaDeEnsayoModel.findById(salaId)
+            if (!sala) {
+                throw new Error("Sala de ensayo no encontrada");
+            }
+            const salaNombre= sala.nameSalaEnsayo 
+
+            const fechaInicio =  dto.fechaI
+            const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReporteBarChart(NewUsersReport.labels, NewUsersReport.datasets[0].data, 'Cantidad de reservas'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReporteValoracionesPDF(chartImage, 'Reporte - Cantidad de Reservas', salaNombre,  fechaInicio, fechaHasta ); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            resp.setHeader('Content-Type', 'application/pdf');
+            resp.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        resp.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
+
+
+    }))
     
-//TODO;: revisar
+//TODO: revisar
     app.post("/reservations/reservationsCanceladasPorSalaMes/", 
         auth,
         validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -302,6 +379,78 @@ export const route = (app: Application) =>{
             const NewUsersReport = await  service.instance.getReservasCanceladasPorMes(dto.idRoom, idUser, dto.fechaI, dto.fechaH)
             console.log(NewUsersReport)
             resp.json(NewUsersReport)    
+    }))
+
+    //descargar cantidad reservas canceladas sala
+    app.post("/reservations/descargarReservationsCanceladasPorSalaMes/", 
+        auth,
+        validator.body("fechaI").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("fechaH").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        validator.body("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),        
+        run(async (req: any, resp: Response) => {
+            const idUser = req.user.id
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body 
+            console.log('dto fechas I y H: ', dto)
+            //fechaID = 'YYYY-MM-DD'
+            console.log("ruta reporte reservas por mes")
+            console.log(dto.fechaI)
+            console.log(dto.fechaH)
+            // const users : UserDto[] = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            let dtoNewUsersReport = [] 
+            //dias = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            //const NewUsersReport = await  service.instance.reporteUserByDateRange2(dto.fechaI, dto.fechaH)
+            const NewUsersReport = await  service.instance.getReservasCanceladasPorMes(dto.idRoom, idUser, dto.fechaI, dto.fechaH)
+            console.log(NewUsersReport)
+            
+            //crear imagen, pdf y descargar
+            //obtener sala de ensayo para tener su nombre:
+            const salaId = mongoose.Types.ObjectId(dto.idRoom)
+            const sala = await SalaDeEnsayoModel.findById(salaId)
+            if (!sala) {
+                throw new Error("Sala de ensayo no encontrada");
+            }
+            const salaNombre= sala.nameSalaEnsayo 
+
+            const fechaInicio =  dto.fechaI
+            const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReporteBarChart(NewUsersReport.labels, NewUsersReport.datasets[0].data, 'Cancelaciones de Reservas'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReporteValoracionesPDF(chartImage, 'Reporte - Cancelaciones de Reservas', salaNombre,  fechaInicio, fechaHasta ); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            resp.setHeader('Content-Type', 'application/pdf');
+            resp.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        resp.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
+
+
     }))
 
     //endpoint para  contar la cantidad de reserva por dia de semana por sala
@@ -344,6 +493,93 @@ export const route = (app: Application) =>{
             }
             console.log('response dia mas valorado: ', response)
             res.json(response)
+        })
+    )
+
+
+    //descargar reporte dia mas reservado/valorado
+    app.get("/reservations/descargarReporteCantidadReservasPorDia/", 
+        auth, 
+        validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run (async (req: any, res: Response)=>{
+            const idRoom = req.query.idRoom as string
+            const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+
+                const reservations = await ReservationModel.aggregate([
+                {
+                    $match: {
+                        idRoom: new mongoose.Types.ObjectId(idRoom),
+                    },
+                },
+                {
+                    $group: {
+                        _id: { $dayOfWeek: "$date" }, // Agrupa por día de la semana
+                        count: { $sum: 1 },
+                    },
+                },
+                {
+                    $sort: { "_id": 1 }, // Ordena por día de la semana (1 = Domingo, 7 = Sábado)
+                },
+            ]);
+
+            // Mapea los resultados a los días de la semana y asegura que cada día tenga un conteo, incluso si es 0
+            const data = daysOfWeek.map((day, index) => {
+                const reservation = reservations.find(res => res._id === (index + 1));
+                return reservation ? reservation.count : 0;
+            });
+            let response = {
+            labels: daysOfWeek,
+            datasets: [
+                {
+                    data,
+                },
+            ],
+            }
+            console.log('response dia mas valorado: ', response)
+            
+            //obtener sala de ensayo para tener su nombre:
+            //const idRoom = req.query.idRoom as string
+            const salaId = mongoose.Types.ObjectId(idRoom)
+            const sala = await SalaDeEnsayoModel.findById(salaId)
+            if (!sala) {
+                throw new Error("Sala de ensayo no encontrada");
+            }
+            const salaNombre= sala.nameSalaEnsayo 
+
+            // const fechaInicio =  dto.fechaI
+            // const fechaHasta =  dto.fechaH
+
+            //Codigo Javascript :
+            const chartImage = await generateReporteBarChart(response.labels, response.datasets[0].data, 'Reservas por dia'); // Generar el gráfico de barras
+            //const chartImageBasic = await generateBarChart(mesesString, arrCantidades); // Generar el gráfico de barras
+            const pdfBytes = await generateReporteValoracionesPDF(chartImage, 'Reporte - Reservas por dia', salaNombre ); // Generar el PDF con el gráfico
+
+            // crear nombre de archivo irrepetible
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const currentDatee = new Date()
+            const currenDay = currentDatee.getDay()
+            const currenMonth = currentDatee.getMonth()
+            const currenYear = currentDatee.getFullYear()
+            const currenHour = currentDatee.getTime()
+
+            const rutaPdf = `report_${currentDate}.pdf`
+            const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
+
+            // Guardar el archivo PDF en el servidor
+            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+
+            // Enviar el archivo al cliente
+            res.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.download(
+                ruta, rutaPdf2, (err) => {
+                    if (err) {
+                        console.error('Error al enviar el archivo:', err);
+                        res.status(500).send('Error al descargar el archivo');
+                    }
+                }
+            )   
         })
     )
 

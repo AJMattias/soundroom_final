@@ -9,7 +9,11 @@ import {BarChart, PieChart} from 'react-native-chart-kit';
 import { theme } from "../core/theme";
 import { reportesService } from "../network/ReportesService";
 import {Calendar, CalendarProps} from 'react-native-calendars';
-import { formatDate } from '../utils/DateUtils'
+import { formatDate } from '../utils/DateUtils';
+import axios from  "axios"
+import {LocalPhoneStorage, STORAGE_JWT_KEY} from "../storage/LocalStorage"
+import { formatFecha as formatFecha2} from '../helpers/dateHelper'
+
 
 //const screenWidth = Dimensions.get('window').width;
 const screenWidth = 350
@@ -224,6 +228,8 @@ export function AdminSoundRoomReportes({navigation}){
     // Implement API call here
     console.log("Fetching graf torta tipo sala");
   };
+  
+  //ver reportes
   const getReportes = async () => {
     switch (selectedReporte) {
       case "usuariosNuevos":
@@ -252,6 +258,33 @@ export function AdminSoundRoomReportes({navigation}){
     }
   }
 
+  const descargarReportes = async () => {
+    switch (selectedReporte) {
+      case "usuariosNuevos":
+        descargarReporteNuevosUsuarios();
+        break;
+      case "artistasNuevos":
+        descargarReporteNuevosArtistas();
+        break;
+      case "salasNuevas":
+        descargarReporteSalasNuevas();
+        break;
+      case "usuariosActivos":
+        descargarReporteUsuariosActivos();
+        break;
+      case "usuariosBaja":
+        descargarReporteUsuariosBaja();
+        break;
+      case "propAlquianSala":
+        descargarReportePropAlquianSala();
+        break;
+      case "grafTortaTipoSala":
+        descargarReportesGrafTortaTipoSala();
+        break;
+      default:
+        console.log("No report selected");
+    }
+  }
   const reportesNuevosUsuarios = async () => {
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
@@ -273,7 +306,71 @@ export function AdminSoundRoomReportes({navigation}){
       if(reporte.labels){
         setMostrarReporte(true)}
     console.log('reporte nuevos usuarios, response: ', reporte, response);
-    return data;
+    return ;
+  }
+
+  const descargarReporteNuevosUsuarios = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/users/descargarReportesNuevosUsers", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+  }
+
+  // Obtén el nombre del archivo desde el encabezado Content-Disposition
+  const disposition = response.headers.get('content-disposition');
+  const currentDatee = new Date()
+  const currenDay = currentDatee.getDate()
+  const currenMonth = currentDatee.getMonth()
+  const currenYear = currentDatee.getFullYear()
+  const currenHour = currentDatee.getTime()
+
+  const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+  let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+  if (disposition) {
+      const fileNameMatch = disposition.match(/filename="(.+)"/);
+      if (fileNameMatch) {
+          fileName = fileNameMatch[1];
+      }
+  }
+
+  // Lee la respuesta como Blob
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  // Crea un enlace para descargar el archivo
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName; // Usa el nombre del archivo
+  document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+  link.click();
+  document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+  // Libera el objeto URL después de la descarga
+  URL.revokeObjectURL(url);
+
+    return;
   }
 
   const reportesNuevosArtistas = async () => {
@@ -298,6 +395,70 @@ export function AdminSoundRoomReportes({navigation}){
         setMostrarReporte(true)}
     console.log('reporte nuevos artistas, response: ', reporte, response);
     return data;
+  }
+
+  const descargarReporteNuevosArtistas = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/users/descargarReportesNuevosArtistas", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
   }
 
   const reporteSalasNuevas = async () => {
@@ -325,6 +486,71 @@ export function AdminSoundRoomReportes({navigation}){
     return data;
   }
 
+  //descargar salas nueas:
+  const descargarReporteSalasNuevas = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/salasdeensayo/descargarReportesNuevasSdE", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
+
   const reportesUsuariosActivos = async () => {
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
@@ -346,6 +572,72 @@ export function AdminSoundRoomReportes({navigation}){
     //   });
     console.log('reporte usuarios activos, response: ', reporte, response);
     return data;
+  }
+
+
+   //descargar Usuarios Activos:
+   const descargarReporteUsuariosActivos = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/users/descargarReportesUsuariosActivos", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
   }
 
   const reportesUsuariosBaja = async () => {
@@ -371,6 +663,73 @@ export function AdminSoundRoomReportes({navigation}){
     return data;
   }
 
+  //descargar usuarios baja:
+  const descargarReporteUsuariosBaja = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/users/descargarReportesUsuariosBaja", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
+
+
+
   const reportesPropAlquianSala = async () => {
     setMostrarReporteTortaTipoSala(false)
     console.log("onpressed ver reporte")
@@ -394,6 +753,74 @@ export function AdminSoundRoomReportes({navigation}){
     return data;
   }
 
+
+  //descargar Propietarios que alquilan:
+  const descargarReportePropAlquianSala = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/users/descargarReportesPropietariosAlquilan", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
+
+
+
   const reportesGrafTortaTipoSala = async () => {
     console.log("onpressed ver reporte")
     const response = await reportesService.reporteGrafTortaTipoSala(fechaI, fechaH);
@@ -411,9 +838,75 @@ export function AdminSoundRoomReportes({navigation}){
     
    
     console.log('reporte tipo sala, response: ', reporteTortaTipoSala, response);
-    return data;
+    return ;
   }
 
+  
+
+   //descargar Tipo Sala:
+   const descargarReportesGrafTortaTipoSala = async() =>{
+
+    const jwt = LocalPhoneStorage.get(STORAGE_JWT_KEY)
+    let fechaIn = formatFecha2(fechaI)
+    let fechaHa = formatFecha2(fechaH)
+    
+    // console.log('fechaI: ', fechaIn)
+    // console.log('fechaH: ', fechaHa)
+    // console.log('fechaI: ', fechaIn, 'Type: ', typeof fechaIn)
+    // console.log('fechaH: ', fechaHa, 'Type: ', typeof fechaHa);
+
+    const response = await fetch("http://localhost:3000/salasDeEnsayo/descargarReporteTipoSalaTorta", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`, // Incluye el token de autenticación
+          'Accept': 'application/pdf' // Espera una respuesta PDF
+      },
+      body: JSON.stringify({
+          fechaI: fechaIn,
+          fechaH: fechaHa
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Error en la solicitud');
+    }
+
+    // Obtén el nombre del archivo desde el encabezado Content-Disposition
+    const disposition = response.headers.get('content-disposition');
+    const currentDatee = new Date()
+    const currenDay = currentDatee.getDate()
+    const currenMonth = currentDatee.getMonth()
+    const currenYear = currentDatee.getFullYear()
+    const currenHour = currentDatee.getTime()
+
+    const rutaPdf2 = `reporte_${currenDay}${currenMonth}${currenYear}${currenHour}.pdf`
+    let fileName = `${rutaPdf2}`; // Nombre predeterminado
+
+    if (disposition) {
+        const fileNameMatch = disposition.match(/filename="(.+)"/);
+        if (fileNameMatch) {
+            fileName = fileNameMatch[1];
+        }
+    }
+
+    // Lee la respuesta como Blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Crea un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName; // Usa el nombre del archivo
+    document.body.appendChild(link); // Asegúrate de que el enlace esté en el DOM
+    link.click();
+    document.body.removeChild(link); // Elimina el enlace después de hacer clic
+
+    // Libera el objeto URL después de la descarga
+    URL.revokeObjectURL(url);
+
+    return;
+  }
   
   
 
@@ -494,6 +987,7 @@ return(
                   }
              </View> 
              <Button color="warning" size="small" onPress  = {()=>getReportes()}>Ver Reporte</Button>
+             <Button color="warning" size="small" onPress  = {()=>descargarReportes()}>Descargar</Button>
              {/* <TouchableOpacity>
                <Text style={styles.linkReporte}> VER REPORTE</Text>
              </TouchableOpacity> */}

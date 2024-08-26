@@ -700,6 +700,7 @@ export class UsersService{
       }
 
       //reporte usuariosactivos v1
+      //TODO revisar conteo documentos
     async obtenerUsuariosActivosPorMes(fechaInicio: string, fechaFin: string) {
         try {
        
@@ -724,16 +725,52 @@ export class UsersService{
                 const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
 
                 const count = await UserModel.countDocuments({
+                // $or:[
+                //     {
+                //         enabledHistory: {
+                //             $elemMatch: {
+                //             status: 'habilitado',
+                //             dateFrom: { $gte: startOfCurrentMonth, $lt: endOfCurrentMonth },
+                //             $and: [
+                //                 { dateTo: { $gt: startOfCurrentMonth, $lte: endOfCurrentMonth } },
+                //                 { dateTo: null }, // Si dateTo es null, significa que aún está habilitado
+                //                 { dateTo: { $exists: false } } // dateTo does not exist
+                //             ],
+                //             },
+                //         },
+                //     },
+                //     {
+                //         enabledHistory: {
+                //             $elemMatch: {
+                //             status: 'habilitado',
+                //             dateFrom: { $lte: endOfCurrentMonth },
+                //             $and: [
+                //                 { dateTo: { $gte: endOfCurrentMonth, $lte: fechaFin } }
+                //             ],
+                //             },
+                //         },
+                //     },
+                //     {
+                //         enabledHistory: {
+                //             $elemMatch: {
+                //                 status: 'habilitado',
+                //                 dateFrom: { $lte: endOfCurrentMonth },
+                //                 dateTo: { $gte: startOfCurrentMonth }
+                //             }
+                //         }
+                //     }
+                // ]
                 enabledHistory: {
                     $elemMatch: {
-                    status: 'habilitado',
-                    dateFrom: { $lte: endOfCurrentMonth },
-                    $or: [
-                        { dateTo: { $gte: startOfCurrentMonth } },
-                        { dateTo: null }, // Si dateTo es null, significa que aún está habilitado
-                    ],
-                    },
-                },
+                        status: 'habilitado',
+                        dateFrom: { $lte: endOfCurrentMonth },
+                        $or: [
+                            { dateTo: { $exists: false } }, // Si dateTo no existe, el estado sigue habilitado
+                            { dateTo: { $gte: startOfCurrentMonth } } // dateTo en el mes actual o después
+                        ]
+                    }
+                }
+                
                 });
 
                 // Llenado del objeto result
@@ -756,7 +793,6 @@ export class UsersService{
 
             // Retorno del objeto result con los datos llenados
             return result;
-
        
         } catch (error) {
             console.error(error);
@@ -1250,6 +1286,7 @@ export class UsersService{
             // Retorno del objeto result con los datos llenados
             result.labels.shift()
             result.datasets[0].data.shift()
+            console.log('result: ', result)
             return result;
     
         } catch (error) {
