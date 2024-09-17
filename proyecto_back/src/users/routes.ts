@@ -2,7 +2,7 @@ import * as service from "./service"
 import * as validator from "express-validator"
 import {run} from "../common/utils/run"
 import {Application, Request, Response} from "express"
-import {admin, auth} from "../server/middleware"
+import {admin, auth, checkPermission} from "../server/middleware"
 import {LoginResponseDto, LoginWithTokenDto, UserDto} from "./dto"
 import {StringUtils} from "../common/utils/string_utils"
 import {ArgumentsException, AuthorizationException} from "../common/exception/exception"
@@ -68,7 +68,8 @@ export const route = (app: Application) => {
 
     //buscar ssalas populares, busca las ultimas 5 creadas.
     //para mas/menos numeros cambiar limit(X)
-    app.get("/user/findPopularsArtists/", auth,
+    app.get("/user/findPopularsArtists/", 
+        auth,
         run(async (req: Request, resp: Response) => {
         // Buscar perfiles con el nombre especificado
         const perfil = await PerfilModel.findOne({ name: "Artista" });
@@ -89,6 +90,7 @@ export const route = (app: Application) => {
 
      app.put("/users/update/",
         auth,
+        checkPermission(["EDITAR_PERFIL"]),
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: Request,resp: Response) => {
             const errors = validator.validationResult(req)
@@ -158,6 +160,80 @@ export const route = (app: Application) => {
             resp.json(user)
         })
      )
+
+     app.put("/users/changeUserState/",
+        auth,
+        checkPermission(["EDITAR_PERFIL"]),
+        validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: Request,resp: Response) => {
+            const errors = validator.validationResult(req)
+            if(errors && !errors.isEmpty()){
+                throw ValidatorUtils.toArgumentsException(errors.array())
+            }
+            const dto = req.body
+            const id = req.query.id as string
+            console.log('update user dto: ', dto)
+            const userOriginal : UserDto = await  service.instance.findUserById(id)
+            if (!dto["name"]) {
+                dto["name"] = userOriginal["name"];
+            }
+            if (!dto["last_name"]) {
+                 dto["last_name"] = userOriginal["last_name"];
+            }
+            if (!dto["email"]) {
+                 dto["email"] = userOriginal["email"];
+            }
+            if (!dto["enabled"]) {
+                dto["enabled"] = userOriginal["enabled"];
+            }
+            if (!dto["password"]) {
+                dto["password"] = userOriginal["password"];
+            }
+            if (!dto["createdAt"]) {
+                dto["createdAt"] = userOriginal["createdAt"];
+            }   
+            if (!dto["idPerfil"]) {
+                dto["idPerfil"] = userOriginal["idPerfil"];
+            } 
+            if (!dto["idSalaDeEnsayo"]) {
+                dto["idSalaDeEnsayo"] = userOriginal["idSalaDeEnsayo"];
+            } 
+            if (!dto["createdAt"]) {
+                dto["createdAt"] = userOriginal["createdAt"];
+            } 
+            if (!dto["estadoUsuario"]) {
+                dto["estadoUsuario"] = userOriginal["estadoUsuario"];
+            } 
+            if (!dto["userType"]) {
+                dto["userType"] = userOriginal["userType"];
+            } 
+            if (!dto["tipoArtista"]) {
+                dto["tipoArtista"] = userOriginal["tipoArtista"];
+            } 
+            if (!dto["password"]) {
+                dto["password"] = userOriginal["password"];
+            } 
+            console.log(" ruta update user, baja:? ", dto["enabled"])
+            console.log('idPerfil: ', dto["idPerfil"])
+            const user = await service.instance.updateUserState(id,{
+                name: dto["name"],
+                last_name: dto["last_name"],
+                email: dto["email"],
+                password: dto["password"],
+                enabled: dto["enabled"],
+                idPerfil: dto["idPerfil"],
+                idArtistType: dto["idArtistType"],
+                idArtistStyle: dto["idArtistStyle"],
+                image_id: undefined,
+                userType: dto["userType"],
+                idSalaDeEnsayo: dto["idSalaDeEnsayo"],
+                tipoArtista: dto['tipoArtista'],
+                createdAt: dto["createdAt"]
+            })
+            resp.json(user)
+        })
+     )
+
      app.post("/users/updatePassword/",
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: Request,resp: Response) => {
@@ -270,13 +346,18 @@ export const route = (app: Application) => {
         })
      )
 
-     app.post("/auth/create_token", run(async(req: Request, resp: Response) => {
+     //recuperar contraseña
+     app.post("/auth/create_token", 
+        //checkPermission(['RECUPERAR_CONTRASEÑA']),
+        run(async(req: Request, resp: Response) => {
          const tokenDto: LoginWithTokenDto = await service.instance.resetPassword(req.body.email)
          resp.json(tokenDto)
      }))
 
-     
-     app.post("/auth/token", run(async(req: Request, resp: Response) => {
+    //recibir codigo para recuperar contraseña
+     app.post("/auth/token",
+        //checkPermission(['RECUPERAR_CONTRASEÑA']),
+        run(async(req: Request, resp: Response) => {
         const tokenDto: LoginResponseDto = await service.instance.loginWithToken(req.body.email, req.body.token)
         resp.json(tokenDto)
     }))

@@ -30,7 +30,7 @@ export  function CreateRoom({ navigation }) {
   const [precio, setPrecio] = useState({ value: '', error: '' })
   const [type, setType] = useState({ value: '', error: '' })
   const [types, setTypes] = useState([
-    { id: '', name:'Tipos de sala' }])
+    { id: '0', name:'Tipos de sala' }])
   const [typeSelected, setTypeSelected] = useState({value:''})
   const [localidad, setLocalidad] = useState({ value: '', error: '' })
   const [checkValue, setCheckValue] = useState(false);
@@ -76,9 +76,7 @@ export  function CreateRoom({ navigation }) {
         <Picker.Item key={locality.id} label={locality.nameLocality} value={locality.nameLocality} />
     );
     
-    const listTypes = types.map((type) =>
-        <Picker.Item key={type.id} label={type.name} value={type.name} />
-    );
+    
     //para mapear ordenadamente cada una de las Salas
     const listRooms = rooms.map((room) =>
         <div className ={clases}>
@@ -163,9 +161,13 @@ export  function CreateRoom({ navigation }) {
             const response  = await roomService.searchType()
             console.log("Got types")
             console.log(types)
-            response.map(type=>{
-                types.push({id: type.id, name: type.name})
-            })
+            // response.map(type=>{
+            //     types.push({id: type.id, name: type.name})
+            // })
+
+            const updatedTypes = response.map(type => ({ id: type.id, name: type.name }));
+            setTypes([{ id: '0', name: 'Tipos de sala' }, ...updatedTypes]);
+
             console.log(types)
         }
         catch(apiError){
@@ -181,6 +183,9 @@ export  function CreateRoom({ navigation }) {
         <Picker.Item key={type.id} label={type.name} value={type.id} />
     );
 
+    const listTypes = types.map((type) =>
+      <Picker.Item key={type.id} label={type.name} value={type.name} />
+    );
 
     //guardar la sala
     /*
@@ -274,13 +279,13 @@ export  function CreateRoom({ navigation }) {
               //  descripcion, precioHora, comodidades)
               console.log('room created in db', stored)
               const user = getUser()
-              if(user.idPerfil.name="artista"){
+              if( user.idPerfil && user.idPerfil.name.toLowerCase() === "artista"){
                 console.log(user.idPerfil.name)
                 const userPerfil = await userService.getUserBd(stored.idRoom)
                 if(userPerfil){
                   await LocalPhoneStorage.set(STORAGE_USER, userPerfil)
                 }
-            }
+              }
               //console.log('room created in db', stored2)
               navigation.navigate("RoomScreen", {
                   roomId: stored.id

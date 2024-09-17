@@ -19,7 +19,7 @@ import { ReporteUsersDto } from "../reporte/reporteDto"
 import { SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel } from "../sala_de_ensayo/model"
 import { StringLiteral } from "typescript"
 import { PerfilModel } from "../perfil/models"
-import { addMonths, endOfMonth, format, isWithinInterval, startOfMonth } from "date-fns"
+import { addMonths, endOfMonth, endOfTomorrow, format, isWithinInterval, startOfMonth } from "date-fns"
 import { CreateSalaDeEnsayoDto, SalaDeEnsayoDto } from "../sala_de_ensayo/dto"
 var mongoose = require('mongoose');
 
@@ -143,71 +143,81 @@ export class UsersService{
             return this.mapToDto(user)
         })
     }
+   
+    async updateUserState(userId: string, dto : CreateUserDto):Promise<UserDto>{
+        //comparar atributo enabled y ejecutar segun cambia  
+        try {
+            if(dto.enabled === "baja"){
+                console.log("service baja: ", dto.enabled)
+                await this.dao.stopDisableUser(userId)
+                return  this.mapToDto( 
+                    await this.dao.bajaUser(userId,{
+                        name:  dto.name,
+                        last_name : dto.last_name,
+                        email: dto.email,
+                        password : dto.password,
+                        createdAt: dto.createdAt,
+                        deletedAt: new Date(),
+                        image_id: undefined,
+                        enabled: dto.enabled,
+                        idPerfil: dto.idPerfil as unknown as string,
+                        idArtistType: dto.idArtistType as unknown as string,
+                        idArtistStyle: dto.idArtistStyle as unknown as string,
+                        userType: dto.userType,
+                        idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                        tipoArtista: dto.tipoArtista
+                    }))
+            }
+            if(dto.enabled === "deshabilitado"){
+                await this.dao.stopDisableUser(userId)
+                return  this.mapToDto( 
+                    await this.dao.disableUser(userId,{
+                        name:  dto.name,
+                        last_name : dto.last_name,
+                        email: dto.email,
+                        password : dto.password,
+                        createdAt: dto.createdAt,
+                        deletedAt: new Date(),
+                        image_id: undefined,
+                        enabled: dto.enabled,
+                        idPerfil: dto.idPerfil as unknown as string,
+                        idArtistType: dto.idArtistType as unknown as string,
+                        idArtistStyle: dto.idArtistStyle as unknown as string,
+                        userType: dto.userType,
+                        idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                        tipoArtista: dto.tipoArtista,   
+                    }))
+            } else
+                if(dto.enabled === "habilitado"){
+                    await this.dao.stopDisableUser(userId)
+                    return  this.mapToDto( 
+                        await this.dao.enabledUser(userId,{
+                            name:  dto.name,
+                            last_name : dto.last_name,
+                            email: dto.email,
+                            password : dto.password,
+                            createdAt: dto.createdAt,
+                            deletedAt: new Date(),
+                            image_id: undefined,
+                            enabled: dto.enabled,
+                            idPerfil: dto.idPerfil as unknown as string,
+                            idArtistType: dto.idArtistType as unknown as string,
+                            idArtistStyle: dto.idArtistStyle as unknown as string,
+                            userType: dto.userType,
+                            idSalaDeEnsayo: dto.idSalaDeEnsayo,
+                            tipoArtista: dto.tipoArtista,   
+                        }))
+            }else {
+                // Manejo de caso inesperado
+                throw new Error(`Estado de usuario no reconocido: ${dto.enabled}`);
+            }
+        } catch (error) {
+            console.log('error al cambiar estado de usuario: ', error)
+            throw error;
+        }
+    }
 
     async updateUser(userId: string, dto : CreateUserDto) : Promise<UserDto>{
-        if(dto.enabled === "baja"){
-            console.log("service baja: ", dto.enabled)
-            await this.dao.stopDisableUser(userId)
-            return  this.mapToDto( 
-                await this.dao.bajaUser(userId,{
-                    name:  dto.name,
-                    last_name : dto.last_name,
-                    email: dto.email,
-                    password : dto.password,
-                    createdAt: dto.createdAt,
-                    deletedAt: new Date(),
-                    image_id: undefined,
-                    enabled: dto.enabled,
-                    idPerfil: dto.idPerfil as unknown as string,
-                    idArtistType: dto.idArtistType as unknown as string,
-                    idArtistStyle: dto.idArtistStyle as unknown as string,
-                    userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
-                    tipoArtista: dto.tipoArtista
-                }))
-        }
-        if(dto.enabled === "deshabilitado"){
-            await this.dao.stopDisableUser(userId)
-            return  this.mapToDto( 
-                await this.dao.disableUser(userId,{
-                    name:  dto.name,
-                    last_name : dto.last_name,
-                    email: dto.email,
-                    password : dto.password,
-                    createdAt: dto.createdAt,
-                    deletedAt: new Date(),
-                    image_id: undefined,
-                    enabled: dto.enabled,
-                    idPerfil: dto.idPerfil as unknown as string,
-                    idArtistType: dto.idArtistType as unknown as string,
-                    idArtistStyle: dto.idArtistStyle as unknown as string,
-                    userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
-                    tipoArtista: dto.tipoArtista,   
-                }))
-        } 
-        if(dto.enabled === "habilitado"){
-            await this.dao.stopDisableUser(userId)
-            return  this.mapToDto( 
-                await this.dao.enabledUser(userId,{
-                    name:  dto.name,
-                    last_name : dto.last_name,
-                    email: dto.email,
-                    password : dto.password,
-                    createdAt: dto.createdAt,
-                    deletedAt: new Date(),
-                    image_id: undefined,
-                    enabled: dto.enabled,
-                    idPerfil: dto.idPerfil as unknown as string,
-                    idArtistType: dto.idArtistType as unknown as string,
-                    idArtistStyle: dto.idArtistStyle as unknown as string,
-                    userType: dto.userType,
-                    idSalaDeEnsayo: dto.idSalaDeEnsayo,
-                    tipoArtista: dto.tipoArtista,   
-                }))
-        } 
-        else {
-            console.log('service update user, dtoUser: ', dto)
         return  this.mapToDto( 
             await this.dao.updateUser(userId,{
                 name:  dto.name,
@@ -226,7 +236,7 @@ export class UsersService{
                 tipoArtista: dto.tipoArtista,
                 enabledHistory: dto.enabledHistory
             })
-        )}
+        )
     }
 
     //TODO-> Agregar funcion para cambiar el estado anterior, es decir agregar fecha hasta en

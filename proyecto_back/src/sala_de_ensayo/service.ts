@@ -230,7 +230,18 @@ export class SalaService{
     }
 
     async borrarSalaBd(id: string): Promise<Boolean>{
-    return await this.dao.borrarSala(id)
+        const salaToDelete = this.dao.findById2(id)
+        const owner = (await salaToDelete).idOwner
+        console.log('salaDeEnsayotoDelete: ', salaToDelete)
+        console.log('owner sala de ensayo: ', owner)
+        //delete sala from bd
+        await this.dao.borrarSala(id)
+        
+        // delete sala from user's array sala_de_ensayo
+        // await UserModel.findByIdAndUpdate(owner._id, {
+        //     $pull: { idSalaDeEnsayo: id }
+        // })
+        return true
     }
      
 

@@ -11,7 +11,7 @@ import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel
 import {ValidatorUtils} from "../common/utils/validator_utils"
 import multer from "../common/utils/storage";
 import  * as imageService from "../imagen/service"
-import { admin, auth } from "../server/middleware";
+import { admin, auth, checkArtistOrSalaDeEnsayo, checkPermission } from "../server/middleware";
 import { UserDto } from "src/users/dto";
 import * as userService from "../users/service"
 import { PerfilModel } from "../perfil/models";
@@ -33,6 +33,8 @@ export const route = (app: Application) => {
     }))
 
     app.get("/salasdeensayo/findOne/",
+        auth,
+        checkPermission(['CONSULTAR_SALA_DE_ENSAYO']),
         run(async (req:Request, resp: Response) => {
             const id = req.query.id as string
             const sala : SalaDeEnsayoDto = await service.instance.findSalaById(id);
@@ -58,7 +60,9 @@ export const route = (app: Application) => {
     
     //buscar ssalas populares, busca las ultimas 5 creadas.
     //para mas/menos numeros cambiar limit(X)
-    app.get("/salasdeensayo/findPopulars/", run(async (req: Request, resp: Response) => {
+    app.get("/salasdeensayo/findPopulars/", 
+        auth,
+        run(async (req: Request, resp: Response) => {
         const salas: SalaDeEnsayoDoc[] = await SalaDeEnsayoModel.find()
         .sort({ createdAt: -1 }) // Ordena por createdAt en orden descendente (los más recientes primero)
         .limit(5)                 // Limita los resultados a 5 documentos
@@ -68,7 +72,11 @@ export const route = (app: Application) => {
         resp.json(salas)    
     }))
    
-    app.get("/salasdeensayo/findByName/", run(async (req: Request, resp: Response) => {
+    //Buscar Sala de ensayo
+    app.get("/salasdeensayo/findByName/",
+        auth,
+        checkPermission(['BUSCAR_SALA_DE_ENSAYO']),
+        run(async (req: Request, resp: Response) => {
         const busqueda = req.query.q
         console.log('req.query.q: ', req.query.q)
         console.log(busqueda)
@@ -78,7 +86,8 @@ export const route = (app: Application) => {
     
 
     //TODO findbyOwner
-    app.get("/salasdeensayo/findByOwner/", 
+    app.get("/salasdeensayo/findByOwner/",
+        auth, 
         run(async (req: Request, resp: Response) => {
             const id = req.query.id as string
             const salas : SalaDeEnsayoDto[] = await service.instance.findSalaByOwner(id)
@@ -86,49 +95,53 @@ export const route = (app: Application) => {
     }))
 
 
-    app.get("/salasdeensayo/search/", 
-    validator.body("idType").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-    validator.body("idLocality").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-    run(async (req: Request, resp: Response) => {
-        console.log("routes llega")
-        const dto = req.body
-        const salas : SalaDeEnsayoDto[] = await  service.instance.getSearch({        
-            nameSalaEnsayo: dto["nameSalaDeEnsayo"],
-            calleDireccion: dto["calleDireccion"],
-            //numeroDireccion: dto["numeroDireccion"],
-            //idLocality: dto["idLocality"],
-            idType: dto["idType"],
-            precioHora: dto["precioHora"],
-            idOwner: dto["idOwner"],
-            duracionTurno: dto["duracionTiempo"],
-            descripcion: dto["descripcion"]
-        })
+    //no se usa creo
+    app.get("/salasdeensayo/search/",
+        auth, 
+        validator.body("idType").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        validator.body("idLocality").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: Request, resp: Response) => {
+            console.log("routes llega")
+            const dto = req.body
+            const salas : SalaDeEnsayoDto[] = await  service.instance.getSearch({        
+                nameSalaEnsayo: dto["nameSalaDeEnsayo"],
+                calleDireccion: dto["calleDireccion"],
+                //numeroDireccion: dto["numeroDireccion"],
+                //idLocality: dto["idLocality"],
+                idType: dto["idType"],
+                precioHora: dto["precioHora"],
+                idOwner: dto["idOwner"],
+                duracionTurno: dto["duracionTiempo"],
+                descripcion: dto["descripcion"]
+            })
         resp.json(salas)    
     }))
     
 
     //email cancelacion reaserva por artista
-   app.post('/email/',
-   validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-   validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-   validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-       run(async (req: Request, resp: Response) => {
-           const dto = req.body
-           var Email = require('../server/MailCtrl');
-           const mailOptions = {
-                    from: 'proyectofinal2021mmaa@gmail.com',
-                    to: dto["receptor"],
-                    subject: "Cancelacion de la sala " + dto["sala"],
-                    html:'<div id=":pf" class="a3s aiL "><table><tbody> <tr> <td style="padding:16px 24px"> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"> <tbody> <tr> <td> <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="auto"> <tbody> <tr> <td> <img alt="Imagen de SoundRoom" border="0" height="70" width="70" src="https://fs-01.cyberdrop.to/SoundRoom_logo-X6fFVkX9.png" style="border-radius:50%;outline:none;color:#ffffff;max-width:unset!important;text-decoration:none" class="CToWUd"></a></td> </tr> </tbody> </table></td> </tr> <tr> <td> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width:396px;padding-bottom:4px;text-align:center"> <tbody> <tr> <td><h2 style="margin:0;color:#262626;font-weight:400;font-size:16px;line-height:1.5">'+"Usted acaba de cancelar su turno en la sala de ensayo " + dto["sala"] + " del dia " + dto["inicio"] + '</h2></td> </tr> </tbody> </table></td> </tr></tbody></table></div>',
-                    text: "Usted acaba de cancelar su turno en la sala de ensayo " + dto["sala"] + " del dia " + dto["inicio"]
-              };
-           Email.sendEmail(mailOptions);
-           resp.json("envio exitoso");
-       })
+    app.post('/email/',
+    auth,
+    validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+    validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+        run(async (req: Request, resp: Response) => {
+            const dto = req.body
+            var Email = require('../server/MailCtrl');
+            const mailOptions = {
+                        from: 'proyectofinal2021mmaa@gmail.com',
+                        to: dto["receptor"],
+                        subject: "Cancelacion de la sala " + dto["sala"],
+                        html:'<div id=":pf" class="a3s aiL "><table><tbody> <tr> <td style="padding:16px 24px"> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%"> <tbody> <tr> <td> <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="auto"> <tbody> <tr> <td> <img alt="Imagen de SoundRoom" border="0" height="70" width="70" src="https://fs-01.cyberdrop.to/SoundRoom_logo-X6fFVkX9.png" style="border-radius:50%;outline:none;color:#ffffff;max-width:unset!important;text-decoration:none" class="CToWUd"></a></td> </tr> </tbody> </table></td> </tr> <tr> <td> <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="center" style="max-width:396px;padding-bottom:4px;text-align:center"> <tbody> <tr> <td><h2 style="margin:0;color:#262626;font-weight:400;font-size:16px;line-height:1.5">'+"Usted acaba de cancelar su turno en la sala de ensayo " + dto["sala"] + " del dia " + dto["inicio"] + '</h2></td> </tr> </tbody> </table></td> </tr></tbody></table></div>',
+                        text: "Usted acaba de cancelar su turno en la sala de ensayo " + dto["sala"] + " del dia " + dto["inicio"]
+                };
+            Email.sendEmail(mailOptions);
+            resp.json("envio exitoso");
+        })
     )
 
     //cancelacion reserva, aviso a dueño sala de ensayo
    app.post('/emailOwner/',
+    auth,
     validator.body("receptor").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -150,6 +163,7 @@ export const route = (app: Application) => {
     )
 
     app.post('/emailReserva/',
+        auth,
         validator.body("receptorCliente").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("sala").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("inicio").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -181,6 +195,7 @@ export const route = (app: Application) => {
 
     app.post("/salasdeensayo/", 
     auth,
+    checkPermission(["CREAR_SALA_DE_ENSAYO"]),
     validator.body("nameSalaDeEnsayo").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     validator.body("calleDireccion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     // validator.body("numeroDireccion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -259,22 +274,26 @@ export const route = (app: Application) => {
                  idSala,
                  user.tipoArtista,
                  user.enabledHistory)
-            const userUpdatePerfil = await userService.instance.updateUser(user.id, {
-                name: user.name,
-                last_name: user.last_name,
-                email: user.email,
-                password: user.password,
-                idPerfil: perfilid,
-                createdAt: user.createdAt,
-                idArtistType: user.idArtistType,
-                idArtistStyle: user.idArtistStyle,
-                image_id: undefined,
-                //enabled: user.enabled,
-                userType: user.userType,
-                idSalaDeEnsayo: idSala,
-                tipoArtista: user.tipoArtista,
-                enabledHistory: user.enabledHistory
-            })
+            if(userUpdate.isAdmin === false){
+                console.log('is not admin, change idPerfil: isAdmin: ', userUpdate.isAdmin )
+                //const userUpdatePerfil = 
+                await userService.instance.updateUser(user.id, {
+                    name: user.name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    password: user.password,
+                    idPerfil: perfilid,
+                    createdAt: user.createdAt,
+                    idArtistType: user.idArtistType,
+                    idArtistStyle: user.idArtistStyle,
+                    image_id: undefined,
+                    //enabled: user.enabled,
+                    userType: user.userType,
+                    idSalaDeEnsayo: idSala,
+                    tipoArtista: user.tipoArtista,
+                    enabledHistory: user.enabledHistory
+                })
+            }
             //resp.json( userUpdatePerfil)
 
            // copiar a perfil con usuario
@@ -286,6 +305,8 @@ export const route = (app: Application) => {
 
     //endpint with 1 image
     app.post("/salasdeensayo_imagen/", multer.single('img'),
+    auth,
+    checkPermission(['CREAR_SALA_DE_ENSAYO']),
     validator.body("nameSalaDeEnsayo").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     validator.body("calleDireccion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     validator.body("numeroDireccion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -335,6 +356,7 @@ export const route = (app: Application) => {
 
     app.put("/salasdeensayo/update/", 
     auth,
+    checkPermission(['EDITAR_SALA_DE_ENSAYO']),
     validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     run( async(req: any, resp: Response) => {
         const errors = validator.validationResult(req)
@@ -387,7 +409,9 @@ export const route = (app: Application) => {
         })
     )
 
-    app.get("/salasdeensayo/deletefrombd/",auth,
+    app.get("/salasdeensayo/deletefrombd/",
+        auth,
+        checkPermission(['EDITAR_SALA_DE_ENSAYO']),
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run( async(req: Request, resp: Response) => {
             const errors = validator.validationResult(req)
@@ -488,6 +512,7 @@ export const route = (app: Application) => {
 
     app.post("/salasdeensayo/createOpinion/",
         auth,
+        checkPermission(['CALIFICAR_SALA_DE_ENSAYO']),
         //validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("descripcion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("estrellas").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -551,6 +576,7 @@ export const route = (app: Application) => {
 
     app.post("/salasdeensayo/createOpinionToArtist/",
         auth,
+        checkPermission(['CALIFICAR_ARTISTA']),
         //validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("descripcion").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         validator.body("estrellas").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
@@ -592,6 +618,7 @@ export const route = (app: Application) => {
     //TODO update opinion
     app.put("/saladeensayo/updateOpinion/",
         auth,
+        checkPermission(['ACTUALIZAR_CALIFICACION_SALA_DE_ENSAYO']),
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: any, resp: Response) =>{
             const errors = validator.validationResult(req)
@@ -627,6 +654,7 @@ export const route = (app: Application) => {
 
     app.put("/saladeensayo/updateOpinionToArtist/",
         auth,
+        checkPermission(['ACTUALIZAR_CALIFICACION_ARTISTA']),
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: any, resp: Response) =>{
             const errors = validator.validationResult(req)
@@ -647,8 +675,9 @@ export const route = (app: Application) => {
             resp.json(opinionUpdate)
         }))
 
-    app.get("/salaPromedio/", run( async(req: Request, res: Response)=>{
-
+    app.get("/salaPromedio/", 
+        auth,
+        run( async(req: Request, res: Response)=>{
         const id = req.query.id as string
         const salaDeEnsayo:SalaDeEnsayoDto = await service.instance.findSalaById(id);
 
@@ -665,7 +694,10 @@ export const route = (app: Application) => {
 
 
     //get opiniones de sala que se pasa por id en la query
-    app.get("/salaOpiniones/", run(async (req: Request, res: Response)=>{
+    app.get("/salaOpiniones/",
+        auth,
+        checkArtistOrSalaDeEnsayo,
+        run(async (req: Request, res: Response)=>{
         const id = req.query.id as string
         //buscar sala de ensayo
         const salaDeEnsayo = await service.instance.findSalaById(id);
@@ -679,7 +711,9 @@ export const route = (app: Application) => {
 
     }))
 
-    app.get("/salaOpinionesdos/", run(async (req: Request, res: Response)=>{
+    app.get("/salaOpinionesdos/",
+        auth,
+        run(async (req: Request, res: Response)=>{
         const id = req.query.id as string
         //buscar sala de ensayo
         // idType: mongoose.Types.ObjectId(sala.idType)
@@ -692,6 +726,7 @@ export const route = (app: Application) => {
     //get opinion hecha por usuario logueado artista,  get mi opinion sobre una sala e particular
     app.get("/salaOpinion/getMyOpinionToRoom/", 
     auth, 
+    checkArtistOrSalaDeEnsayo,
     validator.query("idRoom").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
     run(async (req: any, resp: Response)=>{
         console.log('route getting opinion to room')
@@ -743,6 +778,7 @@ export const route = (app: Application) => {
 
     //TODO get opinones sobre un artista
     app.get("/opinionToArtista/",
+        auth,
         run(async (req: Request,resp: Response) => {
             console.log('ruta opinionToArtista')
             const id = req.query.id as string

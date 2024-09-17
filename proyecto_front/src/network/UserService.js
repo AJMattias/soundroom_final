@@ -104,6 +104,25 @@ class UserService {
         await LocalPhoneStorage.set("user", user)
         return user
     }
+
+    async habilitarUser(
+        userId,
+        email,
+        name,
+        lastName,
+        enabled
+    ) {
+        const user =  await api.put("/users/changeUserState/?id="+userId, {
+                email: email,
+                name: name,
+                last_name: lastName,
+                enabled: enabled
+            }
+        )
+        await LocalPhoneStorage.set("user", user)
+        return user
+    }
+
     async deshabilitarUser(
         userId,
         email,
@@ -111,7 +130,7 @@ class UserService {
         lastName,
         enabled
     ) {
-        const user =  await api.put("/users/update/?id="+userId, {
+        const user =  await api.put("/users/changeUserState/?id="+userId, {
                 email: email,
                 name: name,
                 last_name: lastName,

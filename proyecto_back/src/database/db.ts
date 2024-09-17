@@ -6,7 +6,8 @@ export const connect  = async () =>{
          //await mongoose.connect(`mongodb://localhost/${process.env.MONGO_DB_NAME}`)
          await mongoose.connect(`mongodb://127.0.0.1:27017/${process.env.MONGO_DB_NAME}`, 
          {useNewUrlParser: true, useUnifiedTopology: true,
-        useFindAndModify:false})
+         //useFindAndModify:false
+        })
          mongoose.set('returnOriginal', false)
     } catch (e){
         console.error("Error connecting to mongoose")

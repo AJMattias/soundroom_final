@@ -79,6 +79,7 @@ export function GestionUserScreen ({route, navigation}){
         };
       }, [userId]);
 
+    //deshabilitar usuario
     const deshabilitar = async () => {
         console.log("deshabilitando")
         console.log(userId, 
@@ -86,7 +87,7 @@ export function GestionUserScreen ({route, navigation}){
             user.name,
             user.last_name,
             "deshabilitado")
-        const response = await userService.update(userId, 
+        const response = await userService.deshabilitarUser(userId, 
             user.email,
             user.name,
             user.last_name,
@@ -97,6 +98,8 @@ export function GestionUserScreen ({route, navigation}){
         console.log(user)
         navigation.replace("GestionUsuariosScreen")
     }
+    
+    // habilitar usuario
     const habilitar = async () => {
         console.log("habilitando")
         console.log(userId, 
@@ -104,7 +107,7 @@ export function GestionUserScreen ({route, navigation}){
             user.name,
             user.last_name,
             "habilitado")
-        const response = await userService.update(userId,
+        const response = await userService.habilitarUser(userId,
             user.email,
             user.name,
             user.last_name, 

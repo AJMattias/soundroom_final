@@ -218,6 +218,7 @@ export const route = (app: Application) =>{
 
     //idUser hace la reserva
     app.get("/reservation/findReservationbyUserAndRoom/:userId/:roomId",
+        auth,
         run(async (req: Request,resp: Response) => {
         const id = req.params.userId as string
         //Probar una vez mas con este roomId en la query

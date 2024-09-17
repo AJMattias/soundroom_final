@@ -48,8 +48,6 @@ export class UsersDao {
      */
     async findById(userId: String): Promise<User> {
 
-        
-
         const model = await UserModel.findById(userId).populate('idPerfil').exec()
         if (!model) throw new ModelNotFoundException()
         return this.mapToUser(model)
@@ -142,6 +140,12 @@ export class UsersDao {
         //atributos a actualizar : name:  dto.name,
         const perfilId = mongoose.Types.ObjectId(user.idPerfil)
 
+        const userToUpdate = await UserModel.findById(userId)
+
+        if(!userToUpdate){
+            throw new Error
+        }
+
                 // last_name : dto.last_name,
                 // email: dto.email,
                 // password : dto.password,
@@ -155,7 +159,7 @@ export class UsersDao {
                 // userType: dto.userType,
                 // idSalaDeEnsayo: dto.idSalaDeEnsayo
         const updated = await UserModel.findOneAndUpdate(
-            {_id: userId},
+            {_id: idUser},
             {
                 $set:{
                     name: user.name,
@@ -167,7 +171,7 @@ export class UsersDao {
                     deletedAt: user.deletedAt,
                     idPerfil: perfilId,
                     password: user.password,
-                    enabledHistory: user.enabledHistory,
+                    enabledHistory: userToUpdate.enabledHistory,
                 }
             //password tb?
 
@@ -322,15 +326,43 @@ export class UsersDao {
 
 
      async stopDisableUser(userId: string): Promise<User> {
+        //version anterior, funcionaba, se actualizo mongodb
+        // y ya no funciona mas:
+
+        console.log('stop disable user')
+        const idUser = mongoose.Types.ObjectId(userId);
          const updated = await UserModel.findOneAndUpdate(
-            { _id: userId, "enabledHistory.dateTo": null },
-            { $set: { "enabledHistory.$.dateTo": new Date() } }
+            { _id: idUser, "enabledHistory.dateTo": null },
+            { $set: { "enabledHistory.$.dateTo": new Date() } },
+            {new: true}
         );
          
          if (!updated) {
              throw new ModelNotFoundException()
          }
          return this.mapToUser(updated)
+
+        //nueva version: const idUser = new mongoose.Types.ObjectId(userId);
+    
+    // Encuentra el usuario
+        // const user = await UserModel.findOne({ _id: userId });
+        
+        // if (!user) {
+        //     throw new ModelNotFoundException();
+        // }
+
+        // // Encuentra el elemento en enabledHistory con dateTo igual a null
+        // const historyEntry = user.enabledHistory.find(entry => entry.dateTo === null);
+
+        // if (historyEntry) {
+        //     // Actualiza el campo dateTo a la fecha actual
+        //     historyEntry.dateTo = new Date();
+        //     await user.save();  // Guarda los cambios en la base de datos
+        // } else {
+        //     throw new Error('No se encontró un elemento con dateTo igual a null en enabledHistory');
+        // }
+
+        // return this.mapToUser(user);
      }
      
 

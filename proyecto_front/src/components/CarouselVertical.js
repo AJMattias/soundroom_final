@@ -14,14 +14,14 @@ export const CarouselVertical = ({navigation, title, ownerRooms, style}) => {
     return (
         <Block style = {[style , styles.wrapper]}>
             <Text style = {styles.title}>{title}</Text>
-            <ScrollView
+            <ScrollView vertical = {true}
             style = {{
                 width: '100%'
             }}
             showsHorizontalScrollIndicator={true} 
             contentContainerStyle={{width: '100%'}}>
                 <Block style = {styles.ownerRoomsContainer}>
-                    <Text style = {styles.subtitle} >Tus salas</Text>
+                    {/* <Text style = {styles.subtitle} >Tus salas</Text> */}
                     {ownerRooms.map((room) => (
                         <RoomCard room = {room} navigation = {navigation} />
                     ))}
