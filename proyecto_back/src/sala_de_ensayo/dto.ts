@@ -143,7 +143,7 @@ export interface CreateOpinionDto{
     estrellas: number;
     idUser:  string;
     idRoom: string;
-    idArtist: string;
+    idArtist?: string;
 }
 
 export interface OpinionDto{

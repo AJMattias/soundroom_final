@@ -463,7 +463,7 @@ async  obtenerCantidadValoraciones(idRoom: string) {
             const opiniones : OpinionDto[] = await OpinionModel.find({idRoom: idRoom}).exec();
             console.log('opiniones: ', opiniones)
             // for para contar la cantidad de estrellas que tiene la sala
-            for (let i: number = 1; i<5; i++){
+            for (let i: number = 1; i<=5; i++){
                 const cantidad = await OpinionModel.countDocuments({
                     estrellas: i,
                     idRoom: idRoom

@@ -536,7 +536,7 @@ export const route = (app: Application) => {
                 estrellas: dto["estrellas"] ,
                 idUser: user.id,
                 idRoom: dto["idRoom"],
-                idArtist: '',
+                //idArtist: '',
             })
             console.log('Ruta, opinion creada: ', opinion)
             if(!opinion){
@@ -618,7 +618,7 @@ export const route = (app: Application) => {
     //TODO update opinion
     app.put("/saladeensayo/updateOpinion/",
         auth,
-        checkPermission(['ACTUALIZAR_CALIFICACION_SALA_DE_ENSAYO']),
+        checkPermission(['CALIFICAR_SALA_DE_ENSAYO']),
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
         run(async (req: any, resp: Response) =>{
             const errors = validator.validationResult(req)
@@ -647,7 +647,7 @@ export const route = (app: Application) => {
                 estrellas:dto["estrellas"],
                 idUser:dto["idUser"],
                 idRoom: dto["idRoom"],
-                idArtist: '',
+                //idArtist: '',
             })
         resp.json(opinionUpdate)
     }))
@@ -1060,8 +1060,8 @@ export const route = (app: Application) => {
             const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
 
             // Guardar el archivo PDF en el servidor
-            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
-            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+            const ruta = `C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
 
             // Enviar el archivo al cliente
             resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);

@@ -44,8 +44,8 @@ export class SoundRoomsServer {
             this._app.use(express.json());
             this._app.use(express.urlencoded({extended: false}))
             this._app.use('/uploads', express.static(path.resolve('uploads')))
-            console.log('Serving static files from:', path.join('E:/Usuarios/matti/Escritorio/pdf_soundroom'));
-            this._app.use('/pdfs', express.static(path.join('E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs')));
+            console.log('Serving static files from:', path.join('C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom'));
+            this._app.use('/pdfs', express.static(path.join('C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs')));
 
             routes.route(this._app)
             handler.handle(this._app)
