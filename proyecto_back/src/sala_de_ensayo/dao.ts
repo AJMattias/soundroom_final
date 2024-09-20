@@ -1,5 +1,5 @@
 import { ModelNotFoundException } from "../common/exception/exception";
-import { CreateOpinionDto, CreateSalaDeEnsayoDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, CreateSearchSdEDto, OpinionDto, SalaDeEnsayoDto} from "./dto";
+import { CreateOpinionArtistDto, CreateOpinionDto, CreateSalaDeEnsayoDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, CreateSearchSdEDto, OpinionDto, SalaDeEnsayoDto} from "./dto";
 import { Opinion, OpinionDoc, OpinionModel, SalaDeEnsayo, SalaDeEnsayoDoc, SalaDeEnsayoModel } from "./model";
 import {StringUtils} from "../common/utils/string_utils";
 import { Mongoose, ObjectId } from "mongoose"
@@ -317,6 +317,16 @@ async createOpinion(opinion: CreateOpinionDto): Promise<Opinion>{
         idUser: opinion.idUser,
         estrellas: opinion.estrellas,
         idRoom: opinion.idRoom,
+        idArtist: opinion.idArtist,
+    })
+    return this.mapToOpinion(opinionDoc)
+}
+
+async createOpinionArtist(opinion: CreateOpinionArtistDto): Promise<Opinion>{
+    const opinionDoc = await OpinionModel.create({
+        descripcion: opinion.descripcion,
+        idUser: opinion.idUser,
+        estrellas: opinion.estrellas,
         idArtist: opinion.idArtist,
     })
     return this.mapToOpinion(opinionDoc)

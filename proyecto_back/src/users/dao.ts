@@ -27,6 +27,14 @@ export class UsersDao {
         )
     }
 
+    async getAllUA(): Promise<Array<User>> {
+        return (await UserModel.find().exec())
+         .map((doc: UserDoc) => {
+            return this.mapToUser(doc)
+            }
+        )
+    }
+
     async getAllUserPerfilPermiso(): Promise<Array<User>> {
         return (await UserModel.find({"isAdmin": false})
         .populate('perfil')

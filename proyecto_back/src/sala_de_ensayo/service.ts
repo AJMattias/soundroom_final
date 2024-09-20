@@ -1,7 +1,7 @@
 import { UserModel } from "src/users/models";
 import { PerfilModel } from "../perfil/models";
 import * as dao from "./dao"
-import { CreateOpinionDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, OpinionDto, PopularSalaDeEnsayoDto, SalaDeEnsayoDto} from "./dto";
+import { CreateOpinionArtistDto, CreateOpinionDto, CreateSalaDeEnsayoDto2, CreateSalaDeEnsayoDtoOpinion, OpinionDto, PopularSalaDeEnsayoDto, SalaDeEnsayoDto} from "./dto";
 import { Opinion, OpinionModel, SalaDeEnsayo, SalaDeEnsayoModel } from "./model";
 import { displayPartsToString } from "typescript";
 var mongoose = require('mongoose');
@@ -495,6 +495,17 @@ async  obtenerCantidadValoraciones(idRoom: string) {
                 estrellas: dto.estrellas,
                 idUser: dto.idUser,
                 idRoom: dto.idRoom,
+                idArtist: dto.idArtist
+            })
+        )
+    }
+
+    async createOpinionArtist(dto: CreateOpinionArtistDto):Promise <OpinionDto>{
+        return this.mapToDtoOpinion(
+            await this.dao.createOpinionArtist({
+                descripcion: dto.descripcion,
+                estrellas: dto.estrellas,
+                idUser: dto.idUser,
                 idArtist: dto.idArtist
             })
         )

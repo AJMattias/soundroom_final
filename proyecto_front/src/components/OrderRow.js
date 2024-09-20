@@ -9,6 +9,7 @@ import { DeleteButton } from './DeleteButton'
 import * as DateUtils from '../utils/DateUtils'
 import { Price } from './Price'
 import Collapsible from 'react-native-collapsible'
+import { comisionesService } from '../network/ComisionService'
 
 
 const OrderDetail = ({concept, value, sign}) => {
@@ -39,6 +40,7 @@ const OrderDetail = ({concept, value, sign}) => {
 
     })
 
+    
     return (
         <Block style = {styles.container}>
             <Text style = {styles.conceptText}>
@@ -56,7 +58,14 @@ const OrderDetail = ({concept, value, sign}) => {
     )
 }
 
-export const OrderRow = ({order, onOrderCancelled }) => {
+export const OrderRow = ({order, fee2, onOrderCancelled }) => {
+
+    // const [fee2, setFee2] = useState(0)
+    // const comision = async ()=>{
+    //     const response = comisionesService.getComisionEnabled()
+    //     setFee2(response)
+    // }
+
 
     const [isCollapsed , setIsCollapsed] = useState(true)
 
@@ -69,6 +78,8 @@ export const OrderRow = ({order, onOrderCancelled }) => {
 
     //calcula el total de la reserva mas comision del 5% 
     const fee = order.totalPrice*1.05 - order.totalPrice //order.totalNet
+    const comision = fee2 ? fee2 : 0;
+    console.log(comision, fee2);
 
     //logica de fechas
     // let currentDate = new Date()
@@ -150,17 +161,17 @@ export const OrderRow = ({order, onOrderCancelled }) => {
                     <OrderDetail
                         concept = "Total bruto"
                         sign = "+"
-                        value = {order.totalPrice*1.05}
+                        value = {order.totalPrice}
                     />
                     <OrderDetail
                         concept = "Comisión SoundRoom"
                         sign = "-"
-                        value  = {fee}
+                        value  = {(order.totalPrice * comision) / 100}
                     />
                     <OrderDetail
                         concept = "Total"
                         sign = ""
-                        value = {order.totalPrice} //order.totalNet
+                        value = {order.totalPrice - (order.totalPrice * comision) / 100} //order.totalNet
                     />
                     <Block style = {styles.separator} />   
                     <Block row style = {{justifyContent: 'flex-end', marginTop: 4}}>

@@ -42,7 +42,7 @@ class RatingsService {
 
     async createOpinionToArtist(rating, otherId){
         const opinion_created =  await api.post("salasdeensayo/createOpinionToArtist/", {
-            idRoom :otherId,
+            idArtist :otherId,
             descripcion: rating.comment,
             estrellas: rating.score
         })

@@ -199,7 +199,9 @@ export default function RegisterScreen({ navigation }) {
         style={styles.container}
         onValueChange={(itemValue, itemIndex) => {
           console.log(itemValue)  
-          setPerfilSelected({value: itemValue})
+          setPerfilSelected({
+            value: itemValue
+          })
         }}
         >
         {listPerfiles}

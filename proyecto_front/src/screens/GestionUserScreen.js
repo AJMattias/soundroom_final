@@ -119,6 +119,38 @@ export function GestionUserScreen ({route, navigation}){
         navigation.replace("GestionUsuariosScreen")
     }
 
+    //Setear como admin
+    const hacerAdmin = async () => {
+      console.log("Hacer admin")
+      console.log(userId, 
+          user.email,
+          user.name,
+          user.last_name,
+          "habilitado")
+      const response = await userService.hacerAdmin(userId)
+      console.log(response)
+      setUserFetched(false)
+      setUser(response)
+      console.log(user)
+      navigation.replace("GestionUsuariosScreen")
+  }
+
+   //Deshacer como admin
+   const deshacerAdmin = async () => {
+    console.log("Hacer admin")
+    console.log(userId, 
+        user.email,
+        user.name,
+        user.last_name,
+        "habilitado")
+    const response = await userService.deshacerAdmin(userId)
+    console.log(response)
+    setUserFetched(false)
+    setUser(response)
+    console.log(user)
+    navigation.replace("GestionUsuariosScreen")
+}
+
     return(
         <StateScreen loading={!userFetched}>
             <Screen navigation={navigation}>
@@ -140,6 +172,16 @@ export function GestionUserScreen ({route, navigation}){
                     <Button mode="contained"
                     onPress={deshabilitar}
                     >Deshabilitar</Button>
+                    }
+                    {user.enabled == "habilitado" && user.isAdmin === false &&
+                    <Button mode="contained"
+                    onPress={hacerAdmin}
+                    >Hacer Admin</Button>
+                    }
+                    {user.enabled == "habilitado" && user.isAdmin === true &&
+                    <Button mode="contained"
+                    onPress={deshacerAdmin}
+                    >Deshacer Admin</Button>
                     }
                     </View>
                 </ScrollView>

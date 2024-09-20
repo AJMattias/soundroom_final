@@ -11,6 +11,12 @@ export const TimeSlot = ({ date, hour, reservations, onSelected, isSelected }) =
         return time
     }
 
+    const isCurrentTimeBeforeSlot = () => {
+        const now = new Date();
+        const slotTime = getHours();
+        return now > slotTime;
+    }
+
     const checkIsUsed = () => {
         const time = getHours()
         const turns = reservations.filter(
@@ -19,7 +25,7 @@ export const TimeSlot = ({ date, hour, reservations, onSelected, isSelected }) =
         return turns.length > 0
     }
 
-    const isUsed = checkIsUsed()
+    const isUsed = checkIsUsed() || isCurrentTimeBeforeSlot();
 
     const onTimeClicked = () => {
         if(!isUsed) {
@@ -130,4 +136,3 @@ const styles = StyleSheet.create({
 
 
 })
-

@@ -24,6 +24,7 @@ var mongoose = require('mongoose');
 import * as opinionService from "../sala_de_ensayo/service"
 import { UserDoc, UserModel } from "./models"
 import { PerfilModel } from "../perfil/models"
+import { add } from "date-fns"
 
 /**
  * 
@@ -42,6 +43,17 @@ export const route = (app: Application) => {
         // la respuesta de backend sería un objeto Promise sin resolver queç
         // se serializa como {}
         const users : UserDto[] = await  service.instance.getAllUsers()
+        resp.json(users)    
+    }))
+
+    app.get("/usersUA/", 
+        auth,
+        admin,
+        run(async (req: any, resp: Response) => {
+        //NOTA: tengan cuidado de no olvidar el await. Si omitimos el await
+        // la respuesta de backend sería un objeto Promise sin resolver queç
+        // se serializa como {}
+        const users : UserDto[] = await  service.instance.getAllUsersUA()
         resp.json(users)    
     }))
 
@@ -233,6 +245,40 @@ export const route = (app: Application) => {
             resp.json(user)
         })
      )
+
+     app.put("/users/setAdmin/", async (req: Request, res: Response) => {
+        const userId = req.query.id;
+      
+        try {
+          const user = await UserModel.findById(userId);
+          if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+          }
+      
+          user.isAdmin = true;
+          await user.save();
+          res.status(200).json({ message: 'Usuario ahora es Admin' });
+        } catch (error) {
+          res.status(500).json({ error: 'Error al actualizar usuario' });
+        }
+      });
+
+      app.put("/users/unsetAdmin/", async (req: Request, res: Response) => {
+        const userId = req.query.id;
+      
+        try {
+          const user = await UserModel.findById(userId);
+          if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+          }
+      
+          user.isAdmin = false;
+          await user.save();
+          res.status(200).json({ message: 'Usuario ahora no es Admin' });
+        } catch (error) {
+          res.status(500).json({ error: 'Error al actualizar usuario' });
+        }
+      });
 
      app.post("/users/updatePassword/",
         validator.query("id").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),

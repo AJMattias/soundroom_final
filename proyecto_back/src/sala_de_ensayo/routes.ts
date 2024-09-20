@@ -493,8 +493,8 @@ export const route = (app: Application) => {
             const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
 
             // Guardar el archivo PDF en el servidor
-            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
-            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+            const ruta = `C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
 
             // Enviar el archivo al cliente
             resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);
@@ -524,7 +524,7 @@ export const route = (app: Application) => {
             }
             const dto = req.body
             const idRoom = req.query.idRoom as string
-            console.log('ruta create Pinion idRoom: ', idRoom)
+            console.log('ruta create opinion idRoom: ', idRoom)
             console.log('ruta create opinion, idUser: ', req.user.id)
 
             //obtener usuario logueado con:
@@ -588,21 +588,20 @@ export const route = (app: Application) => {
             }
             const dto = req.body
             const idArtist = req.query.idArtist as string
-            console.log('ruta create Opinion idArtist: ', idArtist)
+            console.log('ruta create Opinion idArtist: ', dto['idArtist'])
             console.log('ruta create opinion, idUser: ', req.user.id)
 
             //obtener usuario logueado con:
             const logged : UserDto = req.user 
             const user: UserDto = await userService.instance.findUserById(logged.id)
             //create opinion
-            const opinion = await service.instance.createOpinion({
+            const opinion = await service.instance.createOpinionArtist({
                 descripcion: dto["descripcion"],
                 estrellas: dto["estrellas"] ,
                 //usuario loguado hace opinion- propietario de SdE
                 idUser: user.id,
-                idRoom: '',
                 //Artista a quien le hace la opinion
-                idArtist: dto["idArtist"],
+                idArtist: dto['idArtist'],
             })
             console.log('Ruta, opinion creada: ', opinion)
             if(!opinion){
@@ -976,8 +975,8 @@ export const route = (app: Application) => {
             const rutaPdf2 = `report_${currenDay}${currenMonth}${currenYear}${currenHour}${currenHour}.pdf`
 
             // Guardar el archivo PDF en el servidor
-            const ruta = `E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`
-            await fs.writeFile(`E:/Usuarios/matti/Escritorio/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
+            const ruta = `C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`
+            await fs.writeFile(`C:/Users/manzu/Desktop/soundroom_final/pdf_soundroom/pdfs/${rutaPdf2}`, pdfBytes);
 
             // Enviar el archivo al cliente
             resp.setHeader('Content-Disposition', `attachment; filename="${rutaPdf2}"`);

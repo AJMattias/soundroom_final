@@ -16,7 +16,7 @@ export function GestionUsuariosScreen ({navigation}) {
     const [mostrar, setMostrar] = useState({value:''})
 
     const fetchUsuarios = async () => {
-        const usuarios1 = await userService.getUsers()
+        const usuarios1 = await userService.getUsersUA()
         console.log("Got Users")
         console.log(usuarios1)
         setUsuarios(usuarios1)
@@ -47,7 +47,13 @@ export function GestionUsuariosScreen ({navigation}) {
           <Block row style={styles.usuariossContainer}
           onClick={()=>handlerOnPress(item)}>
             <Text style={styles.list}>{item.name} {item.last_name}</Text> 
+            {item.isAdmin === false &&
             <Text style={styles.subtitle}>{item.enabled}</Text>
+            }
+            {item.isAdmin === true && 
+            <Text style={styles.subtitle}>Administrador {item.enabled}</Text>
+            }
+            
           </Block>
         )
       }

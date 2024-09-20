@@ -123,6 +123,24 @@ class UserService {
         return user
     }
 
+    async hacerAdmin(
+        userId
+        
+    ) {
+        const user =  await api.put("/users/setAdmin/?id="+userId)
+        await LocalPhoneStorage.set("user", user)
+        return user
+    }
+
+    async deshacerAdmin(
+        userId
+        
+    ) {
+        const user =  await api.put("/users/unsetAdmin/?id="+userId)
+        await LocalPhoneStorage.set("user", user)
+        return user
+    }
+
     async deshabilitarUser(
         userId,
         email,
@@ -145,6 +163,14 @@ class UserService {
         let users = undefined
         try {
             users = await api.get("/users/")
+        } catch (ignored) {}
+        return users
+    }
+
+    async getUsersUA (){
+        let users = undefined
+        try {
+            users = await api.get("/usersUA/")
         } catch (ignored) {}
         return users
     }

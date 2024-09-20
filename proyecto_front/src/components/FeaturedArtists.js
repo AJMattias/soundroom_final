@@ -53,7 +53,7 @@ export const FeaturedArtists = ({ navigation }) => {
                     avatar={userAvatar}
                     title={artist.name + " " + artist.lastName}
                     caption={artist.tipoArtista}
-                    onClick = {() => navigation.navigate('ArtistProfileScreen', {userId: artist.user.id})}
+                    onClick = {() => navigation.navigate('ArtistProfileScreen', {userId: artist._id})}
                 />
             )
             )}

@@ -146,6 +146,13 @@ export interface CreateOpinionDto{
     idArtist?: string;
 }
 
+export interface CreateOpinionArtistDto{
+    descripcion: string;
+    estrellas: number;
+    idUser:  string;
+    idArtist?: string;
+}
+
 export interface OpinionDto{
     id: string,
     descripcion: string;

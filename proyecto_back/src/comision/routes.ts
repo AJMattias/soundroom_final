@@ -46,6 +46,7 @@ export const route = (app: Application) => {
     app.get("/comision/getEnabled/",
     run(async ( req: Request, resp: Response)=>{
         const comision : ComisionDto = await service.instance.findEnabled()
+        console.log(comision)
         resp.json(comision)
     }))
 

@@ -98,6 +98,13 @@ export class UsersService{
         })
     }
 
+    async getAllUsersUA() : Promise<Array<UserDto>>{
+        const users = await this.dao.getAllUA()
+        return users.map((user: User) => {
+            return this.mapToDto(user)
+        })
+    }
+
     // async getNewUsersReport(fechaI: string, fechaH: string) : Promise<Array<ReporteUsersDto>>{
     //     let dateInit = new Date(fechaI);
     //     let dateEnd = new Date(fechaH);

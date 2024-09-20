@@ -11,8 +11,9 @@ import {Price} from "../components/Price"
 import { FiltersHeader } from "../components/FiltersHeader";
 import { getLoggedUser } from "../storage/LocalStorage";
 import { ReservationCard } from "../components/ReservationCard";
+import { comisionesService } from "../network/ComisionService";
 
-const OrdersFooter = ({orders}) => {
+const OrdersFooter = ({orders, fee2}) => {
     const styles = StyleSheet.create({
         footer: {
             width: '100%',
@@ -42,7 +43,8 @@ const OrdersFooter = ({orders}) => {
         }
         return orders.reduce((previous,current) => {
             //return previous + current.totalNet
-            return previous + current.totalPrice
+            // return previous + current.totalPrice
+            return previous + (current.totalPrice - (current.totalPrice * fee2) / 100)
         }, 0)
 
         
@@ -67,6 +69,8 @@ export const OrdersScreen = ({navigation}) => {
 
     const [query, setQuery] = useState("")
     const [month, setMonth] = useState()
+    const [fee2, setFee2] = useState(0)
+
 
     const fetchOrders = async () => {
         console.log("fetchOrders")
@@ -84,11 +88,21 @@ export const OrdersScreen = ({navigation}) => {
                     await ordersService.getMyOrdersBd()
                 )
             }
+            const response = await comisionesService.getComisionEnabled()
+            const porcentaje = response.porcentaje;
+            setFee2(porcentaje)
+            console.log(porcentaje)
         } catch (apiError) {
             console.error(apiError)
         }
         setOrdersFetched(true)
     }
+
+    
+    // const comision = async ()=>{
+    //     const response = comisionesService.getComisionEnabled()
+    //     setFee2(response)
+    // }
 
     const onDateFilter = async (startDate, endDate) => {
         console.log("onDateFilter")
@@ -152,6 +166,7 @@ export const OrdersScreen = ({navigation}) => {
                 children.push(
                     <OrderRow 
                             order = {order} 
+                            fee2 = {fee2}
                             onOrderCancelled = {(order) => cancelOrder(order)}
                     />
                 )
@@ -167,6 +182,7 @@ export const OrdersScreen = ({navigation}) => {
                         <OrderRow 
                                 order = {order} 
                                 onOrderCancelled = {(order) => cancelOrder(order)}
+                                fee2 = {fee2}
                         />
                     )
                 })
@@ -183,7 +199,9 @@ export const OrdersScreen = ({navigation}) => {
 
                 </ScrollView>
             </Screen>
-            <OrdersFooter orders = {orders.filter((order) => order.canceled == 'false')}/>
+            <OrdersFooter 
+            fee2 = {fee2}
+            orders = {orders.filter((order) => order.canceled == 'false')}/>
         </StateScreen>
     )
 }
