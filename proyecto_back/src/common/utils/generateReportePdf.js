@@ -206,6 +206,10 @@ export async function generateReporteValoracionesPDF(chartImage, tituloReporte, 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([700, 500]);
 
+
+    const hoy = new Date()
+    const fechaAtcual = `${hoy.getFullYear()}-${hoy.getMonth()+1}-${hoy.getday}`
+    
     page.drawText(`${tituloReporte}`, {
         x: 50,
         y: 450,
@@ -236,6 +240,15 @@ export async function generateReporteValoracionesPDF(chartImage, tituloReporte, 
         size: 18,
         color: rgb(0, 0, 0),
     });
+    }
+
+    if(fechaHasta){
+        page.drawText(`Fecha Solicitud Reporte: ${fechaAtcual}`, {
+            x: 50,
+            y: 350,
+            size: 18,
+            color: rgb(0, 0, 0),
+        });
     }
 
     // Insertar imagen del gráfico

@@ -87,8 +87,10 @@ export const route = (app: Application) => {
         const perfil = await PerfilModel.findOne({ name: "Artista" });
 
         if (!perfil) {
+            const artistasNo = ['']
             console.log(`Perfil con nombre Artista no encontrado.`);
-            return;
+            resp.json(artistasNo);
+            return
         }
         const perfilId = mongoose.Types.ObjectId(perfil._id)
         const artistas: UserDoc[] = await UserModel.find({ idPerfil: perfilId})
@@ -314,7 +316,7 @@ export const route = (app: Application) => {
                     .isLength({min: 8}).withMessage(ErrorCode.PASSWORD_TOO_SHORT),
             validator.body("email").isEmail().withMessage(ErrorCode.INVALID),
             //validator.body("userType").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
-            validator.body("idPerfil").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
+            //validator.body("idPerfil").notEmpty().withMessage(ErrorCode.FIELD_REQUIRED),
 
             run(async (req: Request, resp: Response) =>{
                 const errors = validator.validationResult(req)

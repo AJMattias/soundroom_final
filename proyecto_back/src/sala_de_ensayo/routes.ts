@@ -1041,6 +1041,9 @@ export const route = (app: Application) => {
 
             const fechaInicio =  dto.fechaI
             const fechaHasta =  dto.fechaH
+            console.log('Fechas Inicio y Fin')
+            console.log('Fecha Inicio: ', fechaInicio)
+            console.log('Fecha hasta: ', fechaHasta)
 
             //Codigo Javascript :
             const chartImage = await generateReporteBarChart(NewUsersReport.labels, NewUsersReport.datasets[0].data, 'Cantidad de valoraciones'); // Generar el gráfico de barras

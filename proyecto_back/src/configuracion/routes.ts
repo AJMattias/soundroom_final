@@ -10,6 +10,7 @@ require('dotenv').config();
 import path from 'path';
 import { spawn } from 'child_process';
 import fs from 'fs';
+import { admin, auth } from "../server/middleware";
 
 
 /**
@@ -101,13 +102,18 @@ export const route = (app: Application) => {
     // }))
 
     //ruta chatgpt idea:
-    app.put("/configuraciones/backup", run(async (req: Request, resp: Response) => {
+    app.put("/configuraciones/backup",
+        auth, admin,
+        run(async (req: Request, resp: Response) => {
         const today = new Date()
-        const day = today.getDay()
-        const motnh = today.getMonth()
+        const day = today.getDate()
+        const motnh = today.getMonth()+1
         const year = today.getFullYear()
-        const nombre = `backup-${day}${motnh}${year}.bson`;
+        const miliseconds = today.getTime()
+        const nombre = `backup-${day}${motnh}${year}${miliseconds}.bson`;
+        console.log('nombre: ', nombre)
         const rutaArchivo = path.join(__dirname, '..', nombre);  // Construir la ruta correcta para el archivo
+        console.log('ruta path: ', rutaArchivo)
         const rutaDump = process.env.MONGODUMP;
     
         // Verifica que `rutaDump` esté correctamente definida.

@@ -59,7 +59,7 @@ export interface CreateUserDto {
     image_id: string|undefined;
     idArtistType: string|undefined;
     idArtistStyle: string|undefined;
-    idPerfil: string; 
+    idPerfil?: string; 
     createdAt?: Date;
     deletedAt?: Date;
     enabled?: string;

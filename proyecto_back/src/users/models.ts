@@ -87,9 +87,10 @@ export const UserSchema = new Schema({
     enabled: String,
     userType: String,
     tipoArtista: String,
-    idPerfil : {
+    idPerfil: {
         type: Schema.Types.ObjectId,
         ref: "Perfil",
+        required: false,
     },
     idArtistType : {
         type: Schema.Types.ObjectId,
@@ -120,4 +121,4 @@ export const UserSchema = new Schema({
 
 })
 
-export const UserModel = mongoose.model<UserDoc>("User", UserSchema)
+export const    UserModel = mongoose.model<UserDoc>("User", UserSchema)

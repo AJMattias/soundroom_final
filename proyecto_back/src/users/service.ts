@@ -56,7 +56,7 @@ export class UsersService{
 
         })
         console.log('service user created: ', user)
-        const msg =  "Usted ha creado la cuenta exitosamente. Gracias por elegir SoundRoom"
+        const msg =  "Usted ha creado la cuenta exitosamente. Gracias por elegirnos y dirigite a SoundRoom"
         //en caso que no funcione bien el mail, pasar la cadena de string directamente como parametro en sendMailPiola en vez de var msg
         await this.sendMailPiola(user.email, msg)
         return  this.mapToDto(user)

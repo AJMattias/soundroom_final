@@ -105,7 +105,8 @@ export class UsersDao {
                 image_id: user.image_id,
                 createdAt: new Date(),
                 userType: user.userType,
-                idPerfil: user.idPerfil,
+                ...(user.idPerfil && { idPerfil: user.idPerfil }),
+                //idPerfil: user.idPerfil,
                 idArtistType: user.idArtistType,
                 idArtistStyle: user.idArtistStyle,
                 isAdmin: false,
@@ -226,6 +227,9 @@ export class UsersDao {
     }
 
     async updateIdPerfil(userId: string, user: CreateUserDto): Promise<User> {
+        if (!user.idPerfil) {
+            throw new Error('idPerfil es requerido');
+        }
         const idPerfil2 = StringUtils.toObjectId(user.idPerfil)
         const updated = await UserModel.findByIdAndUpdate(userId,{
             name: user.name,

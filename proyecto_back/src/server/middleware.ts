@@ -85,6 +85,7 @@ export const auth =  function (req : any , resp:  any, next : any) {
 export const admin = function(req: any, resp: any, next: any) {
     const user: UserDto = req.user
     if(user && user.isAdmin) {
+        console.log('user.isAdmin: ', user.isAdmin)
        next() 
     } else {
         return (new AuthorizationException()).send(resp)
