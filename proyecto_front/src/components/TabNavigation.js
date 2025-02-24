@@ -21,7 +21,9 @@ export const TabNavigation = ({navigation}) => {
             <Tab navigation = {navigation} route = {route} icon = 'search1' text = "Salas" routeName = "SearchScreen"/>
             <Tab navigation = {navigation} route = {route} icon = 'calendar' text = "Reservas" routeName = "ReservationsScreen" />
             {
-                user && isAdmin(user) && (
+                user 
+                //&& isAdmin(user) 
+                && user.isAdmin && (
                     <Tab navigation = {navigation} route = {route} icon = 'tool' text = 'Admin' routeName = "AdminStartScreen" />
                 )
             }

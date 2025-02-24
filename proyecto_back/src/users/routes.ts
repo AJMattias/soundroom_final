@@ -19,12 +19,14 @@ import * as  salaService from "../sala_de_ensayo/service"
 //import fs from 'fs';
 const fs = require('fs-extra');
 var mongoose = require('mongoose');
+import * as crypto from "crypto";
 
 //opinion service
 import * as opinionService from "../sala_de_ensayo/service"
 import { UserDoc, UserModel } from "./models"
 import { PerfilModel } from "../perfil/models"
 import { add } from "date-fns"
+import { sendEmail, sendEmailAsync } from "../server/MailCtrl"
 
 /**
  * 
@@ -406,7 +408,11 @@ export const route = (app: Application) => {
      app.post("/auth/token",
         //checkPermission(['RECUPERAR_CONTRASEÑA']),
         run(async(req: Request, resp: Response) => {
-        const tokenDto: LoginResponseDto = await service.instance.loginWithToken(req.body.email, req.body.token)
+         //original:   
+        //const tokenDto: LoginResponseDto = await service.instance.loginWithToken(req.body.email, req.body.token)
+        
+        //mia:
+        const tokenDto = await service.instance.loginWithToken(req.body.email, req.body.token)
         resp.json(tokenDto)
     }))
 
@@ -975,5 +981,58 @@ export const route = (app: Application) => {
 
         }))
         
+//---------------------------------- Enviar Enlace olvide mi coontraseña--------------------------------------
+
+app.post("/user/forgot-password", 
+    run(async (req, res) => {
+        const { email } = req.body;
+        console.log('user/forgot-password- email:', email)
+        const user = await UserModel.findOne({ email });
+        console.log('usuario encontrado: ', user)
+        if (!user) return res.status(400).json({ message: "Usuario no encontrado" });
+    
+        // Generar token y expiración
+        const token = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hora
+        await user.save();
+    
+        // Enlace de recuperación
+        const resetLink = `http://localhost:19006/reset-password/${token}`;
+        //await sendEmail(email, "Recuperación de contraseña", `Haz click en el siguiente enlace para restablecer tu contraseña: ${resetLink}`);
+        await sendEmailAsync({
+            to:email, 
+            subject: "Recuperación de contraseña", 
+            text:  `Haz click en el siguiente enlace para restablecer tu contraseña: ${resetLink}`})
+        res.json({ message: "Revisa tu correo para restablecer tu contraseña",
+            resetLink:' http://localhost:19006/reset-password/',
+            token: token
+         });
+    })
+);
+
+app.post("/reset-password/:token", async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+    const user = await UserModel.findOne({ 
+        resetPasswordToken: token, 
+        resetPasswordExpires: { $gt: new Date(Date.now()) }
+    });
+
+    if (!user) return res.status(400).json({ message: "Token inválido o expirado" });
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    //logear usuario
+
+    const loginResponse = await service.instance.login(user.email, user.password)
+    res.json( loginResponse)    
+
+    //res.json({ message: "Contraseña actualizada correctamente" });
+});
+
 
 }

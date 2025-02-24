@@ -12,11 +12,12 @@ export default function BackButton({ goBack }) {
     goBack()
   }
 
-  const [user, setUser] = useState({});
-  if(!user){
-    setUser(LocalPhoneStorage.get(STORAGE_USER))
-  }
-  return (
+  // const [user, setUser] = useState({});
+  // if(!user){
+  //   setUser(LocalPhoneStorage.get(STORAGE_USER))
+  // }
+  const [user, setUser] = useState(() => LocalPhoneStorage.get(STORAGE_USER) || {});
+    return (
     <TouchableOpacity onPress={onGoBack} style={styles.container}>
       <Image
         style={styles.image}

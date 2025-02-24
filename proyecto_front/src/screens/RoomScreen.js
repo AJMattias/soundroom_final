@@ -92,9 +92,32 @@ export const RoomScreen = ({ route, navigation }) => {
             idOwner = roomCreated.idOwner
             console.log("id dueño sala: ", idOwner)
             console.log(response.comodidades)
+
+            // Actualizar comodities2: eliminar las comodidades que no están en response.comodidades
+            const updatedComodities2 = comodities2.filter(comodidad =>
+                response.comodidades.includes(comodidad)
+            );
+
+            for (let i = comodities2.length - 1; i >= 0; i--) {
+                const comodidad = comodities2[i];
+                
+                // Verificar si la comodidad no está en response.comodidades
+                if (!response.comodidades.includes(comodidad)) {
+                    // Eliminar comodidad de comodities2
+                    comodities2.splice(i, 1);  // Eliminar el elemento en el índice i
+                    console.log('Comodidad eliminada: ', comodidad);
+                }
+            }
+            
             for (let i = 0; i < response.comodidades.length; i++) {
-                comodities2.push(response.comodidades[i]);
-                console.log('response.comodidades[i]: ', response.comodidades[i])
+                // comodities2.push(response.comodidades[i]);
+                // console.log('response.comodidades[i]: ', response.comodidades[i])
+
+                const comodidad = response.comodidades[i];
+                // Verificar si la comodidad ya está en comodities2
+                if (!comodities2.includes(comodidad)) {
+                    comodities2.push(comodidad);  // Si no existe, la agregamos
+                }
             }
             //setComodities2(response.comodidades)
             console.log('comodities2: ', comodities2)

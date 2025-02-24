@@ -39,6 +39,7 @@ export default function CreateUserProfileScreen({ navigation }) {
 
     const [ownerRooms, setOwnerRooms] = useState([])
    
+    const  [mostrarReporte, setmostrarReporte] = useState(false)
 
     const fetchUser = async () => {
         try {
@@ -65,6 +66,16 @@ export default function CreateUserProfileScreen({ navigation }) {
             setPopular(responsePopular)
             //console.log('updatedData: ', updatedData)
             
+            //mostrar reportes:
+            if( user2.idPerfil){
+                if(user2.idPerfil.name =="Sala de Ensayo"  || user2.isAdmin === true){
+                console.log('user2.idPerfil.name:', user2.idPerfil.name)
+                console.log('user2.isAdmin: ', user2.isAdmin)
+                setmostrarReporte(true)
+                }
+            }else if(user2.isAdmin){
+                setmostrarReporte(true)
+            }
             
             
         } catch (apiError) {
@@ -202,7 +213,8 @@ export default function CreateUserProfileScreen({ navigation }) {
                    <Button mode ="outlined" onPress = {openCreateRoom} >Publica tu sala</Button>
                    
                    {
-                    user.idPerfil && user2.idPerfil.name =="Sala de Ensayo" && (
+                    //user.idPerfil && (user2.idPerfil.name =="Sala de Ensayo"  || user2.isAdmin === true) && (
+                    ( mostrarReporte &&
                    <Button mode ="contained" onPress = {()=>navigation.navigate("AdminSalaReportes")} >Reportes de tus Salas</Button>
                    )
                 }

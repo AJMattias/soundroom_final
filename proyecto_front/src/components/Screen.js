@@ -21,7 +21,7 @@ export const Screen = ({ navigation, rootScreen , showHeader = true , children }
             return setRole(
                 "Admin"
             )
-        } 
+        }
         const rooms = await roomService.getMyRooms()
         setRole(
             rooms.length? "Propietario" : "Artista"

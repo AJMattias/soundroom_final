@@ -215,6 +215,7 @@ export  function EditRoom({ route, navigation }) {
               console.log(roomModificado)
               const stored = await roomService.editRoom(roomModificado)
               console.log('sala acutalizada: ', stored)
+              setRoomFetched(false)
               navigation.navigate("RoomScreen", {roomId: stored.id})
 
             } catch (apiError) {

@@ -40,6 +40,10 @@ export interface User {
     //si es artista tendra opiniones a el
     opiniones: [{type: string, unique: true}];
     enabledHistory: [{ status: string; dateFrom: Date, dateTo: Date }]; 
+    //opciones recuperacion de contraseña
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
+
 }
 
 
@@ -64,6 +68,10 @@ export interface UserDoc extends Document {
     idSalaDeEnsayo:[{type: string}];
     opiniones: [{type: string, unique: true}];
     enabledHistory:[{ status: string; dateFrom: Date, dateTo: Date }];
+    //opciones recuperacion de contraseña
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
+
 }
 
 
@@ -117,7 +125,9 @@ export const UserSchema = new Schema({
         status: String,
         dateFrom: Date, 
         dateTo: Date
-    }] 
+    }],
+    resetPasswordToken: { type: String }, // Token se guarda como string
+    resetPasswordExpires: { type: Date }, // Fecha de expiración se guarda como Date
 
 })
 

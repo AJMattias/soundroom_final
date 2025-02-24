@@ -1,6 +1,6 @@
 export const isAdmin = (user) => {
       // Verifica que user y user.email existan
-  if (!user || !user.email) {
+  if (!user || !user.isAdmin) {
     return false;
   }
   

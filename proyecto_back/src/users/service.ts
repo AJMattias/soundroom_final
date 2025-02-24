@@ -285,11 +285,21 @@ export class UsersService{
         }
     }
 
-    async loginWithToken(email: string, token: string): Promise<LoginResponseDto> {
+    async loginWithToken(email: string, token: string)
+    // :Promise<LoginResponseDto> 
+     {
         const user  = await this.dao.findByEmail(email)
         if(!passwordTokens.checkToken(email, token)) {
             throw new AuthorizationException()
         }
+
+        //MIO: chek if email exist, si no existe mandar msg: "El email ingresado no existe”.
+        if(!user) {
+            return{
+                error: 404,
+                msg: "El email ingresado no existe"} 
+        }
+        
         const userDto =  this.mapToDto(user)
         const jwtKey =  process.env.JWT_KEY 
         if(!jwtKey){
@@ -305,7 +315,7 @@ export class UsersService{
     async resetPassword(email: string): Promise<LoginWithTokenDto> {
         const user  = await this.dao.findByEmail(email)
         const token = passwordTokens.createToken(email)
-        await this.sendMail(user.email, "Su código de login es "+token)
+        await this.sendMail(user.email, "Su código de login es "+token, "Recuperacion contraseña")
         return {
             email: email,
             token: token
@@ -357,11 +367,12 @@ export class UsersService{
       await Email.sendEmailAsync(mailOptions)
     }
 
-    async sendMail(to: string, message: string) {
+    async sendMail(to: string,  message: string, subject?: string) {
         const mailOptions = {
             from: 'soundroomapp@gmail.com',
             to: to,
-            subject: "Registro de usuarios",
+            //subject: "Registro de usuarios",
+            subject: subject,
             text: message,
             //borrar todo html en caso de que se rompa je
             }

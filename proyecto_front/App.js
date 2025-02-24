@@ -56,10 +56,10 @@ import {
 import {Navigation} from "./src/components/index"
 import { CalendarScreen } from './src/screens/CalendarScreen'
 import { SalaReporteScreen } from './src/screens/SalaReportesScreen'
+import PasswordChangeScreen from './src/screens/PasswordChangeScreen'
 
 
 const Stack = createStackNavigator()
-
 
 export default function App() {
 
@@ -118,9 +118,12 @@ export default function App() {
           <Stack.Screen name = "CalendarScreen" component = {CalendarScreen} />
           <Stack.Screen name = "EditUserScreen" component = {EditUserScreen} />
           <Stack.Screen name = "SalaReporteScreen" component = {SalaReporteScreen} />
+          <Stack.Screen name = "PasswordChangeScreen" component={PasswordChangeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       {/* <Navigation/> */}
     </Provider>
   )
 }
+
+

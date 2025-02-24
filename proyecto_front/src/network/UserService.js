@@ -1,6 +1,6 @@
 
 import {api} from './ApiClient'
-import { LocalPhoneStorage, STORAGE_JWT_KEY, STORAGE_USER } from '../storage/LocalStorage'
+import { getNewPasswordStatus, LocalPhoneStorage, setNewPasswordStatus, setPasswordChangeFalse, setPasswordChangeTrue, setTokenLocalStorage, STORAGE_JWT_KEY, STORAGE_USER, toggleNewPassword } from '../storage/LocalStorage'
 import { MockStore } from '../mock/MockStore'
 import { ApiException } from "../exception/ApiException"
 import { merger } from '../mock/MockMerger'
@@ -215,6 +215,11 @@ class UserService {
                 token: code
             }
         )
+        //mio
+        if(loginResponse.error){
+            return loginResponse.msg
+        }
+        //original:
         if(loginResponse.token) {
             console.log("Got token")
             console.log(loginResponse.token)
@@ -222,8 +227,43 @@ class UserService {
             await LocalPhoneStorage.set(STORAGE_USER, loginResponse.user)
         }
         return loginResponse.user
-        
     }
+
+    //recuperar password por link al mail
+    async resetPassword (email){
+        const resetPassword = await api.post("/user/forgot-password",{
+        email: email
+        })
+        const data= resetPassword
+        console.log('reset password link: ', data)
+        if(data.resetLink){
+            //toggleNewPassword()
+            setPasswordChangeTrue()
+            setTokenLocalStorage(data.token)
+        }
+        console.log(getNewPasswordStatus())
+        return resetPassword
+    }
+
+    async changePassword(token, password){
+        try {
+            const changedPassword = await api.post(`/reset-password/${token}`, {
+                newPassword: password,
+            });
+            if (changedPassword.token) {
+                console.log("Got token");
+                console.log(changedPassword.token);
+                await LocalPhoneStorage.set(STORAGE_JWT_KEY, changedPassword.token);
+                await LocalPhoneStorage.set(STORAGE_USER, changedPassword.user);
+                setPasswordChangeFalse();
+            }
+            return changedPassword; // Devuelve la respuesta completa
+        } catch (error) {
+            console.error("Error changing password:", error);
+            return null; // O un valor que indique un error
+        }
+    }
+    
 }
 
 export const userService = new UserService()

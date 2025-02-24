@@ -21,11 +21,12 @@ export function ProfileScreen2({ route, navigation }) {
   const [perfil, setPerfil] = useState({id:'',name:'', permisos:[]})
   const [perfilPermisos, setPerfilPermisos] = useState([])
   const [permisosAll, setPermisosAll] = useState([])
-
+ 
   const [perfilName, setPerfilName] = useState()
   const [permisosPicked, setPermisosPicked] = useState([])
   const [permisosTodos, setPermisosTodos] = useState([])
   const [permisosCero, setPermisosCero] = useState('')
+  const [permisosNoOtorgados, setPermisosNoOtorgados] = useState([])
 
   const fetchPerfil = async () => {
     console.log('buscando perfil')
@@ -46,6 +47,26 @@ export function ProfileScreen2({ route, navigation }) {
     setPerfilName(perfil.name)
   }
 
+  //nuevo codigo permisos no otorgados:
+  const getPermisosNoOtorgados = async () => {
+    console.log('get All Permisos')
+    const response = await perfilesService.getPermisos()
+    console.log(response)
+    response.map((permiso) => {
+      permisosAll.push({ id: permiso.id, name: permiso.name, checked: false })
+    })
+    console.log(permisosAll)
+
+    let permisosNoOtorgados = permisosAll.filter((permiso) => 
+      !perfilPermisos.some((perfilPermiso) => perfilPermiso.id === permiso.id)
+    )
+    setPermisosNoOtorgados(permisosNoOtorgados)
+    setPerfilPermisos([...perfilPermisos, permisosNoOtorgados])
+    setPerfilFetched(true)
+
+  }
+
+  //viejo codigo
   const getAllPermisos = async () => {
     console.log('get All Permisos')
     const response = await perfilesService.getPermisos()
@@ -127,6 +148,9 @@ export function ProfileScreen2({ route, navigation }) {
      }
 
   if (!perfilFetched) {
+    setPerfilPermisos([])
+    setPermisosAll([])
+    setPermisosTodos([])
     fetchPerfil().then()
     getAllPermisos().then()
     //filterPermisos().then()
@@ -193,8 +217,10 @@ export function ProfileScreen2({ route, navigation }) {
   console.log('nuevosPermisos: ', nuevosPermisos)
   const response =  addPermisosPerfil(nuevosPermisos)
   if(response){
+    setPerfilFetched(false)
     console.log('respuesta a la llamada al back para actualizar permisos: ', response)
     navigation.navigate("ProfileListScreen")
+    //navigation.replace("ProfileListScreen")
   }
   }
 

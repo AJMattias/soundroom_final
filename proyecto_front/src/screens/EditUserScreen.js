@@ -29,7 +29,7 @@ export function EditUserScreen ({navigation}){
     const [perfil, setPerfil] = useState({value:'', error:''})
     const [errorMessage, setErrorMessage ] = useState({error: ''})
     const [tipoArtista, setTipoArtista] = useState({value:'', error:''})
-  
+    const [tipoPerfil, setTipoPerfil] = useState({value:'', error:''})
     const [userFetched, setUserFetched] = useState(false)
     const [perfilSelected, setPerfilSelected] = useState({value:''})
     const [perfiles, setPerfiles] = useState([
@@ -105,18 +105,18 @@ export function EditUserScreen ({navigation}){
       break  
   }
 }
-  const showPasswordError = (argumentError) => {
-    switch(argumentError.code) {
-       case "PASSWORD_TOO_SHORT":
-          setPassword({...password, error: "La contraseña debe tener mínimo 8 caracteres."})
-          break
-        case "FIELD_REQUIRED":
-          setPassword({...password, error: "Este campo es requerido." })
-          break
-        default:
-          setPassword({...password, error: "Ingrese un valor válido."})  
-    }
-}
+//   const showPasswordError = (argumentError) => {
+//     switch(argumentError.code) {
+//        case "PASSWORD_TOO_SHORT":
+//           setPassword({...password, error: "La contraseña debe tener mínimo 8 caracteres."})
+//           break
+//         case "FIELD_REQUIRED":
+//           setPassword({...password, error: "Este campo es requerido." })
+//           break
+//         default:
+//           setPassword({...password, error: "Ingrese un valor válido."})  
+//     }
+// }
 
   const listPerfiles = perfiles.map((perfil) =>
   <Picker.Item key={perfil.id} label={perfil.name} value={perfil.id} />
@@ -124,33 +124,43 @@ export function EditUserScreen ({navigation}){
 
   const editarPerfil = async () =>{
     console.log('Editar pressed 1')
-    checkPasswords(password2.value)
+    //checkPasswords(password2.value)
+
+    if (password.value !== password2.value) {
+      setPassword2({ value: '', error: 'Las contraseñas deben ser iguales' });
+      return; // Detenemos la ejecución si las contraseñas no coinciden
+    }
+
     const tipoArtistaError = tipoArtistaValidator(tipoArtista.value)
+    const tipoPerfilError = tipoPerfilValidator(tipoPerfilValidator.value)
     setErrorMessage({...errorMessage, error:''})
-    // if (tipoArtistaError) {
-    //   setTipoArtista({ ...tipoArtista, error: tipoArtistaError })
-    //   return
-    // }
-    try {
-      console.log('Editar pressed')
-      const userNuevo = await userService.update(
-        user.id,
-        email.value,
-        name.value,
-        lastName.value,
-        "habilitado",
-        perfilSelected.value,
-        tipoArtista.value,
-        password.value
-      )
-      console.log("User Edited")
-      console.log(userNuevo)
-      //await userService.login(email.value, password.value)
-      navigation.replace('UserProfileScreen2')
-    }catch(apiError) {
-      console.error("Error al loguearnos")
-      console.error(apiError)
-      showApiError(apiError)
+    if (tipoArtistaError || tipoPerfilValidator) {
+       setTipoArtista({ ...tipoArtista, error: tipoArtistaError })
+       //setTipoPerfil({ ...tipoPerfil, error: tipoPerfilError})
+       setErrorMessage({...errorMessage, error:tipoPerfilError})
+       return
+    }else{
+      try {
+        console.log('Editar pressed')
+        const userNuevo = await userService.update(
+          user.id,
+          email.value,
+          name.value,
+          lastName.value,
+          "habilitado",
+          perfilSelected.value,
+          tipoArtista.value,
+          password.value
+        )
+        console.log("User Edited")
+        console.log(userNuevo)
+        //await userService.login(email.value, password.value)
+        navigation.replace('UserProfileScreen2')
+      }catch(apiError) {
+        console.error("Error al loguearnos")
+        console.error(apiError)
+        showApiError(apiError)
+      }
    }
   }
 
